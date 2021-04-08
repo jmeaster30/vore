@@ -25,44 +25,50 @@ void UpdateLineColumnNumber();
 void Drop();
 void Drop(const char* message);
 void InvalidToken();
-int ProcessToken(const char* name, int token_parser_id, int value_type);
+int ProcessToken(const char* name, int token_parser_id);
 %}
 
 /* Rules Section  */
 %%
-"find"    { return ProcessToken("FIND",    WA, 0); }
-"replace" { return ProcessToken("REPLACE", WA, 0); }
-"with"    { return ProcessToken("WITH",    WA, 0); }
-"top"     { return ProcessToken("TOP",     WA, 0); }
-"skip"    { return ProcessToken("SKIP",    WA, 0); }
-"take"    { return ProcessToken("TAKE",    WA, 0); }
-"all"     { return ProcessToken("ALL",     WA, 0); }
+"find"     { return ProcessToken("FIND",     FIND); }
+"replace"  { return ProcessToken("REPLACE",  REPLACE); }
+"with"     { return ProcessToken("WITH",     WITH); }
+"top"      { return ProcessToken("TOP",      TOP); }
+"skip"     { return ProcessToken("SKIP",     SKIP); }
+"take"     { return ProcessToken("TAKE",     TAKE); }
+"all"      { return ProcessToken("ALL",      ALL); }
+"previous" { return ProcessToken("PREVIOUS", PREVIOUS); }
+"after"    { return ProcessToken("AFTER",    AFTER); }
 
-"exactly"  { return ProcessToken("EXACTLY",  WA, 0); }
-"at least" { return ProcessToken("AT LEAST", WA, 0); }
-"or"       { return ProcessToken("OR",       WA, 0); }
-"at most"  { return ProcessToken("AT MOST",  WA, 0); }
-"between"  { return ProcessToken("BETWEEN",  WA, 0); }
-"and"      { return ProcessToken("AND",      WA, 0); }
-"not"      { return ProcessToken("NOT",      WA, 0); }
-"fewest"   { return ProcessToken("FEWEST",   WA, 0); }
-"in"       { return ProcessToken("IN",       WA, 0); }
+"exactly"  { return ProcessToken("EXACTLY",  EXACTLY); }
+"at least" { return ProcessToken("AT LEAST", LEAST); }
+"or"       { return ProcessToken("OR",       OR); }
+"at most"  { return ProcessToken("AT MOST",  MOST); }
+"between"  { return ProcessToken("BETWEEN",  BETWEEN); }
+"and"      { return ProcessToken("AND",      AND); }
+"not"      { return ProcessToken("NOT",      NOT); }
+"fewest"   { return ProcessToken("FEWEST",   FEWEST); }
+"in"       { return ProcessToken("IN",       IN); }
 
-"any"        { return ProcessToken("ANY", WA, 0); }
-"sol"        { return ProcessToken("SOL", WA, 0); }
-"eol"        { return ProcessToken("EOL", WA, 0); }
-"sof"        { return ProcessToken("SOF", WA, 0); }
-"eof"        { return ProcessToken("EOF", WA, 0); }
-"whitespace" { return ProcessToken("WHITESPACE", WA, 0); }
-"digit"      { return ProcessToken("DIGIT",      WA, 0); }
+"any"        { return ProcessToken("ANY", ANY); }
+"sol"        { return ProcessToken("SOL", SOL); }
+"eol"        { return ProcessToken("EOL", EOL); }
+"sof"        { return ProcessToken("SOF", SOF); }
+"eof"        { return ProcessToken("mEOF", mEOF); }
+"whitespace" { return ProcessToken("WHITESPACE", WHITESPACE); }
+"digit"      { return ProcessToken("DIGIT",      DIGIT); }
 
-(\"[^\"]*\"|\'[^\']*\') { return ProcessToken("STRING", WA, 0); }
-[0-9]+    { return ProcessToken("NUMBER",     WA, 0); }
-\$[a-z_]+ { return ProcessToken("IDENTIFIER", WA, 0); }
+(\"[^\"]*\"|\'[^\']*\') { return ProcessToken("STRING", STRING); }
+[0-9]+    { return ProcessToken("NUMBER",     NUMBER); }
+\@[a-z_]+ { return ProcessToken("IDENTIFIER", IDENTIFIER); }
 
-"=" { return ProcessToken("ASSIGN",     WA, 0); }
-"(" { return ProcessToken("LEFTPAREN",  WA, 0); }
-")" { return ProcessToken("RIGHTPAREN", WA, 0); }
+"-" { return ProcessToken("DASH",        DASH); }
+"=" { return ProcessToken("ASSIGN",      ASSIGN); }
+"(" { return ProcessToken("LEFTPAREN",   LEFTPAREN); }
+")" { return ProcessToken("RIGHTPAREN",  RIGHTPAREN); }
+"[" { return ProcessToken("LEFTSQUARE",  LEFTSQUARE); }
+"]" { return ProcessToken("RIGHTSQUARE", RIGHTSQUARE); }
+"," { return ProcessToken("COMMA",       COMMA); }
 
 "\n" {
   Drop("NEWLINE");
@@ -99,26 +105,14 @@ void Drop(const char* message)
   printf("[%i, %i] DROPPED : %s\n", line_number, column_number, message);
 }
 
-int ProcessToken(const char* name, int token_parser_id, int value_type)
+int ProcessToken(const char* name, int token_parser_id)
 {
   UpdateLineColumnNumber();
 
   printf("[%i, %i] %s %s\n", line_number, column_number, name, yytext);
 
-  //Token<TokenType>* token;
-  //if(value_type == 0){
-  //  token = new Token<TokenType>(token_type, strdup(yytext), line_number, column_number);
-  //}else if(value_type == 1){
-  //  token = new Token<TokenType>(token_type, atoi(yytext), line_number, column_number);
-  //}else if(value_type == 2){
-  //  token = new Token<TokenType>(token_type, (float)atof(yytext), line_number, column_number);
-  //}else if(value_type == 3){
-  //  token = new Token<TokenType>(token_type, strcmp(yytext, "true") == 0, line_number, column_number);
-  //}else if(value_type == 4) { //hex value
-  //  token = new Token<TokenType>(token_type, strdup(yytext) + 2, line_number, column_number);
- // }
-
-  //yylval.token = token;
+  //Token* token;
+  yylval.token = yytext;
   return token_parser_id;
 }
 
