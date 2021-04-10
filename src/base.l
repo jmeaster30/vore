@@ -57,7 +57,7 @@ int ProcessToken(const char* name, int token_parser_id);
 
 (\"[^\"]*\"|\'[^\']*\') { return ProcessToken("STRING", STRING); }
 [0-9]+    { return ProcessToken("NUMBER",     NUMBER); }
-\@[a-z_]+ { return ProcessToken("IDENTIFIER", IDENTIFIER); }
+\@[a-z_][a-z0-9_]* { return ProcessToken("IDENTIFIER", IDENTIFIER); }
 
 "-" { return ProcessToken("DASH",        DASH); }
 "=" { return ProcessToken("ASSIGN",      ASSIGN); }
