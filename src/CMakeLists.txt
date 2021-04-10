@@ -19,7 +19,7 @@ FLEX_TARGET(BASE_SCANNER base.l ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.cpp)
 ADD_FLEX_BISON_DEPENDENCY(BASE_SCANNER BASE_PARSER)
 
 add_executable(textql
-  main.cpp
+  main.cpp ast.cpp context.cpp
   ${BISON_BASE_PARSER_OUTPUTS}
   ${FLEX_BASE_SCANNER_OUTPUTS}
 )
