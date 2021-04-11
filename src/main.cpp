@@ -1,9 +1,12 @@
 #include <iostream>
 #include <vector>
 
+#include "ast.hpp"
+
 #include "base.tab.hpp"
 
 extern FILE* yyin;
+program* root;
 
 int main(int argc, char** argv) {
   ++argv, --argc; //skip over the program name argument
@@ -20,6 +23,14 @@ int main(int argc, char** argv) {
 
   yyparse();
   std::cout << "Done Parsing" << std::endl;
+  if(root == nullptr)
+  {
+    std::cout << "something bad happened" << std::endl;
+  }
+  else
+  {
+    root->print();
+  }
 
   return 0;
 }

@@ -15,21 +15,30 @@ std::string context::peek(size_t length) {
   return peek_buffer;
 }
 
-void context::consume() {
+std::string context::consume() {
   //update the latest match
   auto latest_match = matches->back();
   if(latest_match->file_offset == -1)
   {
     latest_match->file_offset = ftell(file);
-    latest_match->start_line_number = line_number;
-    latest_match->start_column_number = column_number;
-    latest_match->end_line_number = line_number;
-    latest_match->end_column_number = column_number;
   }
 
   latest_match->value += peek_buffer;
   latest_match->match_length += peek_size;
 
-  //update the end line and end column values here
+  startOfLine = peek_buffer[peek_size - 1] == '\n';
 
+  return peek_buffer;
 }
+
+u_int64_t context::filepos() {
+  return ftell(file);
+}
+
+bool context::isStartOfLine() {
+  return startOfLine;
+}
+
+bool context::isEndOfFile() {
+  return feof(file) != 0;
+} 
