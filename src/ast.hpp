@@ -12,14 +12,14 @@
 class node {
 public:
   node() {}
-  virtual bool match(context* c) = 0;
+  virtual int match(context* c) = 0;
   virtual void print() = 0;
 };
 
 class stmt : public node {
 public:
   stmt() {}
-  virtual bool match(context* c) = 0;
+  virtual int match(context* c) = 0;
   virtual void print() = 0;
 };
 
@@ -29,21 +29,21 @@ public:
   element(bool fewest) {
     _fewest = fewest;
   }
-  virtual bool match(context* c) = 0;
+  virtual int match(context* c) = 0;
   virtual void print() = 0;
 };
 
 class primary : public element {
 public:
   primary():element(false){}
-  virtual bool match(context* c) = 0;
+  virtual int match(context* c) = 0;
   virtual void print() = 0;
 };
 
 class atom : public primary {
 public:
   atom(){}
-  virtual bool match(context* c) = 0;
+  virtual int match(context* c) = 0;
   virtual void print() = 0;
 };
 
@@ -62,7 +62,7 @@ public:
     _length = length;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -99,7 +99,7 @@ public:
     _stmts = stmts;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -119,7 +119,7 @@ public:
     _atoms = atoms;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -134,7 +134,7 @@ public:
     _elements = elements;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -148,7 +148,7 @@ public:
     _primary = primary;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -162,7 +162,7 @@ public:
     _primary = primary;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -176,7 +176,7 @@ public:
     _primary = primary;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -192,7 +192,7 @@ public:
     _primary = primary;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -207,7 +207,7 @@ public:
     _atoms = atoms;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -219,7 +219,7 @@ public:
     _primary = primary;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -233,7 +233,7 @@ public:
     _primary = primary;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -247,7 +247,7 @@ public:
     _rhs = rhs;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -259,7 +259,7 @@ public:
     _elements = elements;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -273,56 +273,56 @@ public:
     _to = to;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
 class any : public atom {
 public:
   any(){}
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
 class sol : public atom {
 public:
   sol(){}
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
 class eol : public atom {
 public:
   eol(){}
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
 class sof : public atom {
 public:
   sof(){}
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
 class eof : public atom {
 public:
   eof(){}
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
 class whitespace : public atom {
 public:
   whitespace(){}
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
 class digit : public atom {
 public:
   digit(){}
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -334,7 +334,7 @@ public:
     _id = id;
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 
@@ -348,7 +348,7 @@ public:
     _value_len = _value.length();
   }
 
-  bool match(context* c);
+  int match(context* c);
   void print();
 };
 

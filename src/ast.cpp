@@ -1,134 +1,180 @@
 #include "ast.hpp"
 
 #include <iostream>
+#include <algorithm>
 
-bool amount::match(context* c)
+int amount::match(context* c)
 {
   return false;
 }
 
-bool program::match(context* c)
+int program::match(context* c)
 {
   return false;
 }
 
-bool replacestmt::match(context* c)
+int replacestmt::match(context* c)
 {
   return false;
 }
 
-bool findstmt::match(context* c)
+int findstmt::match(context* c)
 {
   return false;
 }
 
-bool exactly::match(context* c)
+int exactly::match(context* c)
 {
   return false;
 }
 
-bool least::match(context* c)
+int least::match(context* c)
 {
   return false;
 }
 
-bool most::match(context* c)
+int most::match(context* c)
 {
   return false;
 }
 
-bool between::match(context* c)
+int between::match(context* c)
 {
   return false;
 }
 
-bool in::match(context* c)
+int in::match(context* c)
 {
   return false;
 }
 
-bool anti::match(context* c)
+int anti::match(context* c)
 {
   return false;
 }
 
-bool assign::match(context* c)
+int assign::match(context* c)
 {
   return false;
 }
 
-bool orelement::match(context* c)
+int orelement::match(context* c)
 {
   return false;
 }
 
-bool subelement::match(context* c)
+int subelement::match(context* c)
 {
   return false;
 }
 
-bool range::match(context* c)
+int range::match(context* c)
 {
-  return false;
+  int fromlen = _from.length();
+  int tolen = _to.length();
+
+  if(tolen < fromlen)
+    return -1;
+
+  int match_length = 0;
+  std::string nc = c->peek(tolen);
+
+  for(int i = 0; i < tolen; i++)
+  {
+    char c = nc[i];
+    char min = i < fromlen ? _from[i] : '\0';
+    char max = _to[i];
+    if(c >= min && c <= max)
+    {
+      match_length += 1;
+    }
+    else
+    {
+      break;
+    }
+  }
+
+  if(match_length >= fromlen)
+  {
+    return match_length;
+  }
+
+  return -1;
 }
 
-bool any::match(context* c)
+int any::match(context* c)
 {
   std::string nc = c->peek(1);
-  return nc[0] != '\0';
+  if(nc[0] != '\0')
+    return 1;
+  return -1;
 }
 
-bool sol::match(context* c)
+int sol::match(context* c)
 {
   std::string nc = c->peek(1);
-  return c->isStartOfLine();
+  if(c->isStartOfLine())
+    return 1;
+  return -1;
 }
 
-bool eol::match(context* c)
+int eol::match(context* c)
 {
   std::string nc = c->peek(1);
-  return nc[0] == '\n';
+  if(nc[0] == '\n')
+    return 1;
+  return -1;
 }
 
-bool sof::match(context* c)
+int sof::match(context* c)
 {
   std::string nc = c->peek(1);
-  return c->filepos() == 0;
+  if(c->filepos() == 0)
+    return 1;
+  return -1;
 }
 
-bool eof::match(context* c)
+int eof::match(context* c)
 {
   std::string nc = c->peek(1);
-  return nc == "" && c->isEndOfFile();
+  if(nc == "" && c->isEndOfFile())
+    return 1;
+  return -1;
 }
 
-bool whitespace::match(context* c)
+int whitespace::match(context* c)
 {
   std::string next_character = c->peek(1);
 
-  return (next_character[0] == ' ' ||
-          next_character[0] == '\t' ||
-          next_character[0] == '\r' ||
-          next_character[0] == '\v' ||
-          next_character[0] == '\f' ||
-          next_character[0] == '\n');
+  if (next_character[0] == ' ' ||
+      next_character[0] == '\t' ||
+      next_character[0] == '\r' ||
+      next_character[0] == '\v' ||
+      next_character[0] == '\f' ||
+      next_character[0] == '\n')
+  {
+    return 1;
+  }
+
+  return -1;
 }
 
-bool digit::match(context* c)
+int digit::match(context* c)
 {
   std::string next_character = c->peek(1);
-  return next_character[0] >= '0' && next_character[0] <= '9';
+  if(next_character[0] >= '0' && next_character[0] <= '9')
+    return 1;
+  return -1;
 }
 
-bool identifier::match(context* c)
+int identifier::match(context* c)
 {
-
-  return false;
+  return -1;
 }
 
-bool string::match(context* c)
+int string::match(context* c)
 {
-  bool result = true;
+  int result = _value_len;
 
   std::string next_n_chars = c->peek(_value_len);
 
@@ -136,7 +182,7 @@ bool string::match(context* c)
   {
     if(_value[i] != next_n_chars[i])
     {
-      result = false;
+      result = -1;
       break;
     }
   }
