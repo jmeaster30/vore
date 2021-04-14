@@ -42,9 +42,9 @@ int exactly::match(context* c)
   return -1;
 }
 
+//TODO add the fewest functionality
 int least::match(context* c)
 {
-  //do the fewest here
   int match_length = 0;
   u_int64_t i = 0;
   while(true) //we break below
@@ -66,6 +66,8 @@ int least::match(context* c)
   return -1;
 }
 
+//TODO make sure this is inclusive
+//TODO add fewest functionality
 int most::match(context* c)
 {
   //do the fewest here
@@ -85,6 +87,8 @@ int most::match(context* c)
   return match_length;
 }
 
+//TODO make sure this is inclusive
+//TODO add fewest functionality
 int between::match(context* c)
 {
   //do the fewest here
@@ -113,13 +117,15 @@ int between::match(context* c)
 
 int in::match(context* c)
 {
-  //how???????
+  //TODO implement
+  //? im not sure how this will work I think it may be straight forward
   return false;
 }
 
 int anti::match(context* c)
 {
-  //how
+  //TODO implement
+  //? im not sure how this will work (big time)
   return false;
 }
 
@@ -157,6 +163,7 @@ int orelement::match(context* c)
 
 int subelement::match(context* c)
 {
+  //TODO implement
   // i will need to store the file position and restore it if there is no match
   return false;
 }
