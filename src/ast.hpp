@@ -12,14 +12,13 @@
 class node {
 public:
   node() {}
-  virtual int match(context* c) = 0;
   virtual void print() = 0;
 };
 
 class stmt : public node {
 public:
   stmt() {}
-  virtual int match(context* c) = 0;
+  virtual context* execute(FILE* file) = 0;
   virtual void print() = 0;
 };
 
@@ -61,8 +60,7 @@ public:
     _start = start;
     _length = length;
   }
-
-  int match(context* c);
+  
   void print();
 };
 
@@ -89,17 +87,14 @@ public:
 
 class program : public node {
 public:
-  //maybe store an array of queries in the program
-
-  //OR we allow only one query per file
-
   std::vector<stmt*>* _stmts;
 
   program(std::vector<stmt*>* stmts) {
     _stmts = stmts;
   }
 
-  int match(context* c);
+  std::vector<context*> execute(FILE* file);
+
   void print();
 };
 
@@ -119,7 +114,7 @@ public:
     _atoms = atoms;
   }
 
-  int match(context* c);
+  context* execute(FILE* file);
   void print();
 };
 
@@ -134,7 +129,7 @@ public:
     _elements = elements;
   }
 
-  int match(context* c);
+  context* execute(FILE* file);
   void print();
 };
 

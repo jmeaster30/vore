@@ -3,68 +3,161 @@
 #include <iostream>
 #include <algorithm>
 
-int amount::match(context* c)
+
+//just to make things easier to see maybe we split up the statements/program, prints and elements
+context* replacestmt::execute(FILE* file)
 {
-  return false;
+  return nullptr;
 }
 
-int program::match(context* c)
+context* findstmt::execute(FILE* file)
 {
-  return false;
-}
-
-int replacestmt::match(context* c)
-{
-  return false;
-}
-
-int findstmt::match(context* c)
-{
-  return false;
+  //loop through whole file
+  //increment number of matches when elements is gone through in full
+  //if matches is equal to the max amount then we can stop (skip + take)
+  //then drop the min amount of matches (skip)
+  return nullptr;
 }
 
 int exactly::match(context* c)
 {
-  return false;
+  int match_length = 0;
+  u_int64_t i = 0;
+  for(i = 0; i < _number; i++)
+  {
+    int prim_len = _primary->match(c);
+    if(prim_len == -1)
+    {
+      break;
+    }
+    match_length += prim_len;
+  }
+
+  if(i == _number - 1)
+  {
+    c->consume(match_length);
+    return match_length;
+  }
+
+  return -1;
 }
 
 int least::match(context* c)
 {
-  return false;
+  //do the fewest here
+  int match_length = 0;
+  u_int64_t i = 0;
+  while(true) //we break below
+  {
+    int prim_len = _primary->match(c);
+    if(prim_len == -1)
+    {
+      break; //break the loop here
+    }
+    match_length += prim_len;
+  }
+
+  if(i >= _number)
+  {
+    c->consume(match_length);
+    return match_length;
+  }
+
+  return -1;
 }
 
 int most::match(context* c)
 {
-  return false;
+  //do the fewest here
+  int match_length = 0;
+  u_int64_t i = 0;
+  for(i = 0; i < _number; i++)
+  {
+    int prim_len = _primary->match(c);
+    if(prim_len == -1)
+    {
+      break;
+    }
+    match_length += prim_len;
+  }
+
+  c->consume(match_length);
+  return match_length;
 }
 
 int between::match(context* c)
 {
-  return false;
+  //do the fewest here
+  int match_length = 0;
+  u_int64_t i = 0;
+  for(i = 0; i < _max; i++)
+  {
+    int prim_len = _primary->match(c);
+    if(prim_len == -1)
+    {
+      break;
+    }
+    match_length += prim_len;
+  }
+
+  if(i >= _min) //because of the for loop its always less than the max
+  {
+    //if _min is zero then match_length is zero here
+    //which is the correct behavior :)
+    c->consume(match_length);
+    return match_length;
+  }
+
+  return -1;
 }
 
 int in::match(context* c)
 {
+  //how???????
   return false;
 }
 
 int anti::match(context* c)
 {
+  //how
   return false;
 }
 
 int assign::match(context* c)
 {
-  return false;
+  int len = _primary->match(c);
+  if(len == -1)
+    return len;
+
+  std::string consumed = c->consume(len);
+
+  c->addvar(_id, consumed);
+
+  return len;
 }
 
 int orelement::match(context* c)
 {
-  return false;
+  int lhs = _lhs->match(c);
+  if(lhs != -1)
+  {
+    c->consume(lhs);
+    return lhs;
+  }
+
+  int rhs = _rhs->match(c);
+  if(rhs != -1)
+  {
+    c->consume(rhs);
+    return rhs;
+  }
+
+  return -1;
 }
 
 int subelement::match(context* c)
 {
+  // i will need to store the file position and restore it if there is no match
   return false;
 }
 

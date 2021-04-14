@@ -40,10 +40,13 @@ public:
   }
 
   std::string peek(size_t length);
-  std::string consume();
+  std::string consume(size_t length);
   u_int64_t filepos();
   bool isStartOfLine();
   bool isEndOfFile();
+
+  void addvar(std::string name, std::string value);
+  std::string getvar(std::string name);
 };
 
 #endif
