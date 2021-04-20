@@ -25,6 +25,7 @@ public:
 class element : public node {
 public:
   bool _fewest;
+
   element(bool fewest) {
     _fewest = fewest;
   }
@@ -133,6 +134,18 @@ public:
   void print();
 };
 
+class usestmt : public stmt {
+public:
+  std::string _filename;
+  
+  usestmt(std::string filename) {
+    _filename = filename;
+  }
+
+  context* execute(FILE* file);
+  void print();
+};
+
 class exactly : public element {
 public:
   u_int64_t _number;
@@ -224,6 +237,20 @@ public:
   primary* _primary;
 
   assign(std::string id, primary* primary) : element(false) {
+    _id = id;
+    _primary = primary;
+  }
+
+  int match(context* c);
+  void print();
+};
+
+class rassign : public element {
+public:
+  std::string _id;
+  primary* _primary;
+
+  rassign(std::string id, primary* primary) : element(false) {
     _id = id;
     _primary = primary;
   }
@@ -326,6 +353,18 @@ public:
   std::string _id;
 
   identifier(std::string id){
+    _id = id;
+  }
+
+  int match(context* c);
+  void print();
+};
+
+class subroutine : public atom {
+public:
+  std::string _id;
+
+  subroutine(std::string id){
     _id = id;
   }
 

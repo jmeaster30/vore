@@ -32,6 +32,7 @@ int ProcessToken(const char* name, int token_parser_id, int type);
 "find"     { return ProcessToken("FIND",     FIND, 0); }
 "replace"  { return ProcessToken("REPLACE",  REPLACE, 0); }
 "with"     { return ProcessToken("WITH",     WITH, 0); }
+"use"      { return ProcessToken("USE",      USE, 0); }
 "top"      { return ProcessToken("TOP",      TOP, 0); }
 "skip"     { return ProcessToken("SKIP",     SKIP, 0); }
 "take"     { return ProcessToken("TAKE",     TAKE, 0); }
@@ -60,6 +61,7 @@ int ProcessToken(const char* name, int token_parser_id, int type);
 (\"[^\"]*\"|\'[^\']*\') { return ProcessToken("STRING", STRING, 1); }
 [0-9]+    { return ProcessToken("NUMBER",     NUMBER, 2); }
 \@[a-z_][a-z0-9_]* { return ProcessToken("IDENTIFIER", IDENTIFIER, 3); }
+\$[a-z_][a-z0-9_]* { return ProcessToken("SUBROUTINE", SUBROUTINE, 3); }
 
 "-" { return ProcessToken("DASH",        DASH, 0); }
 "=" { return ProcessToken("ASSIGN",      ASSIGN, 0); }

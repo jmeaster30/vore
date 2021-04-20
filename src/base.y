@@ -39,13 +39,13 @@ extern program* root;
   primary* prim;
 }
 
-%token<str> FIND REPLACE WITH TOP
-%token<str> SKIP TAKE ALL PREVIOUS AFTER
+%token<str> FIND REPLACE WITH CREATE USE
+%token<str> TOP SKIP TAKE ALL PREVIOUS AFTER
 %token<str> EXACTLY LEAST OR MOST BETWEEN
 %token<str> AND NOT FEWEST IN ANY
 %token<str> SOL EOL SOF mEOF
 %token<str> WHITESPACE DIGIT
-%token<str> STRING IDENTIFIER
+%token<str> STRING IDENTIFIER SUBROUTINE
 %token<num> NUMBER
 %token<str> ASSIGN LEFTPAREN RIGHTPAREN
 %token<str> LEFTSQUARE RIGHTSQUARE COMMA DASH
@@ -89,6 +89,7 @@ STMT : FIND AMOUNT ELEMENTS OFFSET {
      | REPLACE AMOUNT ELEMENTS OFFSET {
         $$ = new replacestmt($2, $4, $3, nullptr);
       }
+     | USE STRING { $$ = nullptr; }
      ;
 
 ELEMENTS : ELEMENT ELEMENTS { $2->insert($2->begin(), $1); $$ = $2; }
@@ -103,6 +104,7 @@ ELEMENT : EXACTLY NUMBER PRIMARY { $$ = new exactly($2, $3); }
         | NOT IN LEFTSQUARE GROUP RIGHTSQUARE { $$ = new in(true, $4); }
         | IN LEFTSQUARE GROUP RIGHTSQUARE { $$ = new in(false, $3); }
         | PRIMARY ASSIGN IDENTIFIER { $$ = new assign($3, $1); }
+        | PRIMARY ASSIGN SUBROUTINE { $$ = new rassign($3, $1); }
         | PRIMARY OR PRIMARY { $$ = new orelement($1, $3); }
         | PRIMARY { $$ = (element*)$1; }
         ;
@@ -144,6 +146,7 @@ ATOM : ANY { $$ = new any(); }
      | WHITESPACE { $$ = new whitespace(); }
      | DIGIT { $$ = new digit(); }
      | IDENTIFIER { $$ = new identifier($1); }
+     | SUBROUTINE { $$ = new subroutine($1); }
      | STRING { $$ = new string($1); }
      ;
 

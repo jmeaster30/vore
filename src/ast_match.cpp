@@ -1,24 +1,5 @@
 #include "ast.hpp"
 
-#include <iostream>
-#include <algorithm>
-
-
-//just to make things easier to see maybe we split up the statements/program, prints and elements
-context* replacestmt::execute(FILE* file)
-{
-  return nullptr;
-}
-
-context* findstmt::execute(FILE* file)
-{
-  //loop through whole file
-  //increment number of matches when elements is gone through in full
-  //if matches is equal to the max amount then we can stop (skip + take)
-  //then drop the min amount of matches (skip)
-  return nullptr;
-}
-
 int exactly::match(context* c)
 {
   int match_length = 0;
@@ -42,7 +23,6 @@ int exactly::match(context* c)
   return -1;
 }
 
-//TODO add the fewest functionality
 int least::match(context* c)
 {
   int match_length = 0;
@@ -50,7 +30,7 @@ int least::match(context* c)
   while(true) //we break below
   {
     int prim_len = _primary->match(c);
-    if(prim_len == -1)
+    if(prim_len == -1 || (_fewest && i == _number))
     {
       break; //break the loop here
     }
@@ -67,7 +47,6 @@ int least::match(context* c)
 }
 
 //TODO make sure this is inclusive
-//TODO add fewest functionality
 int most::match(context* c)
 {
   //do the fewest here
@@ -76,7 +55,7 @@ int most::match(context* c)
   for(i = 0; i < _number; i++)
   {
     int prim_len = _primary->match(c);
-    if(prim_len == -1)
+    if(prim_len == -1 || (_fewest && i == 0))
     {
       break;
     }
@@ -88,7 +67,6 @@ int most::match(context* c)
 }
 
 //TODO make sure this is inclusive
-//TODO add fewest functionality
 int between::match(context* c)
 {
   //do the fewest here
@@ -97,7 +75,7 @@ int between::match(context* c)
   for(i = 0; i < _max; i++)
   {
     int prim_len = _primary->match(c);
-    if(prim_len == -1)
+    if(prim_len == -1 || (_fewest && i == _min))
     {
       break;
     }
@@ -130,6 +108,19 @@ int anti::match(context* c)
 }
 
 int assign::match(context* c)
+{
+  int len = _primary->match(c);
+  if(len == -1)
+    return len;
+
+  std::string consumed = c->consume(len);
+
+  c->addvar(_id, consumed);
+
+  return len;
+}
+
+int rassign::match(context* c)
 {
   int len = _primary->match(c);
   if(len == -1)
@@ -272,6 +263,11 @@ int identifier::match(context* c)
   return -1;
 }
 
+int subroutine::match(context* c)
+{
+  return -1;
+}
+
 int string::match(context* c)
 {
   int result = _value_len;
@@ -288,179 +284,4 @@ int string::match(context* c)
   }
 
   return result;
-}
-
-//print functions
-
-void program::print()
-{
-  std::cout << "[PROGRAM: ";
-  for(auto a : *_stmts) {
-    a->print();
-  }
-  std::cout << "]";
-}
-
-void amount::print()
-{
-  std::cout << "[AMOUNT (" << _start << ", " << _length << ")]";
-}
-
-void offset::print()
-{
-  std::cout << "[OFFSET (" << _previous << ", " << _skip << ", " << _take << ")]"; 
-}
-
-void replacestmt::print()
-{
-  std::cout << "[REPLACE: ";
-  _matchNumber->print();
-  for(auto a : *_elements) {
-    std::cout << " ";
-    a->print();
-  }
-  if(_offset != nullptr) {
-    std::cout << " ";
-    _offset->print();
-  }
-  if(_atoms != nullptr) {
-    std::cout << " with";
-    for(auto a : *_atoms) {
-      std::cout << " ";
-      a->print();
-    }
-  }
-  std::cout << "]";
-}
-
-void findstmt::print()
-{
-  std::cout << "[FIND: ";
-  _matchNumber->print();
-  for(auto a : *_elements) {
-    std::cout << " ";
-    a->print();
-  }
-  std::cout << "]";
-}
-
-void exactly::print()
-{
-  std::cout << "[EXACT: " << _number << " ";
-  _primary->print();
-  std::cout << "]";
-}
-
-void least::print()
-{
-  std::cout << "[LEAST: " << _number << " ";
-  _primary->print();
-  std::cout << "]";
-}
-
-void most::print()
-{
-  std::cout << "[MOST: " << _number << " ";
-  _primary->print();
-  std::cout << "]";
-}
-
-void between::print()
-{
-  std::cout << "[BETWEEN: " << _min << " " << _max << " ";
-  _primary->print();
-  std::cout << "]";
-}
-
-void in::print()
-{
-  std::cout << "[IN " << _notIn << ":";
-  for(auto a : *_atoms) {
-    std::cout << " ";
-    a->print();
-  }
-  std::cout << "]";
-}
-
-void anti::print()
-{
-  std::cout << "[NOT ";
-  _primary->print();
-  std::cout << "]";
-}
-
-void assign::print()
-{
-  std::cout << "[ASSIGN " << _id << " ";
-  _primary->print();
-  std::cout << "]";
-}
-
-void orelement::print()
-{
-  std::cout << "[OR ";
-  _lhs->print();
-  std::cout << " ";
-  _rhs->print();
-  std::cout << "]";
-}
-
-void subelement::print()
-{
-  std::cout << "[SUBEXP ";
-  for(auto a : *_elements) {
-    std::cout << " ";
-    a->print();
-  }
-  std::cout << "]";
-}
-
-void range::print()
-{
-  std::cout << "[RANGE " << _from << " " << _to << "]";
-}
-
-void any::print()
-{
-  std::cout << "[ANY]";
-}
-
-void sol::print()
-{
-  std::cout << "[SOL]";
-}
-
-void eol::print()
-{
-  std::cout << "[EOL]";
-}
-
-void sof::print()
-{
-  std::cout << "[SOF]";
-}
-
-void eof::print()
-{
-  std::cout << "[EOF]";
-}
-
-void whitespace::print()
-{
-  std::cout << "[WHITESPACE]";
-}
-
-void digit::print()
-{
-  std::cout << "[DIGIT]";
-}
-
-void identifier::print()
-{
-  std::cout << "[@" << _id << "]";
-}
-
-void string::print()
-{
-  std::cout << "[" << _value << "]";
 }

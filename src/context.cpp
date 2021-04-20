@@ -19,7 +19,7 @@ std::string context::consume(size_t length) {
   //update the latest match
   peek(length);
 
-  auto latest_match = matches->back();
+  auto latest_match = matches.back();
   if(latest_match->file_offset == -1)
   {
     latest_match->file_offset = ftell(file);
@@ -53,15 +53,15 @@ bool context::isEndOfFile() {
 
 void context::addvar(std::string name, std::string value)
 {
-  auto latest_match = matches->back();
-  (*(latest_match->variables))[name] = value;
+  auto latest_match = current.top();
+  latest_match->variables[name] = value;
 }
 
 std::string context::getvar(std::string name)
 {
-  auto latest_match = matches->back();
-  auto found = latest_match->variables->find(name);
-  if(found == latest_match->variables->end())
+  auto latest_match = current.top();
+  auto found = (latest_match->variables).find(name);
+  if(found == (latest_match->variables).end())
     return "";
   else
     return found->second;

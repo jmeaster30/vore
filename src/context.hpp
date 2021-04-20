@@ -6,19 +6,24 @@
 #include <string.h> // for memset
 #include <vector>
 #include <unordered_map>
+#include <stack>
+
+class primary; //forward declare
 
 class match {
 public:
   std::string value;
   u_int64_t file_offset;
   u_int64_t match_length;
-  std::unordered_map<std::string, std::string>* variables;
+  std::unordered_map<std::string, std::string> variables;
+  std::unordered_map<std::string, primary*> subroutines;
 
   match(){
     value = "";
     file_offset = -1;
-    match_length = 0;
-    variables = new std::unordered_map<std::string, std::string>();
+    match_length = -1;
+    variables = std::unordered_map<std::string, std::string>();
+    subroutines = std::unordered_map<std::string, primary*>();
   };
 };
 
@@ -30,12 +35,14 @@ private:
   bool startOfLine;
 
 public:
-  std::vector<match*>* matches;
+  std::vector<match*> matches;
+  std::stack<match*> current;
 
   context(FILE* f){
     file = f;
     peek_buffer = nullptr;
-    matches = new std::vector<match*>();
+    matches = std::vector<match*>();
+    current = std::stack<match*>();
     startOfLine = true;
   }
 
