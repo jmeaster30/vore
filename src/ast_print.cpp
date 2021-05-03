@@ -25,9 +25,10 @@ void replacestmt::print()
 {
   std::cout << "[REPLACE: ";
   _matchNumber->print();
-  for(auto a : *_elements) {
-    std::cout << " ";
-    a->print();
+  element* current = _start_element;
+  while(current != nullptr) {
+    current->print();
+    current = current->_next;
   }
   if(_offset != nullptr) {
     std::cout << " ";
@@ -47,9 +48,10 @@ void findstmt::print()
 {
   std::cout << "[FIND: ";
   _matchNumber->print();
-  for(auto a : *_elements) {
-    std::cout << " ";
-    a->print();
+  element* current = _start_element;
+  while(current != nullptr) {
+    current->print();
+    current = current->_next;
   }
   std::cout << "]";
 }
@@ -130,9 +132,10 @@ void orelement::print()
 void subelement::print()
 {
   std::cout << "[SUBEXP ";
-  for(auto a : *_elements) {
-    std::cout << " ";
-    a->print();
+  element* current = _element;
+  while(current != nullptr) {
+    current->print();
+    current = current->_next;
   }
   std::cout << "]";
 }

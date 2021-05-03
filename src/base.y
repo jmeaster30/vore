@@ -27,7 +27,6 @@ extern program* root;
 
   program* prog;
   std::vector<stmt*>* stmts;
-  std::vector<element*>* elems;
   std::vector<atom*>* atoms;
 
   amount* amnt;
@@ -54,7 +53,7 @@ extern program* root;
 %type<stmts> STMT_LIST
 %type<statement> STMT
 
-%type<elems> ELEMENTS
+%type<elem> ELEMENTS
 %type<elem> ELEMENT
 %type<few> FELEMENT
 
@@ -92,8 +91,11 @@ STMT : FIND AMOUNT ELEMENTS OFFSET {
      | USE STRING { $$ = nullptr; }
      ;
 
-ELEMENTS : ELEMENT ELEMENTS { $2->insert($2->begin(), $1); $$ = $2; }
-         | { $$ = new std::vector<element*>(); }
+ELEMENTS : ELEMENT ELEMENTS { 
+            $$ = $1;
+            $$->_next = $2;
+          }
+         | { $$ = nullptr; }
          ;
 
 ELEMENT : EXACTLY NUMBER PRIMARY { $$ = new exactly($2, $3); }

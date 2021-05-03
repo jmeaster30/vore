@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include "context.hpp"
+#include "match.hpp"
 
 class node {
 public:
@@ -25,25 +25,29 @@ public:
 class element : public node {
 public:
   bool _fewest;
+  element* _next;
+  element* _previous;
 
   element(bool fewest) {
     _fewest = fewest;
+    _next = nullptr;
+    _previous = nullptr;
   }
-  virtual int match(context* c) = 0;
+  virtual match* isMatch(match* currentMatch, context* context) = 0;
   virtual void print() = 0;
 };
 
 class primary : public element {
 public:
   primary():element(false){}
-  virtual int match(context* c) = 0;
+  virtual match* isMatch(match* currentMatch, context* context) = 0;
   virtual void print() = 0;
 };
 
 class atom : public primary {
 public:
   atom(){}
-  virtual int match(context* c) = 0;
+  virtual match* isMatch(match* currentMatch, context* context) = 0;
   virtual void print() = 0;
 };
 
@@ -104,14 +108,14 @@ public:
   amount* _matchNumber;
   offset* _offset;
   //to find
-  std::vector<element*>* _elements;
+  element* _start_element;
   //replacing text
   std::vector<atom*>* _atoms;
 
-  replacestmt(amount* matchNumber, offset* offset, std::vector<element*>* elements, std::vector<atom*>* atoms) {
+  replacestmt(amount* matchNumber, offset* offset, element* start, std::vector<atom*>* atoms) {
     _matchNumber = matchNumber;
     _offset = offset;
-    _elements = elements;
+    _start_element = start;
     _atoms = atoms;
   }
 
@@ -123,11 +127,11 @@ class findstmt : public stmt {
 public:
   amount* _matchNumber;
   //to find
-  std::vector<element*>* _elements;
+  element* _start_element;
  
-  findstmt(amount* matchNumber, std::vector<element*>* elements) {
+  findstmt(amount* matchNumber, element* start) {
     _matchNumber = matchNumber;
-    _elements = elements;
+    _start_element = start;
   }
 
   context* execute(FILE* file);
@@ -156,7 +160,7 @@ public:
     _primary = primary;
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
@@ -170,7 +174,7 @@ public:
     _primary = primary;
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
@@ -184,7 +188,7 @@ public:
     _primary = primary;
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
@@ -200,7 +204,7 @@ public:
     _primary = primary;
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
@@ -215,7 +219,7 @@ public:
     _atoms = atoms;
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
@@ -227,7 +231,7 @@ public:
     _primary = primary;
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
@@ -241,7 +245,7 @@ public:
     _primary = primary;
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
@@ -255,7 +259,7 @@ public:
     _primary = primary;
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
@@ -269,19 +273,19 @@ public:
     _rhs = rhs;
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class subelement : public primary {
 public:
-  std::vector<element*>* _elements;
+  element* _element;
 
-  subelement(std::vector<element*>* elements) {
-    _elements = elements;
+  subelement(element* element) {
+    _element = element;
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
@@ -295,56 +299,56 @@ public:
     _to = to;
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class any : public atom {
 public:
   any(){}
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class sol : public atom {
 public:
   sol(){}
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class eol : public atom {
 public:
   eol(){}
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class sof : public atom {
 public:
   sof(){}
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class eof : public atom {
 public:
   eof(){}
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class whitespace : public atom {
 public:
   whitespace(){}
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class digit : public atom {
 public:
   digit(){}
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
@@ -356,7 +360,7 @@ public:
     _id = id;
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
@@ -368,7 +372,7 @@ public:
     _id = id;
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
@@ -382,7 +386,7 @@ public:
     _value_len = _value.length();
   }
 
-  int match(context* c);
+  match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
