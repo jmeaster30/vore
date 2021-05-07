@@ -1,12 +1,14 @@
-# RegQL
+# VORE
 
-RegQL - **Reg**ular Expression **Q**uery **L**anguage
+VORE - **V**erb**O**se Regula**R** Expr**E**ssions
 
-RegQL is just a regular expression engine but with more readable syntax and some extra features that I felt would be useful from processing text.
+VORE is just a regular expression engine but with more readable syntax and some extra features that I felt would be useful from processing text.
 
-I like how natural it is to read SQL queries so I tried to design the syntax similarly.
+This language is mostly a result of difficulties that I have had with regular expressions and I also took into account some things I have heard others have difficulty with. Some of the difficulties I have experienced with regular expressions are how its difficult to read the expressions and how difficult it is to remember the syntax when writing them. So, when coming up with the syntax for VORE I tried to make it feel like you can type out what you want like you are saying the rules and you'll have the proper regular expression. I took some syntax style inspiration from SQL as you will probably see.
 
-Like regular expressions, you can find matches but I also added the ability to transform the text. (I think you may be able to do substitutions in regular expressions but I don't know how they work and I don't know if they actually transform the text)
+Another thing I wanted from this language is to fully encompass original regular expressions to the point where I would be able to write a transpiler from VORE to regex and back. I don't know if I will actually write the transpiler but if I think it would be a fun quick project I probably will.
+
+Here are some examples of the language...
 
 >This example replaces all instances of "test - error" or "test - fail" with "test - success"
 >
@@ -36,9 +38,9 @@ While regular expressions are shorter in length, you don't need to understand th
 
 When coming up with the syntax for this language I basically translated every symbol that you can have in regular expressions and combined some that I felt were represented by the other constructs.
 
-## Syntax mapping from Regex to RegQL
+## Syntax mapping from Regex to VORE
 
-Regex Syntax | RegQL Syntax
+Regex Syntax | VORE Syntax
 -------------|-------------
 **Anchors** | 
 ```^``` (beginning)| ```sof``` (start of file)
@@ -66,6 +68,10 @@ N/A          | ```eol``` (end of line)**
 ```(ABC)``` (capturing group) (capturing behavior) | ```'ABC' = @1``` (assigning variables)
 ```(ABC)``` (capturing group) (subexpression behavior) | ```("ABC")``` (subexpression)
 ```(?:ABC)``` (non-capturing group) | ```("ABC")``` (subexpression)
+**Subroutines** |
+```(?P<name>[abc])``` (subroutine) | ```[abc] = $name```
+```(?P>name)``` (call subroutine) | ```$name```
+
 **Quantifiers & Alternation**
 ```a+``` (plus) | ```at least 1 'a'``` (at least)
 ```a*``` (start) | ```at least 0 "a"``` (at least)
@@ -80,12 +86,26 @@ N/A          | ```eol``` (end of line)**
 
 \** also matches end if file for the last line
 
-\*** I know I want to add this sometime in the future but I am just trying to get this basic language out. Also, many of the stuff marked "N/A" in RegQL is something that could potentially be added.
+\*** I know I want to add this sometime in the future but I am just trying to get this basic language out. Also, many of the stuff marked "N/A" in VORE is something that could potentially be added.
 
 \**** all characters in quotes are "escaped" but you need to follow usual escaping rules you have in any programming language with strings
 
+## Notes on the RegEx modifiers
+There are no equivalents to the expression modifiers in this language. If you don't know, regular expressions have modifiers that follow the regular expression and modify what the regular expression does (Ex. ```/(abc)+/gm``` the ```g``` and the ```m``` are the modifiers). In my experience, I have never even seen some of these modifiers used and other times have found myself confused as to why my regular expression wasn't working properly when I was either missing a modifier or had an extraneous one. Despite writing this paragraph about my issues with these modifiers I actually don't have THAT much of an issue with them because I really only ever used the ```g``` modifier. I had never needed to explore the other ones in any depth at all. So, here is a table of all of the regex modifiers and their place in the VORE language...
+
+Modifier | Name | Behavior | Place in VORE
+---------|------|----|--------------
+```g```  | Global | Retains the end index of the last match allowing subsequent searches to find further matches in the text | Base assumption of search functionality
+```u``` | Unicode | Allows using extended unicode escape characters | Unicode will be a base feature of VORE (once I actually get it working lol)
+```i``` | Ignorecase | Basically what it sounds like, the case of the characters in the search are ignored when making a match | This is the only modifier that makes me question my stance on this. I may add a statement that sets let the character case to be ignored
+```m``` | Multiline | Changes the behavior of ```^``` and ```$``` to match the start of a line and end of a line instead of the start of the file and end of the file. | This has no place in VORE I would rather have the behavior of an anchor be explicit so I split the behavior of ```^``` and ```$``` into ```sof```, ```sol```, ```eof```, and ```eol```.
+```s``` | Dotall | Changes the behavior of ```.``` to match all characters including newlines instead of the original behavior of matching all characters except newline | Currently, I am assuming this behavior with the ```any``` character class. I do like the original behavior of ```.``` but I feel it would be confusing if something called ```any``` didn't match ALL characters. (Maybe we can add ```any*``` to replace the original ```.``` since it's "anything* (*but newlines)" lol)
+```y``` | Sticky | Does not advance the last match index unless a match was found at that index | No place in VORE. The use cases for this modifier can be implemented without this modifier with not much extra programming overhead. If someone can come up with a way to change my mind on this I am open but I doubt I will be easily convinced.
+
+
 ## Todo
 
-- [ ] Conditionals
-- [ ] Recursion (we have subroutines with subexpressions and variables but I don't think recursion would work out-of-the-box)
+- [ ] Some idea of "functions" which allow for transforming atoms based on computations
+  - These "functions" will be statements and almost definitely be pure functions
 - [ ] Unicode support
+- [ ] Lookahead and lookbehind regex equivalent. I have ideas for the syntax but I am not set on it
