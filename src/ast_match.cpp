@@ -2,24 +2,57 @@
 
 match* string_match(match* currentMatch, context* ctxt, std::string _value, u_int64_t _value_len, element* _next);
 
-match* exactly::isMatch(match* currentMatch, context* context)
+match* maxToMinMatch(match* currentMatch, context* ctxt, u_int64_t min, u_int64_t max);
+match* minToMaxMatch(match* currentMatch, context* ctxt, u_int64_t min, u_int64_t max);
+
+match* exactly::isMatch(match* currentMatch, context* ctxt)
 {
-  return nullptr;
+  match* sumMatch = currentMatch->copy();
+  sumMatch->lastMatch = "";
+  for (int i = 0; i < _number; i++)
+  {
+    match* part = _primary->isMatch(currentMatch, ctxt);
+    if (part == nullptr) return nullptr;
+
+    sumMatch->value += part->lastMatch;
+    sumMatch->match_length += part->lastMatch.length();
+    sumMatch->lastMatch += part->lastMatch;
+  }
+
+  return _next == nullptr ? sumMatch : _next->isMatch(sumMatch, ctxt);
 }
 
-match* least::isMatch(match* currentMatch, context* context)
+match* least::isMatch(match* currentMatch, context* ctxt)
 {
-  return nullptr;
+  match* result = nullptr;
+  if (_fewest) {
+    result = minToMaxMatch(currentMatch, ctxt, _number, -1); //-1 wraps to the max 64bit integer
+  } else {
+    result = maxToMinMatch(currentMatch, ctxt, _number, -1);
+  }
+  return result;
 }
 
-match* most::isMatch(match* currentMatch, context* context)
+match* most::isMatch(match* currentMatch, context* ctxt)
 {
-  return nullptr;
+  match* result = nullptr;
+  if (_fewest) {
+    result = minToMaxMatch(currentMatch, ctxt, 0, _number);
+  } else {
+    result = maxToMinMatch(currentMatch, ctxt, 0, _number);
+  }
+  return result;
 }
 
-match* between::isMatch(match* currentMatch, context* context)
+match* between::isMatch(match* currentMatch, context* ctxt)
 {
-  return nullptr;
+  match* result = nullptr;
+  if (_fewest) {
+    result = minToMaxMatch(currentMatch, ctxt, _min, _max);
+  } else {
+    result = maxToMinMatch(currentMatch, ctxt, _min, _max);
+  }
+  return result;
 }
 
 match* in::isMatch(match* currentMatch, context* context)
