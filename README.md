@@ -71,7 +71,6 @@ N/A          | ```eol``` (end of line)**
 **Subroutines** |
 ```(?P<name>[abc])``` (subroutine) | ```[abc] = $name```
 ```(?P>name)``` (call subroutine) | ```$name```
-
 **Quantifiers & Alternation**
 ```a+``` (plus) | ```at least 1 'a'``` (at least)
 ```a*``` (start) | ```at least 0 "a"``` (at least)
