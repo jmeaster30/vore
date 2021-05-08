@@ -90,16 +90,16 @@ N/A          | ```eol``` (end of line)**
 \**** all characters in quotes are "escaped" but you need to follow usual escaping rules you have in any programming language with strings
 
 ## Notes on the RegEx modifiers
-There are no equivalents to the expression modifiers in this language. If you don't know, regular expressions have modifiers that follow the regular expression and modify what the regular expression does (Ex. ```/(abc)+/gm``` the ```g``` and the ```m``` are the modifiers). In my experience, I have never even seen some of these modifiers used and other times have found myself confused as to why my regular expression wasn't working properly when I was either missing a modifier or had an extraneous one. Despite writing this paragraph about my issues with these modifiers I actually don't have THAT much of an issue with them because I really only ever used the ```g``` modifier. I had never needed to explore the other ones in any depth at all. So, here is a table of all of the regex modifiers and their place in the VORE language...
+I do not like the idea of these modifiers in regular expressions. They are just kinda weird and personally I rarely used them (besides global and multiline), so I figured I wouldn't add them or add language contructs to replace them. Here is a table of the regex modifiers and their equivalents in VORE
 
-Modifier | Name | Behavior | Place in VORE
+Modifier | Name | Behavior | VORE Equivalent
 ---------|------|----|--------------
 ```g```  | Global | Retains the end index of the last match allowing subsequent searches to find further matches in the text | Base assumption of search functionality
 ```u``` | Unicode | Allows using extended unicode escape characters | Unicode will be a base feature of VORE (once I actually get it working lol)
-```i``` | Ignorecase | Basically what it sounds like, the case of the characters in the search are ignored when making a match | This is the only modifier that makes me question my stance on this. I may add a statement that sets let the character case to be ignored
-```m``` | Multiline | Changes the behavior of ```^``` and ```$``` to match the start of a line and end of a line instead of the start of the file and end of the file. | This has no place in VORE I would rather have the behavior of an anchor be explicit so I split the behavior of ```^``` and ```$``` into ```sof```, ```sol```, ```eof```, and ```eol```.
+```i``` | Ignorecase | Basically what it sounds like, the case of the characters in the search are ignored when making a match | I may add something that adds this behavior in the future
+```m``` | Multiline | Changes the behavior of ```^``` and ```$``` to match the start of a line and end of a line instead of the start of the file and end of the file. | Instead of having a modifier, I split the behavior of ```^``` and ```$``` into ```sof```, ```sol```, ```eof```, and ```eol```.
 ```s``` | Dotall | Changes the behavior of ```.``` to match all characters including newlines instead of the original behavior of matching all characters except newline | Currently, I am assuming this behavior with the ```any``` character class. I do like the original behavior of ```.``` but I feel it would be confusing if something called ```any``` didn't match ALL characters. (Maybe we can add ```any*``` to replace the original ```.``` since it's "anything* (*but newlines)" lol)
-```y``` | Sticky | Does not advance the last match index unless a match was found at that index | No place in VORE. The use cases for this modifier can be implemented without this modifier with not much extra programming overhead. If someone can come up with a way to change my mind on this I am open but I doubt I will be easily convinced.
+```y``` | Sticky | Does not advance the last match index unless a match was found at that index | I have never used this in my life and even seeing what it is used for I couldn't think of a use for this
 
 
 ## Todo

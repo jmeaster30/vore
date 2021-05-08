@@ -102,7 +102,7 @@ void in::print()
 void anti::print()
 {
   std::cout << "[NOT ";
-  _primary->print();
+  _atom->print();
   std::cout << "]";
 }
 

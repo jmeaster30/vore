@@ -102,7 +102,6 @@ ELEMENT : EXACTLY NUMBER PRIMARY { $$ = new exactly($2, $3); }
         | LEAST NUMBER PRIMARY FELEMENT { $$ = new least($2, $3, $4); }
         | MOST NUMBER PRIMARY FELEMENT { $$ = new most($2, $3, $4); }
         | BETWEEN NUMBER AND NUMBER PRIMARY FELEMENT { $$ = new between($2, $4, $5, $6); }
-        | NOT PRIMARY { $$ = new anti($2); }
         | NOT IN LEFTSQUARE GROUP RIGHTSQUARE { $$ = new in(true, $4); }
         | IN LEFTSQUARE GROUP RIGHTSQUARE { $$ = new in(false, $3); }
         | PRIMARY ASSIGN IDENTIFIER { $$ = new assign($3, $1); }
@@ -148,7 +147,6 @@ ATOM : ANY { $$ = new any(); }
      | WHITESPACE { $$ = new whitespace(); }
      | DIGIT { $$ = new digit(); }
      | IDENTIFIER { $$ = new identifier($1); }
-     | SUBROUTINE { $$ = new subroutine($1); }
      | STRING { $$ = new string($1); }
      ;
 
@@ -156,7 +154,9 @@ RANGE : STRING DASH STRING { $$ = new range($1, $3); }
       ;
 
 PRIMARY : ATOM { $$ = $1; }
+        | NOT ATOM { $$ = new anti($2); }
         | LEFTPAREN ELEMENTS RIGHTPAREN { $$ = new subelement($2); }
+        | SUBROUTINE { $$ = new subroutine($1); }
         ;
 
 %%

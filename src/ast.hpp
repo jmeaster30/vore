@@ -223,12 +223,12 @@ public:
   void print();
 };
 
-class anti : public element {
+class anti : public primary {
 public:
-  primary* _primary;
+  atom* _atom;
   
-  anti(primary* primary) : element(false) {
-    _primary = primary;
+  anti(atom* atom) {
+    _atom = atom;
   }
 
   match* isMatch(match* currentMatch, context* context);
@@ -364,7 +364,7 @@ public:
   void print();
 };
 
-class subroutine : public atom {
+class subroutine : public primary {
 public:
   std::string _id;
 
