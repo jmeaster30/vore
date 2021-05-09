@@ -2,8 +2,8 @@
 
 match* string_match(match* currentMatch, context* ctxt, std::string _value, u_int64_t _value_len, element* _next);
 
-match* maxToMinMatch(match* currentMatch, context* ctxt, u_int64_t min, u_int64_t max);
-match* minToMaxMatch(match* currentMatch, context* ctxt, u_int64_t min, u_int64_t max);
+match* maxToMinMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next);
+match* minToMaxMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next);
 
 match* exactly::isMatch(match* currentMatch, context* ctxt)
 {
@@ -26,9 +26,9 @@ match* least::isMatch(match* currentMatch, context* ctxt)
 {
   match* result = nullptr;
   if (_fewest) {
-    result = minToMaxMatch(currentMatch, ctxt, _number, -1); //-1 wraps to the max 64bit integer
+    result = minToMaxMatch(currentMatch, ctxt, _primary, _number, -1, _next); //-1 wraps to the max 64bit integer
   } else {
-    result = maxToMinMatch(currentMatch, ctxt, _number, -1);
+    result = maxToMinMatch(currentMatch, ctxt, _primary, _number, -1, _next);
   }
   return result;
 }
@@ -37,9 +37,9 @@ match* most::isMatch(match* currentMatch, context* ctxt)
 {
   match* result = nullptr;
   if (_fewest) {
-    result = minToMaxMatch(currentMatch, ctxt, 0, _number);
+    result = minToMaxMatch(currentMatch, ctxt, _primary, 0, _number, _next);
   } else {
-    result = maxToMinMatch(currentMatch, ctxt, 0, _number);
+    result = maxToMinMatch(currentMatch, ctxt, _primary, 0, _number, _next);
   }
   return result;
 }
@@ -48,11 +48,72 @@ match* between::isMatch(match* currentMatch, context* ctxt)
 {
   match* result = nullptr;
   if (_fewest) {
-    result = minToMaxMatch(currentMatch, ctxt, _min, _max);
+    result = minToMaxMatch(currentMatch, ctxt, _primary, _min, _max, _next);
   } else {
-    result = maxToMinMatch(currentMatch, ctxt, _min, _max);
+    result = maxToMinMatch(currentMatch, ctxt, _primary, _min, _max, _next);
   }
   return result;
+}
+
+//helpers
+//bactracks from the largest value to the smallest
+match* maxToMinMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next)
+{
+  //there is probably a much nicer way to do this but all of the other ways I thought of were a lot of effort
+  for (u_int64_t matchNum = max; matchNum >= min; matchNum--) {
+    match* sumMatch = currentMatch->copy();
+    sumMatch->lastMatch = "";
+    for (u_int64_t i = 0; i < matchNum; i++)
+    {
+      match* part = toMatch->isMatch(currentMatch, ctxt);
+      if (part == nullptr) {
+        matchNum = i + 1; //if we didn't reach the match length then we can shrink the max to what we reached
+        break; //break out of this inner for loop
+      }
+
+      sumMatch->value += part->lastMatch;
+      sumMatch->match_length += part->lastMatch.length();
+      sumMatch->lastMatch += part->lastMatch;
+    }
+
+    if (next == nullptr) {
+      return sumMatch;
+    } else {
+      match* nextMatch = next->isMatch(sumMatch, ctxt);
+      if(nextMatch != nullptr) {
+        return nextMatch;
+      }
+    }
+
+    free(sumMatch);
+  }
+}
+
+//backtracks from the smallest value to the largest
+match* minToMaxMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next)
+{
+  match* sumMatch = currentMatch->copy();
+  sumMatch->lastMatch = "";
+  for (u_int64_t i = 0; i < max; i++)
+  {
+    match* part = toMatch->isMatch(currentMatch, ctxt);
+    if (part == nullptr) return nullptr;
+    
+    sumMatch->value += part->lastMatch;
+    sumMatch->match_length += part->lastMatch.length();
+    sumMatch->lastMatch += part->lastMatch;
+
+    if (next == nullptr && i >= min - 1) {
+      return sumMatch;
+    } else if (next != nullptr) {
+      match* nextMatch = next->isMatch(sumMatch, ctxt);
+      if (nextMatch != nullptr) { 
+        return nextMatch;
+      }
+    }
+  }
+
+  return nullptr;
 }
 
 match* in::isMatch(match* currentMatch, context* context)
@@ -63,7 +124,10 @@ match* in::isMatch(match* currentMatch, context* context)
 match* anti::isMatch(match* currentMatch, context* context)
 {
   //TODO implement
-  //? im not sure how this will work (big time)
+  //? i think this will be easier now but how to do strings?
+  // perhaps we try to match a string of length n. if it fails matching that string
+  // then match those n characters (since its not) otherwise fail matching
+  // does this make sense?????? all the other character classes are simple
   return nullptr;
 }
 
