@@ -19,7 +19,8 @@ FLEX_TARGET(BASE_SCANNER base.l ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.cpp)
 ADD_FLEX_BISON_DEPENDENCY(BASE_SCANNER BASE_PARSER)
 
 add_executable(vore
-  main.cpp ast_execute.cpp ast_match.cpp ast_print.cpp match.cpp
+  main.cpp vore.cpp match.cpp
+  ast_execute.cpp ast_match.cpp ast_print.cpp
   ${BISON_BASE_PARSER_OUTPUTS}
   ${FLEX_BASE_SCANNER_OUTPUTS}
 )

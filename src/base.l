@@ -97,20 +97,20 @@ void InvalidToken(){
 void Drop()
 {
   UpdateLineColumnNumber();
-  printf("[%i, %i] DROPPED : %s\n", line_number, column_number, yytext);
+  //printf("[%i, %i] DROPPED : %s\n", line_number, column_number, yytext);
 }
 
 void Drop(const char* message)
 {
   UpdateLineColumnNumber();
-  printf("[%i, %i] DROPPED : %s\n", line_number, column_number, message);
+  //printf("[%i, %i] DROPPED : %s\n", line_number, column_number, message);
 }
 
 int ProcessToken(const char* name, int token_parser_id, int type)
 {
   UpdateLineColumnNumber();
 
-  printf("[%i, %i] %s %s\n", line_number, column_number, name, yytext);
+  //printf("[%i, %i] %s %s\n", line_number, column_number, name, yytext);
 
   if(type == 0)
   {
