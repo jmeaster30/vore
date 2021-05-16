@@ -10,6 +10,4 @@ set (CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_subdirectory(src)
-
-enable_testing()
 add_subdirectory(test)

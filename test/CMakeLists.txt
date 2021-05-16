@@ -5,13 +5,6 @@ set(TEST_SOURCES
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-add_executable(test ${TEST_SOURCES})
-add_test(test_build
-  "${CMAKE_COMMAND}"
-  --build "${CMAKE_BINARY_DIR}"
-  --config "$<CONFIG>"
-  --target test
-)
-set_tests_properties(test_build PROPERTIES FIXTURES_SETUP    test_fixture)
-add_test(test test)
-set_tests_properties(test       PROPERTIES FIXTURES_REQUIRED test_fixture)
+add_executable(test_runner ${TEST_SOURCES})
+add_custom_target(check COMMAND test_runner)
+add_custom_target(check_full COMMAND test_runner -s -d yes)
