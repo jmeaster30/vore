@@ -16,7 +16,7 @@ Here are some examples of the language...
 
 In the above example you can see the functionality of replacing text but it also is an example of using variables in regular expressions. Original regular expressions had the ability to use numeric references and named capture groups but I feel this syntax is significantly easier.
 
->RegQL find statement: 
+>Vore find statement: 
 >
 >```find all sol (at least zero any) = @myLine eol```
 >
@@ -26,7 +26,7 @@ In the above example you can see the functionality of replacing text but it also
 
 You can also use the variables to find that sequence again in the match. This next example matches the string "aabb"
 
->RegQL example:
+>Vore example:
 >
 >```find all "a" = $varA $varA "b" = $varB $varB```
 >
@@ -100,11 +100,3 @@ Modifier | Name | Behavior | VORE Equivalent
 ```m``` | Multiline | Changes the behavior of ```^``` and ```$``` to match the start of a line and end of a line instead of the start of the file and end of the file. | Instead of having a modifier, I split the behavior of ```^``` and ```$``` into ```sof```, ```sol```, ```eof```, and ```eol```.
 ```s``` | Dotall | Changes the behavior of ```.``` to match all characters including newlines instead of the original behavior of matching all characters except newline | Currently, I am assuming this behavior with the ```any``` character class. I do like the original behavior of ```.``` but I feel it would be confusing if something called ```any``` didn't match ALL characters. (Maybe we can add ```any*``` to replace the original ```.``` since it's "anything* (*but newlines)" lol)
 ```y``` | Sticky | Does not advance the last match index unless a match was found at that index | I have never used this in my life and even seeing what it is used for I couldn't think of a use for this
-
-
-## Todo
-
-- [ ] Some idea of "functions" which allow for transforming atoms based on computations
-  - These "functions" will be statements and almost definitely be pure functions
-- [ ] Unicode support
-- [ ] Lookahead and lookbehind regex equivalent. I have ideas for the syntax but I am not set on it
