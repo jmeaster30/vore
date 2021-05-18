@@ -39,16 +39,39 @@ public:
   bool changeFile;
   bool dontStore;
   FILE* file;
+  std::string input;
   std::vector<match*> matches;
 
   context(FILE* _file){
     file = _file;
+    input = "";
+    inputPointer = 0;
     matches = std::vector<match*>();
     changeFile = false;
     dontStore = false;
   };
 
+  context(std::string _input) {
+    file = nullptr;
+    input = _input;
+    inputPointer = 0;
+    matches = std::vector<match*>();
+    changeFile = false;
+    dontStore = false;
+  }
+
+  std::string getChars(u_int64_t amount);
+  void seekForward(u_int64_t value);
+  void seekBack(u_int64_t value);
+  void setPos(u_int64_t value);
+  u_int64_t getPos();
+  u_int64_t getSize();
+  bool endOfFile();
+
   void print();
+
+private:
+  u_int64_t inputPointer;
 };
 
 #endif

@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
     std::cout << "Provide a source file and an input file (in that order) as arguments." << std::endl; 
     return 1;
   }
-
+  
   FILE* source = fopen(argv[0], "r");
   FILE* input = fopen(argv[1], "r"); //this may need to change for the replace statements
 
@@ -20,6 +20,14 @@ int main(int argc, char** argv) {
   std::cout << "Done executing :)" << std::endl;
 
   for(auto ctxt : results) {
+    ctxt->print();
+  }
+
+  std::cout << " --------- STRING input" << std::endl;
+  Vore::compile("find all \"boy\" = @boy");
+  auto stringResults = Vore::execute("Big boy!!!!!");
+  
+  for(auto ctxt : stringResults) {
     ctxt->print();
   }
 

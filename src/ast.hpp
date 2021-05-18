@@ -18,7 +18,7 @@ public:
 class stmt : public node {
 public:
   stmt() {}
-  virtual context* execute(FILE* file) = 0;
+  virtual void execute(context* ctxt) = 0;
   virtual void print() = 0;
 };
 
@@ -57,8 +57,8 @@ public:
   u_int64_t _length;
 
   amount() {
-    _start = -1;
-    _length = -1;
+    _start = 0;
+    _length = -1; //this wraps intentionally
   }
 
   amount(u_int64_t start, u_int64_t length) {
@@ -99,6 +99,7 @@ public:
   }
 
   std::vector<context*> execute(FILE* file);
+  std::vector<context*> execute(std::string input);
 
   void print();
 };
@@ -119,7 +120,7 @@ public:
     _atoms = atoms;
   }
 
-  context* execute(FILE* file);
+  void execute(context* ctxt);
   void print();
 };
 
@@ -134,7 +135,7 @@ public:
     _start_element = start;
   }
 
-  context* execute(FILE* file);
+  void execute(context* ctxt);
   void print();
 };
 
@@ -146,7 +147,7 @@ public:
     _filename = filename;
   }
 
-  context* execute(FILE* file);
+  void execute(context* ctxt);
   void print();
 };
 

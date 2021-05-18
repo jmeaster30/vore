@@ -11,10 +11,14 @@ match* exactly::isMatch(match* currentMatch, context* ctxt)
 {
   match* sumMatch = currentMatch->copy();
   sumMatch->lastMatch = "";
+  u_int64_t currentFileOffset = ctxt->getPos();
   for (int i = 0; i < _number; i++)
   {
     match* part = _primary->isMatch(currentMatch, ctxt);
-    if (part == nullptr) return nullptr;
+    if (part == nullptr) {
+      ctxt->setPos(currentFileOffset);
+      return nullptr;
+    }
 
     sumMatch->value += part->lastMatch;
     sumMatch->match_length += part->lastMatch.length();
@@ -63,7 +67,7 @@ match* maxToMinMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int
 {
   //there is probably a much nicer way to do this but all of the other ways I thought of were a lot of effort
   for (u_int64_t matchNum = max; matchNum >= min; matchNum--) {
-    //u_int64_t currentFileOffset = ftell(ctxt->file);
+    u_int64_t currentFileOffset = ctxt->getPos();
     match* sumMatch = currentMatch->copy();
     sumMatch->lastMatch = "";
     for (u_int64_t i = 0; i < matchNum; i++)
@@ -89,7 +93,7 @@ match* maxToMinMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int
     }
 
     free(sumMatch);
-    //fseek(ctxt->file, currentFileOffset, SEEK_SET);
+    ctxt->setPos(currentFileOffset);
   }
   return nullptr;
 }
@@ -101,7 +105,7 @@ match* minToMaxMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int
   sumMatch->lastMatch = "";
   for (u_int64_t i = 0; i < max; i++)
   {
-    //u_int64_t currentFileOffset = ftell(ctxt->file);
+    u_int64_t currentFileOffset = ctxt->getPos();
     match* part = toMatch->isMatch(currentMatch, ctxt);
     if (part == nullptr) return nullptr;
     
@@ -117,9 +121,9 @@ match* minToMaxMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int
         return nextMatch;
       }
     }
-    //fseek(ctxt->file, currentFileOffset, SEEK_SET);
+    ctxt->setPos(currentFileOffset);
   }
-
+  free(sumMatch);
   return nullptr;
 }
 
@@ -127,7 +131,7 @@ match* in::isMatch(match* currentMatch, context* ctxt)
 {
   //greedy 
   if (_notIn) {
-    //u_int64_t currentFileOffset = ftell(ctxt->file);
+    u_int64_t currentFileOffset = ctxt->getPos();
     u_int64_t longestMatch = 0;
     for (auto atom : *_atoms) {
       match* potentialMatch = atom->isMatch(currentMatch, ctxt);
@@ -139,21 +143,12 @@ match* in::isMatch(match* currentMatch, context* ctxt)
 
       free(potentialMatch);
     }
-    //fseek(ctxt->file, currentFileOffset, SEEK_SET);
 
+    ctxt->setPos(currentFileOffset);
     for(; longestMatch >= 0; longestMatch--)
     {
       match* copy = currentMatch->copy();
-      //consume the next longestMatch
-      //check next
-      //return that if not nullptr
-      char* buffer = (char*)malloc(longestMatch * sizeof(char));
-      memset(buffer, 0, longestMatch * sizeof(char));
-
-      longestMatch = fread(buffer, sizeof(char), longestMatch, ctxt->file);
-
-      std::string peekedString(buffer, longestMatch);
-      free(buffer);
+      std::string peekedString = ctxt->getChars(longestMatch);
 
       copy->value += peekedString;
       copy->lastMatch = peekedString;
@@ -166,7 +161,7 @@ match* in::isMatch(match* currentMatch, context* ctxt)
       }
 
       free(copy);
-      //fseek(ctxt->file, currentFileOffset, SEEK_SET);
+      ctxt->setPos(currentFileOffset);
     }
   } else {
     for (auto atom : *_atoms) {
@@ -213,8 +208,6 @@ match* rassign::isMatch(match* currentMatch, context* ctxt)
 
 match* orelement::isMatch(match* currentMatch, context* ctxt)
 {
-  //u_int64_t currentFileOffset = ftell(ctxt->file);
-
   match* firstMatch = _lhs->isMatch(currentMatch, ctxt);
   if (firstMatch != nullptr) {
     match* nextMatch = (_next == nullptr) ? firstMatch : _next->isMatch(firstMatch, ctxt);
@@ -223,7 +216,6 @@ match* orelement::isMatch(match* currentMatch, context* ctxt)
     }
   }
 
-  //fseek(ctxt->file, currentFileOffset, SEEK_SET);
   match* secondMatch = _rhs->isMatch(currentMatch, ctxt);
 
   if(secondMatch != nullptr) {
@@ -238,7 +230,7 @@ match* orelement::isMatch(match* currentMatch, context* ctxt)
 
 match* subelement::isMatch(match* currentMatch, context* ctxt)
 {
-  u_int64_t currentFileOffset = ftell(ctxt->file);
+  u_int64_t currentFileOffset = ctxt->getPos();
   
   match* tempMatch = new match(currentFileOffset);
   tempMatch->variables = currentMatch->variables;
@@ -248,7 +240,7 @@ match* subelement::isMatch(match* currentMatch, context* ctxt)
 
   //if no match restore the file pointer just in case :) 
   if(tempMatch == nullptr) { 
-    fseek(ctxt->file, currentFileOffset, SEEK_SET);
+    ctxt->setPos(currentFileOffset);
     return nullptr;
   }
 
@@ -271,14 +263,11 @@ match* range::isMatch(match* currentMatch, context* ctxt)
   if (tolen < fromlen)
     return nullptr;
 
-  char* buffer = (char*)malloc(tolen * sizeof(char));
-  memset(buffer, 0, tolen * sizeof(char));
-
   int match_length;
   for(int i = tolen; i >= fromlen; i--)
   {
-    //if fread reads less than i we reset i to what we got left
-    i = fread(buffer, sizeof(char), i, ctxt->file);
+    std::string buffer = ctxt->getChars(i);
+    i = buffer.length();
     match_length = i;
 
     bool isMatch = true;
@@ -295,10 +284,9 @@ match* range::isMatch(match* currentMatch, context* ctxt)
 
     if (isMatch) {
       newMatch = currentMatch->copy();
-      std::string m(buffer, match_length);
-      newMatch->value += m;
+      newMatch->value += buffer;
       newMatch->match_length += match_length;
-      newMatch->lastMatch = m;
+      newMatch->lastMatch = buffer;
       if (_next != nullptr) {
         match* nextmatch = _next->isMatch(newMatch, ctxt);
         if (nextmatch != nullptr)
@@ -310,48 +298,46 @@ match* range::isMatch(match* currentMatch, context* ctxt)
         break;
       }
     }
-
-    memset(buffer, 0, tolen * sizeof(char));
   }
 
-  free(buffer);
   return newMatch;
 }
 
 match* any::isMatch(match* currentMatch, context* ctxt)
 {
-  char anyChar = getc(ctxt->file);
-  if(anyChar == EOF)
+  std::string anyChar = ctxt->getChars(1);
+  if(anyChar == "")
     return nullptr;
 
   match* newMatch = currentMatch->copy();
   newMatch->value += anyChar;
   newMatch->match_length += 1;
-  newMatch->lastMatch = std::string(&anyChar);
+  newMatch->lastMatch = anyChar;
   return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
 }
 
 match* sol::isMatch(match* currentMatch, context* ctxt)
 {
-  char currentChar = getc(ctxt->file);
+  std::string c = ctxt->getChars(1);
  
   //check if we are at the start of the file
-  if(ftell(ctxt->file) == 1) {
+  if(ctxt->getPos() == 1) {
     match* newMatch = currentMatch->copy();
-    newMatch->value += currentChar;
+    newMatch->value += c;
     newMatch->match_length += 1;
+    newMatch->lastMatch = c;
     return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
   }
 
   //check if if the previous character was a new line
-  fseek(ctxt->file, -2, SEEK_CUR);
-  char thisChar = getc(ctxt->file);
-  if (thisChar == '\n') {
+  ctxt->seekBack(2);
+  std::string newline = ctxt->getChars(1);
+  if (newline == "\n") {
     match* newMatch = currentMatch->copy();
-    newMatch->value += currentChar;
+    newMatch->value += c;
     newMatch->match_length += 1;
-    newMatch->lastMatch = std::string(&currentChar);
-    fseek(ctxt->file, 1, SEEK_CUR);
+    newMatch->lastMatch = c;
+    ctxt->seekForward(1);
     return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
   }
 
@@ -360,28 +346,28 @@ match* sol::isMatch(match* currentMatch, context* ctxt)
 
 match* eol::isMatch(match* currentMatch, context* ctxt)
 {
-  char c = getc(ctxt->file);
-  if(c == '\n')
+  std::string c = ctxt->getChars(1);
+  if(c == "\n")
   {
     match* newMatch = currentMatch->copy();
     newMatch->value += c;
     newMatch->match_length += 1;
-    newMatch->lastMatch = std::string(&c);
+    newMatch->lastMatch = c;
     return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
   }
 
-  fseek(ctxt->file, -1, SEEK_CUR);
+  ctxt->seekBack(1);
   return nullptr;
 }
 
 match* sof::isMatch(match* currentMatch, context* ctxt)
 {
-  if(ftell(ctxt->file) == 0) {
+  if(ctxt->getPos() == 0) {
     match* newMatch = currentMatch->copy();
-    char c = getc(ctxt->file);
+    std::string c = ctxt->getChars(1);
     newMatch->value += c;
     newMatch->match_length += 1;
-    newMatch->lastMatch = std::string(&c);
+    newMatch->lastMatch = c;
     return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
   }
 
@@ -390,11 +376,10 @@ match* sof::isMatch(match* currentMatch, context* ctxt)
 
 match* eof::isMatch(match* currentMatch, context* ctxt)
 {
-  if(getc(ctxt->file) == EOF) {
+  if(ctxt->endOfFile()) {
     return (_next == nullptr) ? currentMatch : _next->isMatch(currentMatch, ctxt);
   }
 
-  fseek(ctxt->file, -1, SEEK_CUR);
   return nullptr;
 }
 
@@ -402,28 +387,18 @@ match* whitespace::isMatch(match* currentMatch, context* ctxt)
 {
   match* newMatch = currentMatch->copy();
 
-  char* nextChar = (char*)malloc(sizeof(char));
-  nextChar[0] = 0;
-
-  if(fread(nextChar, sizeof(char), 1, ctxt->file) != 1) {
-    free(nextChar);
-    free(newMatch);
-    fseek(ctxt->file, -1, SEEK_CUR);
-    return nullptr;
-  }
+  std::string nextChar = ctxt->getChars(1);
 
   if (nextChar[0] == ' ' || nextChar[0] == '\t' || nextChar[0] == '\v' ||
       nextChar[0] == '\r' || nextChar[0] == '\n' || nextChar[0] == '\f') {
     newMatch->value += nextChar[0];
     newMatch->match_length += 1;
-    newMatch->lastMatch = std::string(nextChar);
-    free(nextChar);
+    newMatch->lastMatch = nextChar;
     return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
   }
 
-  free(nextChar);
   free(newMatch);
-  fseek(ctxt->file, -1, SEEK_CUR);
+  ctxt->seekBack(1);
   return nullptr;
 }
 
@@ -431,27 +406,17 @@ match* digit::isMatch(match* currentMatch, context* ctxt)
 {
   match* newMatch = currentMatch->copy();
 
-  char* nextChar = (char*)malloc(sizeof(char));
-  nextChar[0] = 0;
-
-  if(fread(nextChar, sizeof(char), 1, ctxt->file) != 1) {
-    free(nextChar);
-    free(newMatch);
-    fseek(ctxt->file, -1, SEEK_CUR);
-    return nullptr;
-  }
+  std::string nextChar = ctxt->getChars(1);
 
   if (nextChar[0] >= '0' && nextChar[0] <= '9') {
     newMatch->value += nextChar[0];
     newMatch->match_length += 1;
-    newMatch->lastMatch = std::string(nextChar);
-    free(nextChar);
+    newMatch->lastMatch = nextChar;
     return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
   }
 
-  free(nextChar);
   free(newMatch);
-  fseek(ctxt->file, -1, SEEK_CUR);
+  ctxt->seekBack(1);
   return nullptr;
 }
 
@@ -484,20 +449,7 @@ match* string_match(match* currentMatch, context* ctxt, std::string _value, u_in
 {
   match* newMatch = currentMatch->copy();
 
-  char* buffer = (char*)malloc(_value_len * sizeof(char));
-  memset(buffer, 0, _value_len * sizeof(char));
-
-  u_int64_t read_bytes = fread(buffer, sizeof(char), _value_len, ctxt->file);
-  if(_value_len != read_bytes)
-  {
-    free(buffer);
-    free(newMatch);
-    fseek(ctxt->file, -1 * (int64_t)read_bytes, SEEK_CUR);
-    return nullptr;
-  }
-
-  std::string peekedString(buffer, _value_len); //this does a deep copy
-  free(buffer); //so we can clear this buffer here
+  std::string peekedString = ctxt->getChars(_value_len);
 
   if(peekedString == _value)
   {
@@ -508,6 +460,6 @@ match* string_match(match* currentMatch, context* ctxt, std::string _value, u_in
   }
 
   free(newMatch);
-  fseek(ctxt->file, -_value_len, SEEK_CUR);
+  ctxt->seekBack(peekedString.length());
   return nullptr;
 }

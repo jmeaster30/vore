@@ -7,7 +7,9 @@
 class Vore {
 public:
   static void compile(FILE* source);
+  static void compile(std::string source);
   static std::vector<context*> execute(FILE* input);
+  static std::vector<context*> execute(std::string input);
 private:
   static program* prog;
 };

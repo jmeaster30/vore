@@ -8,48 +8,69 @@ std::vector<context*> program::execute(FILE* file)
   std::vector<context*> contexts = std::vector<context*>();
   
   for (auto stmt : *_stmts) {
-    context* toAdd = stmt->execute(ctxtFile); //! mem leak i believe
+    context* toAdd = new context(file);
+    
+    stmt->execute(toAdd);
 
-    if (toAdd == nullptr) {
-      std::cout << "ERROR OR NOT IMPLEMENTED" << std::endl;
-    }
-
-    if (toAdd->changeFile) ctxtFile = toAdd->file;
+    //if (toAdd->changeFile) ctxtFile = toAdd->file;
     if (!toAdd->dontStore) contexts.push_back(toAdd);
   }
 
   return contexts;
 }
 
-context* replacestmt::execute(FILE* file)
+std::vector<context*> program::execute(std::string input)
 {
-  //TODO implement
-  return nullptr;
+  std::vector<context*> contexts = std::vector<context*>();
+  
+  for (auto stmt : *_stmts) {
+    context* toAdd = new context(input);
+    
+    stmt->execute(toAdd);
+
+    //if (toAdd->changeFile) ctxtFile = toAdd->file;
+    if (!toAdd->dontStore) contexts.push_back(toAdd);
+  }
+
+  return contexts;
 }
 
-context* findstmt::execute(FILE* file)
+context* findMatches(context* ctxt, element* start, amount* amt)
 {
-  context* ctxt = new context(file);
+  u_int64_t size = ctxt->getSize();
 
-  fseek(file, 0, SEEK_END);
-  u_int64_t size = ftell(file);
-  fseek(file, 0, SEEK_SET);
+  u_int64_t numMatches = 0;
 
-  while (ftell(ctxt->file) < size) {
+  u_int64_t currentPos = ctxt->getPos();
+  while ((currentPos = ctxt->getPos()) < size) {
     //! this probably can be cleaned up a bit
-    match* currentMatch = new match(ftell(ctxt->file));
-    match* newMatch = _start_element->isMatch(currentMatch, ctxt);
+    match* currentMatch = new match(currentPos);
+    match* newMatch = start->isMatch(currentMatch, ctxt);
     if(newMatch != nullptr) {
-      ctxt->matches.push_back(newMatch);
+      numMatches += 1;
+      if (numMatches > amt->_start && numMatches <= amt->_start + amt->_length) {
+        ctxt->matches.push_back(newMatch);
+      }
     }
-    fseek(ctxt->file, 1, SEEK_CUR); //! we should be able to have a smarter way of moving the file pointer along
+    ctxt->seekForward(1);
   }
 
   return ctxt;
 }
 
-context* usestmt::execute(FILE* file)
+void replacestmt::execute(context* ctxt)
 {
-  //TODO implement
-  return nullptr;
+  findMatches(ctxt, _start_element, _matchNumber);
+
+  //TODO do the replace
+}
+
+void findstmt::execute(context* ctxt)
+{
+  findMatches(ctxt, _start_element, _matchNumber);
+}
+
+void usestmt::execute(context* ctxt)
+{
+  return;
 }
