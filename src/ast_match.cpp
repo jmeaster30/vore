@@ -74,7 +74,7 @@ match* maxToMinMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int
     {
       match* part = toMatch->isMatch(currentMatch, ctxt);
       if (part == nullptr) {
-        matchNum = i + 1; //if we didn't reach the match length then we can shrink the max to what we reached
+        matchNum = i; //if we didn't reach the match length then we can shrink the max to what we reached
         break; //break out of this inner for loop
       }
 
@@ -83,12 +83,21 @@ match* maxToMinMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int
       sumMatch->lastMatch += part->lastMatch;
     }
 
+    if (matchNum < min) {
+      free(sumMatch);
+      ctxt->setPos(currentFileOffset);
+      return nullptr;
+    }
+
     if (next == nullptr) {
       return sumMatch;
     } else {
       match* nextMatch = next->isMatch(sumMatch, ctxt);
       if(nextMatch != nullptr) {
         return nextMatch;
+      }
+      if(matchNum == 0) {
+        return nullptr;
       }
     }
 
@@ -101,29 +110,42 @@ match* maxToMinMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int
 //backtracks from the smallest value to the largest
 match* minToMaxMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next)
 {
-  match* sumMatch = currentMatch->copy();
-  sumMatch->lastMatch = "";
-  for (u_int64_t i = 0; i < max; i++)
+  //this could be cleaned up too but again this is the best I can think of currently
+  for (u_int64_t matchNum = min; matchNum < max; matchNum++)
   {
     u_int64_t currentFileOffset = ctxt->getPos();
-    match* part = toMatch->isMatch(currentMatch, ctxt);
-    if (part == nullptr) return nullptr;
-    
-    sumMatch->value += part->lastMatch;
-    sumMatch->match_length += part->lastMatch.length();
-    sumMatch->lastMatch += part->lastMatch;
+    match* sumMatch = currentMatch->copy();
+    sumMatch->lastMatch = "";
+    for (u_int64_t i = 0; i < matchNum; i++)
+    {
+      match* part = toMatch->isMatch(currentMatch, ctxt);
+      if (part == nullptr) {
+        matchNum = i; //we want this to shrink here but it causes an infinite loop when min is zero
+        break; //break out of this inner for loop
+      }
 
-    if (next == nullptr && i >= min - 1) {
+      sumMatch->value += part->lastMatch;
+      sumMatch->match_length += part->lastMatch.length();
+      sumMatch->lastMatch += part->lastMatch;
+    }
+
+    if (matchNum < min) {
+      free(sumMatch);
+      ctxt->setPos(currentFileOffset);
+      return nullptr;
+    }
+
+    if (next == nullptr) {
       return sumMatch;
-    } else if (next != nullptr) {
+    } else {
       match* nextMatch = next->isMatch(sumMatch, ctxt);
-      if (nextMatch != nullptr) { 
+      if(nextMatch != nullptr) {
         return nextMatch;
       }
     }
+    free(sumMatch);
     ctxt->setPos(currentFileOffset);
   }
-  free(sumMatch);
   return nullptr;
 }
 

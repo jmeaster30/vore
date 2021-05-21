@@ -1,3 +1,4 @@
+#load and build flex and bison stuff
 #find packages
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
@@ -35,3 +36,6 @@ set(VORE_HEADERS
 )
 
 add_executable(vore main.cpp ${VORE_SOURCES})
+
+add_library(voreTestLib OBJECT ${VORE_SOURCES})
+set_target_properties(voreTestLib PROPERTIES EXCLUDE_FROM_ALL 1)

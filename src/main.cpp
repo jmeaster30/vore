@@ -22,14 +22,6 @@ int main(int argc, char** argv) {
   for(auto ctxt : results) {
     ctxt->print();
   }
-
-  std::cout << " --------- STRING input" << std::endl;
-  Vore::compile("find all \"boy\" = @boy");
-  auto stringResults = Vore::execute("Big boy!!!!!");
   
-  for(auto ctxt : stringResults) {
-    ctxt->print();
-  }
-
   return 0;
 }
