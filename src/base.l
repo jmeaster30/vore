@@ -82,7 +82,8 @@ int ProcessToken(const char* name, int token_parser_id, int type);
 "--".*$ { Drop(); }
 
 . {
-  Drop("INVALID");
+  InvalidToken();
+  //Drop("INVALID");
 }
 %%
 

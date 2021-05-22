@@ -456,6 +456,8 @@ match* subroutine::isMatch(match* currentMatch, context* ctxt)
 {
   primary* subElement = currentMatch->subroutines[_id];
 
+  if (subElement == nullptr) return nullptr;
+
   match* thisMatch = subElement->isMatch(currentMatch, ctxt);
 
   if(thisMatch == nullptr)

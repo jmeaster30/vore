@@ -14,6 +14,13 @@ void SINGLE_MATCH(std::vector<context*> results, u_int64_t fileOffset, u_int64_t
   REQUIRE(singleMatch->value == value);
 }
 
+void IS_MATCH(match* m, u_int64_t offset, u_int64_t len, std::string val) 
+{
+  REQUIRE(m->file_offset == offset);
+  REQUIRE(m->match_length == len);
+  REQUIRE(m->value == val);
+}
+
 TEST_CASE("Find all bois", "[string, assign]") {
   Vore::compile("find all \"boy\" = @test");
 
@@ -149,3 +156,21 @@ TEST_CASE("find at most 3 fewest", "[string, atleast, fewest]") {
   SINGLE_MATCH(firstResults, 4, 15, "lmaolmaolmao xD");
 }
 
+TEST_CASE("find with subroutine or", "[string, subroutine, or]") {
+  Vore::compile("find all ('a' or 'b') = $sub $sub");
+  auto results = Vore::execute("please ba ab bb aa");
+  REQUIRE(results.size() == 1);
+
+  auto ctxt = results[0];
+  REQUIRE(ctxt->matches.size() == 4);
+  IS_MATCH(ctxt->matches[0], 7, 2, "ba");
+  IS_MATCH(ctxt->matches[1], 10, 2, "ab");
+  IS_MATCH(ctxt->matches[2], 13, 2, "bb");
+  IS_MATCH(ctxt->matches[3], 16, 2, "aa");
+}
+
+TEST_CASE("find with recursive subroutine", "[string, subroutine, atleast]") {
+  Vore::compile("find all ('a' at least 0 $sub 'b') = $sub");
+  auto results = Vore::execute("omg aaabbb");
+  SINGLE_MATCH(results, 4, 6, "aaabbb");
+}

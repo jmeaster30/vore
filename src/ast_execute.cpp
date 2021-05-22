@@ -43,7 +43,6 @@ context* findMatches(context* ctxt, element* start, amount* amt)
 
   u_int64_t currentPos = ctxt->getPos();
   while ((currentPos = ctxt->getPos()) < size) {
-    //! this probably can be cleaned up a bit
     match* currentMatch = new match(currentPos);
     match* newMatch = start->isMatch(currentMatch, ctxt);
     if(newMatch != nullptr) {
