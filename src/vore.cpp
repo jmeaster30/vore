@@ -15,16 +15,10 @@ program* Vore::prog = nullptr;
 
 void Vore::compile(FILE* source)
 {
-  yyin = nullptr;
   root = nullptr;
   prog = nullptr;
-
-  if (source == nullptr) {
-    std::cout << "Please provide a source file to compile." << std::endl;
-    return;
-  }
-
   yyin = source;
+
   yyparse();
   if (root == nullptr) {
     std::cout << "ERROR::ParsingError - There was an error while parsing the source." << std::endl;
@@ -52,8 +46,7 @@ void Vore::compile(std::string source)
 }
 
 std::vector<context*> Vore::execute(FILE* input) {
-  if (input == nullptr) {
-    std::cout << "Please provide an input file." << std::endl;
+  if(prog == nullptr) {
     return std::vector<context*>();
   }
 
@@ -61,8 +54,7 @@ std::vector<context*> Vore::execute(FILE* input) {
 }
 
 std::vector<context*> Vore::execute(std::string input) {
-  if (input == "") {
-    std::cout << "No input." << std::endl;
+  if(prog == nullptr) {
     return std::vector<context*>();
   }
 
