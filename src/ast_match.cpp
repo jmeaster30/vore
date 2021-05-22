@@ -90,6 +90,7 @@ match* maxToMinMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int
     }
 
     if (next == nullptr) {
+      if (matchNum == 0) return nullptr;
       return sumMatch;
     } else {
       match* nextMatch = next->isMatch(sumMatch, ctxt);
@@ -111,7 +112,7 @@ match* maxToMinMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int
 match* minToMaxMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next)
 {
   //this could be cleaned up too but again this is the best I can think of currently
-  for (u_int64_t matchNum = min; matchNum < max; matchNum++)
+  for (u_int64_t matchNum = min; matchNum <= max; matchNum++)
   {
     u_int64_t currentFileOffset = ctxt->getPos();
     match* sumMatch = currentMatch->copy();
@@ -120,7 +121,7 @@ match* minToMaxMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int
     {
       match* part = toMatch->isMatch(currentMatch, ctxt);
       if (part == nullptr) {
-        matchNum = i; //we want this to shrink here but it causes an infinite loop when min is zero
+        if (matchNum > i) return nullptr; //quit if we cant find at least matchNum matches otherwise we will be caught in an infinite loop since the file offset resets after each loop
         break; //break out of this inner for loop
       }
 
@@ -136,6 +137,7 @@ match* minToMaxMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int
     }
 
     if (next == nullptr) {
+      if (matchNum == 0) return nullptr; //if there is no more to match then instead of matching empty strings we want this to match nothing
       return sumMatch;
     } else {
       match* nextMatch = next->isMatch(sumMatch, ctxt);

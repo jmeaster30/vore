@@ -130,14 +130,21 @@ TEST_CASE("find at least 4 fewest", "[string, atleast, fewest]") {
   SINGLE_MATCH(secondResults, 14, 15, "xDxDxDxDxD lmao");
 }
 
+TEST_CASE("at least zero no match", "[string, atleast]") {
+  Vore::compile("find all at least 0 'waaa'");
+  auto firstResults = Vore::execute("there will be not matches");
+  REQUIRE(firstResults.size() == 1);
+  REQUIRE(firstResults[0]->matches.size() == 0);
+}
+
 TEST_CASE("find at most 5", "[string, atleast]") {
-  Vore::compile("find all at most 5 'lo'"); // << these extra matches come from zero length matches
+  Vore::compile("find all at most 5 'lo'");
   auto firstResults = Vore::execute("aaa lolololololol");
   SINGLE_MATCH(firstResults, 4, 10, "lololololo");
 }
 
 TEST_CASE("find at most 3 fewest", "[string, atleast, fewest]") {
-  //Vore::compile("find all at most 3 'lmao' fewest ' xD'"); << this causes infinite loop when uncommented
+  Vore::compile("find all at most 3 'lmao' fewest ' xD'");
   auto firstResults = Vore::execute("lmaolmaolmaolmao xD");
   SINGLE_MATCH(firstResults, 4, 15, "lmaolmaolmao xD");
 }
