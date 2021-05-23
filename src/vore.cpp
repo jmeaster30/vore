@@ -26,6 +26,7 @@ void Vore::compile(FILE* source)
   }
 
   prog = root;
+  prog->print();
 }
 
 void Vore::compile(std::string source)

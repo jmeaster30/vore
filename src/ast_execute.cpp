@@ -45,11 +45,14 @@ context* findMatches(context* ctxt, element* start, amount* amt)
   while ((currentPos = ctxt->getPos()) < size) {
     match* currentMatch = new match(currentPos);
     match* newMatch = start->isMatch(currentMatch, ctxt);
-    if(newMatch != nullptr) {
+
+    if(newMatch != nullptr && newMatch->match_length > 0) {
       numMatches += 1;
       if (numMatches > amt->_start && numMatches <= amt->_start + amt->_length) {
         ctxt->matches.push_back(newMatch);
       }
+    } else {
+      ctxt->setPos(currentPos);
     }
     ctxt->seekForward(1);
   }

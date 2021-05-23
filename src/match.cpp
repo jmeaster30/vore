@@ -124,8 +124,17 @@ u_int64_t context::getSize() {
 }
 
 bool context::endOfFile() {
-  if(file != nullptr)
-    return feof(file); //I have had issues with this 
-  else
-    return inputPointer == input.length();
+  //this is kinda janky
+  if(getChars(1) == "") {
+    return true;
+  } else {
+    seekBack(1);
+    return false;
+  }
+
+  //but this below code is hella busted
+  //if(file != nullptr)
+  //  return feof(file); //I have had issues with this 
+  //else
+  //  return inputPointer == input.length();
 }

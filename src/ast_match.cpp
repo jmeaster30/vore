@@ -342,27 +342,17 @@ match* any::isMatch(match* currentMatch, context* ctxt)
 
 match* sol::isMatch(match* currentMatch, context* ctxt)
 {
-  std::string c = ctxt->getChars(1);
- 
   //check if we are at the start of the file
-  if(ctxt->getPos() == 1) {
-    match* newMatch = currentMatch->copy();
-    newMatch->value += c;
-    newMatch->match_length += 1;
-    newMatch->lastMatch = c;
-    return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
+  if(ctxt->getPos() == 0) {
+    return (_next == nullptr) ? currentMatch : _next->isMatch(currentMatch, ctxt);
   }
 
+  std::string c = ctxt->getChars(1);
   //check if if the previous character was a new line
   ctxt->seekBack(2);
   std::string newline = ctxt->getChars(1);
   if (newline == "\n") {
-    match* newMatch = currentMatch->copy();
-    newMatch->value += c;
-    newMatch->match_length += 1;
-    newMatch->lastMatch = c;
-    ctxt->seekForward(1);
-    return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
+    return (_next == nullptr) ? currentMatch : _next->isMatch(currentMatch, ctxt);
   }
 
   return nullptr;
@@ -370,14 +360,15 @@ match* sol::isMatch(match* currentMatch, context* ctxt)
 
 match* eol::isMatch(match* currentMatch, context* ctxt)
 {
+  if(ctxt->endOfFile()) {
+    return (_next == nullptr) ? currentMatch : _next->isMatch(currentMatch, ctxt);
+  }
+
   std::string c = ctxt->getChars(1);
   if(c == "\n")
   {
-    match* newMatch = currentMatch->copy();
-    newMatch->value += c;
-    newMatch->match_length += 1;
-    newMatch->lastMatch = c;
-    return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
+    ctxt->seekBack(1);
+    return (_next == nullptr) ? currentMatch : _next->isMatch(currentMatch, ctxt);
   }
 
   ctxt->seekBack(1);
@@ -387,12 +378,7 @@ match* eol::isMatch(match* currentMatch, context* ctxt)
 match* sof::isMatch(match* currentMatch, context* ctxt)
 {
   if(ctxt->getPos() == 0) {
-    match* newMatch = currentMatch->copy();
-    std::string c = ctxt->getChars(1);
-    newMatch->value += c;
-    newMatch->match_length += 1;
-    newMatch->lastMatch = c;
-    return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
+    return (_next == nullptr) ? currentMatch : _next->isMatch(currentMatch, ctxt);
   }
 
   return nullptr;

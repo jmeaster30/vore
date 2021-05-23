@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 
 #include "ast.hpp"
 
@@ -58,7 +59,7 @@ int ProcessToken(const char* name, int token_parser_id, int type);
 "whitespace" { return ProcessToken("WHITESPACE", WHITESPACE, 0); }
 "digit"      { return ProcessToken("DIGIT",      DIGIT, 0); }
 
-(\"[^\"]*\"|\'[^\']*\') { return ProcessToken("STRING", STRING, 1); }
+(\"([^\"]|\\\")*\"|\'([^\']|\\\')*\') { return ProcessToken("STRING", STRING, 1); }
 [0-9]+    { return ProcessToken("NUMBER",     NUMBER, 2); }
 \@[a-z_][a-z0-9_]* { return ProcessToken("IDENTIFIER", IDENTIFIER, 3); }
 \$[a-z_][a-z0-9_]* { return ProcessToken("SUBROUTINE", SUBROUTINE, 3); }

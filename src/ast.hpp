@@ -382,10 +382,7 @@ public:
   std::string _value;
   u_int64_t _value_len;
 
-  string(std::string value){
-    _value = value;
-    _value_len = _value.length();
-  }
+  string(std::string value);
 
   match* isMatch(match* currentMatch, context* context);
   void print();
