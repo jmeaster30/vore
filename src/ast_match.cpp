@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-match* string_match(match* currentMatch, context* ctxt, std::string _value, u_int64_t _value_len, element* _next);
+match* string_match(match* currentMatch, context* ctxt, std::string _value, u_int64_t _value_len, bool _not, element* _next);
 
 match* maxToMinMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next);
 match* minToMaxMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next);
@@ -195,14 +195,6 @@ match* in::isMatch(match* currentMatch, context* ctxt)
       }
     }
   }
-  return nullptr;
-}
-
-match* anti::isMatch(match* currentMatch, context* context)
-{
-  //greedy
-  //match the same length as the atom but not
-  //TODO
   return nullptr;
 }
 
@@ -399,8 +391,10 @@ match* whitespace::isMatch(match* currentMatch, context* ctxt)
 
   std::string nextChar = ctxt->getChars(1);
 
-  if (nextChar[0] == ' ' || nextChar[0] == '\t' || nextChar[0] == '\v' ||
-      nextChar[0] == '\r' || nextChar[0] == '\n' || nextChar[0] == '\f') {
+  bool whitespace = nextChar[0] == ' ' || nextChar[0] == '\t' || nextChar[0] == '\v' ||
+      nextChar[0] == '\r' || nextChar[0] == '\n' || nextChar[0] == '\f';
+
+  if ((whitespace && !_not) || (!whitespace && _not)) {
     newMatch->value += nextChar[0];
     newMatch->match_length += 1;
     newMatch->lastMatch = nextChar;
@@ -418,7 +412,9 @@ match* digit::isMatch(match* currentMatch, context* ctxt)
 
   std::string nextChar = ctxt->getChars(1);
 
-  if (nextChar[0] >= '0' && nextChar[0] <= '9') {
+  bool digit = nextChar[0] >= '0' && nextChar[0] <= '9';
+
+  if ((digit && !_not) || (!digit && _not)) {
     newMatch->value += nextChar[0];
     newMatch->match_length += 1;
     newMatch->lastMatch = nextChar;
@@ -435,7 +431,7 @@ match* identifier::isMatch(match* currentMatch, context* ctxt)
   std::string _value = currentMatch->variables[_id];
   u_int64_t _value_len = _value.length();
 
-  return string_match(currentMatch, ctxt, _value, _value_len, _next);
+  return string_match(currentMatch, ctxt, _value, _value_len, false, _next);
 }
 
 match* subroutine::isMatch(match* currentMatch, context* ctxt)
@@ -454,16 +450,18 @@ match* subroutine::isMatch(match* currentMatch, context* ctxt)
 
 match* string::isMatch(match* currentMatch, context* ctxt)
 {
-  return string_match(currentMatch, ctxt, _value, _value_len, _next);
+  return string_match(currentMatch, ctxt, _value, _value_len, _not, _next);
 }
 
-match* string_match(match* currentMatch, context* ctxt, std::string _value, u_int64_t _value_len, element* _next)
+match* string_match(match* currentMatch, context* ctxt, std::string _value, u_int64_t _value_len, bool _not, element* _next)
 {
   match* newMatch = currentMatch->copy();
 
   std::string peekedString = ctxt->getChars(_value_len);
 
-  if(peekedString == _value)
+  bool isMatch = peekedString == _value;
+
+  if((isMatch && !_not) || (!isMatch && _not))
   {
     newMatch->value += peekedString;
     newMatch->lastMatch = peekedString;

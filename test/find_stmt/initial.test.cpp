@@ -1,7 +1,7 @@
 #include "helper.hpp"
 
 TEST_CASE("Find all bois", "[string, assign]") {
-  Vore::compile("find all \"boy\" = @test");
+  Vore::compile("find all \"boy\" = test");
 
   auto results = Vore::execute("big boy :)");
   SINGLE_MATCH(results, 4, 3, "boy");
@@ -12,6 +12,19 @@ TEST_CASE("Find all bois", "[string, assign]") {
   auto var = vars.begin();
   REQUIRE(var->first == "test");
   REQUIRE(var->second == "boy");
+}
+
+TEST_CASE("Find two bois", "[string, assign, identifier]") {
+  Vore::compile("find all \'boy\' = boy boy");
+   auto results = Vore::execute("big boyboy!");
+   SINGLE_MATCH(results, 4, 6, "boyboy");
+   
+   auto vars = results[0]->matches[0]->variables;
+   REQUIRE(vars.size() == 1);
+
+   auto var = vars.begin();
+   REQUIRE(var->first == "boy");
+   REQUIRE(var->second == "boy");
 }
 
 TEST_CASE("Find second fella", "[string, skiptake]") {
@@ -42,7 +55,7 @@ TEST_CASE("Find OR Test", "[string, or]") {
 }
 
 TEST_CASE("Find Or/Assign/Subexpression", "[string, or, assign, sub]") {
-  Vore::compile("find all ('error' or 'success') = @word");
+  Vore::compile("find all ('error' or 'success') = word");
 
   auto results = Vore::execute("I hope this is a success");
   SINGLE_MATCH(results, 17, 7, "success");

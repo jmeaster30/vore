@@ -99,13 +99,6 @@ void in::print()
   std::cout << "]";
 }
 
-void anti::print()
-{
-  std::cout << "[NOT ";
-  _atom->print();
-  std::cout << "]";
-}
-
 void assign::print()
 {
   std::cout << "[ASSIGN " << _id << " ";

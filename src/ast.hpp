@@ -46,7 +46,11 @@ public:
 
 class atom : public primary {
 public:
-  atom(){}
+  bool _not;
+
+  atom(bool n){
+    _not = n;
+  }
   virtual match* isMatch(match* currentMatch, context* context) = 0;
   virtual void print() = 0;
 };
@@ -224,18 +228,6 @@ public:
   void print();
 };
 
-class anti : public primary {
-public:
-  atom* _atom;
-  
-  anti(atom* atom) {
-    _atom = atom;
-  }
-
-  match* isMatch(match* currentMatch, context* context);
-  void print();
-};
-
 class assign : public element {
 public:
   std::string _id;
@@ -295,7 +287,7 @@ public:
   std::string _from;
   std::string _to;
   
-  range(std::string from, std::string to) {
+  range(std::string from, std::string to, bool n) : atom(n) {
     _from = from;
     _to = to;
   }
@@ -306,49 +298,49 @@ public:
 
 class any : public atom {
 public:
-  any(){}
+  any() : atom(false) {}
   match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class sol : public atom {
 public:
-  sol(){}
+  sol() : atom(false) {}
   match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class eol : public atom {
 public:
-  eol(){}
+  eol() : atom(false) {}
   match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class sof : public atom {
 public:
-  sof(){}
+  sof() : atom(false) {}
   match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class eof : public atom {
 public:
-  eof(){}
+  eof() : atom(false) {}
   match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class whitespace : public atom {
 public:
-  whitespace(){}
+  whitespace(bool n) : atom(n) {}
   match* isMatch(match* currentMatch, context* context);
   void print();
 };
 
 class digit : public atom {
 public:
-  digit(){}
+  digit(bool n) : atom(n) {}
   match* isMatch(match* currentMatch, context* context);
   void print();
 };
@@ -357,7 +349,7 @@ class identifier : public atom {
 public:
   std::string _id;
 
-  identifier(std::string id){
+  identifier(std::string id) : atom(false){
     _id = id;
   }
 
@@ -382,7 +374,7 @@ public:
   std::string _value;
   u_int64_t _value_len;
 
-  string(std::string value);
+  string(std::string value, bool n);
 
   match* isMatch(match* currentMatch, context* context);
   void print();

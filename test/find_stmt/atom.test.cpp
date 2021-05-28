@@ -1,7 +1,5 @@
 #include "helper.hpp"
 
-#include <iostream>
-
 TEST_CASE("find string", "[string]") {
   Vore::compile("find all 'yay'");
   auto results = Vore::execute("OMG yay :)");
@@ -96,4 +94,29 @@ TEST_CASE("find escape chars", "[string]") {
   Vore::compile("find all '\x77\x6f\x77\x20\x3B\x29'");
   auto results = Vore::execute("does this work? wow ;)");
   SINGLE_MATCH(results, 16, 6, "wow ;)");
+}
+
+TEST_CASE("find whitespace", "[whitepsace, string]") {
+  Vore::compile("find all whitespace 'source' whitespace");
+  FILE* test_file = fopen("test_files/multiline.txt", "r");
+  REQUIRE(test_file != nullptr);
+
+  auto results = Vore::execute(test_file);
+  SINGLE_MATCH(results, 122, 8, "\tsource ");
+
+  if(test_file != nullptr) {
+    fclose(test_file);
+  }
+}
+
+TEST_CASE("find not whitespace", "[not, whitespace, atleast]") {
+  Vore::compile("find all at least 0 not whitespace");
+  auto results = Vore::execute(" \t\v\r\nyeah\r\v \n\t");
+  SINGLE_MATCH(results, 5, 4, "yeah");
+}
+
+TEST_CASE("find not digit", "[not, digit, atleast]") {
+  Vore::compile("find all at least 0 not digit");
+  auto results = Vore::execute("09834745:)0299432718");
+  SINGLE_MATCH(results, 8, 2, ":)");
 }

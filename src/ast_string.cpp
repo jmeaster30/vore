@@ -1,6 +1,5 @@
 #include "ast.hpp"
 
-//string constructor
 std::string FixEscapeCharacters(std::string val) {
   std::string fixed = "";
   for(u_int64_t i = 0; i < val.length(); i++)
@@ -78,7 +77,7 @@ std::string FixEscapeCharacters(std::string val) {
   return fixed;
 }
 
-string::string(std::string val) {
+string::string(std::string val, bool n) : atom(n) {
   std::string fixed = FixEscapeCharacters(val);
   _value = fixed;
   _value_len = fixed.length();

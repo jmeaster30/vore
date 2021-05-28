@@ -148,17 +148,20 @@ ATOM : ANY { $$ = new any(); }
      | EOL { $$ = new eol(); }
      | SOF { $$ = new sof(); }
      | mEOF { $$ = new eof(); }
-     | WHITESPACE { $$ = new whitespace(); }
-     | DIGIT { $$ = new digit(); }
+     | WHITESPACE { $$ = new whitespace(false); }
+     | NOT WHITESPACE { $$ = new whitespace(true); }
+     | DIGIT { $$ = new digit(false); }
+     | NOT DIGIT { $$ = new digit(true); }
      | IDENTIFIER { $$ = new identifier($1); }
-     | STRING { $$ = new string($1); }
+     | STRING { $$ = new string($1, false); }
+     | NOT STRING { $$ = new string($2, true); }
      ;
 
-RANGE : STRING DASH STRING { $$ = new range($1, $3); }
+RANGE : STRING DASH STRING { $$ = new range($1, $3, false); }
+      | NOT STRING DASH STRING { $$ = new range($2, $4, true); }
       ;
 
 PRIMARY : ATOM { $$ = $1; }
-        | NOT ATOM { $$ = new anti($2); }
         | LEFTPAREN ELEMENTS RIGHTPAREN { $$ = new subelement($2); }
         | SUBROUTINE { $$ = new subroutine($1); }
         ;
