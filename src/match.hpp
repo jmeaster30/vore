@@ -11,18 +11,30 @@
 //forward declarations
 class primary;
 class element;
+class funcdec;
+
+struct eresults {
+  int type;
+  bool b_value;
+  std::string s_value;
+  u_int64_t n_value;
+  funcdec* e_value;
+};
 
 class match {
 public:
   std::string value;
+  std::string replacement;
   std::string lastMatch;
   u_int64_t file_offset;
+  u_int64_t lineNumber;
   u_int64_t match_length;
   std::unordered_map<std::string, std::string> variables;
   std::unordered_map<std::string, primary*> subroutines;
 
   match(u_int64_t startOffset){
     value = "";
+    replacement = "";
     lastMatch = "";
     file_offset = startOffset;
     match_length = 0;
@@ -41,12 +53,18 @@ public:
   FILE* file;
   std::string input;
   std::vector<match*> matches;
+  std::unordered_map<std::string, eresults> global;
+
+  context() {
+    context(nullptr);
+  }
 
   context(FILE* _file){
     file = _file;
     input = "";
     inputPointer = 0;
     matches = std::vector<match*>();
+    global = std::unordered_map<std::string, eresults>();
     changeFile = false;
     dontStore = false;
   };
@@ -56,6 +74,7 @@ public:
     input = _input;
     inputPointer = 0;
     matches = std::vector<match*>();
+    global = std::unordered_map<std::string, eresults>();
     changeFile = false;
     dontStore = false;
   }
@@ -69,9 +88,11 @@ public:
   bool endOfFile();
 
   void print();
+  context* copy();
 
 private:
   u_int64_t inputPointer;
+  u_int64_t lineNumber;
 };
 
 #endif

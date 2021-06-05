@@ -19,19 +19,14 @@ void match::print()
   std::cout << "===== START MATCH =====" << std::endl;
 
   std::cout << "value = '" << value << "'" << std::endl;
+  std::cout << "replacement = '" << replacement << "'" << std::endl;
   std::cout << "fileOffset = " << file_offset << std::endl;
+  std::cout << "lineNumber = " << lineNumber << std::endl;
   std::cout << "matchLength = " << match_length << std::endl;
 
   std::cout << "## variables " << std::endl;
   for(const auto& [key, value] : variables) {
     std::cout << "'" << key << "' = '" << value << "'" << std::endl;
-  }
-
-  std::cout << "## subroutines " << std::endl;
-  for(auto [key, value] : subroutines) {
-    std::cout << "'" << key << "' = (";
-    value->print();
-    std::cout << ")" << std::endl;
   }
  
   std::cout << "===== END MATCH   =====" << std::endl;
@@ -50,6 +45,18 @@ void context::print()
   std::cout << "END CONTEXT MATCHES" << std::endl;
 
   std::cout << "---------- END CONTEXT   -----------" << std::endl;
+}
+
+context* context::copy()
+{
+  context* ctxt = new context();
+  ctxt->changeFile = changeFile;
+  ctxt->dontStore = dontStore;
+  ctxt->file = file;
+  ctxt->input = input;
+  ctxt->matches = matches;
+  ctxt->global = global;
+  return ctxt;
 }
 
 std::string context::getChars(u_int64_t amount) {
@@ -124,17 +131,10 @@ u_int64_t context::getSize() {
 }
 
 bool context::endOfFile() {
-  //this is kinda janky
   if(getChars(1) == "") {
     return true;
   } else {
     seekBack(1);
     return false;
   }
-
-  //but this below code is hella busted
-  //if(file != nullptr)
-  //  return feof(file); //I have had issues with this 
-  //else
-  //  return inputPointer == input.length();
 }

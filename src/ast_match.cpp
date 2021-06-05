@@ -1,7 +1,5 @@
 #include "ast.hpp"
 
-#include <iostream>
-
 match* string_match(match* currentMatch, context* ctxt, std::string _value, u_int64_t _value_len, bool _not, element* _next);
 
 match* maxToMinMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next);

@@ -15,6 +15,13 @@ public:
   virtual void print() = 0;
 };
 
+class expr {
+public:
+  expr() {}
+  virtual void print() = 0;
+  virtual eresults evaluate(std::unordered_map<std::string, eresults>* ctxt) = 0;
+};
+
 class stmt : public node {
 public:
   stmt() {}
@@ -73,27 +80,6 @@ public:
   void print();
 };
 
-class offset {
-public:
-  bool _previous;
-  u_int64_t _skip;
-  u_int64_t _take;
-
-  offset() {
-    _previous = false;
-    _skip = -1;
-    _take = -1;  
-  }
-
-  offset(bool previous, u_int64_t skip, u_int64_t take) {
-    _previous = previous;
-    _skip = skip;
-    _take = take;
-  }
-
-  void print();
-};
-
 class program : public node {
 public:
   std::vector<stmt*>* _stmts;
@@ -111,15 +97,11 @@ public:
 class replacestmt : public stmt {
 public:
   amount* _matchNumber;
-  offset* _offset;
-  //to find
   element* _start_element;
-  //replacing text
-  std::vector<atom*>* _atoms;
+  std::vector<expr*>* _atoms;
 
-  replacestmt(amount* matchNumber, offset* offset, element* start, std::vector<atom*>* atoms) {
+  replacestmt(amount* matchNumber, element* start, std::vector<expr*>* atoms) {
     _matchNumber = matchNumber;
-    _offset = offset;
     _start_element = start;
     _atoms = atoms;
   }
@@ -131,7 +113,6 @@ public:
 class findstmt : public stmt {
 public:
   amount* _matchNumber;
-  //to find
   element* _start_element;
  
   findstmt(amount* matchNumber, element* start) {
@@ -149,6 +130,34 @@ public:
   
   usestmt(std::string filename) {
     _filename = filename;
+  }
+
+  void execute(context* ctxt);
+  void print();
+};
+
+class repeatstmt : public stmt {
+public:
+  u_int64_t _number;
+  stmt* _statement;
+
+  repeatstmt(u_int64_t number, stmt* statement) {
+    _number = number;
+    _statement = statement;
+  }
+
+  void execute(context* ctxt);
+  void print();
+};
+
+class setstmt : public stmt {
+public:
+  std::string _id;
+  expr* _expression;
+
+  setstmt(std::string id, expr* expression) {
+    _id = id;
+    _expression = expression;
   }
 
   void execute(context* ctxt);
@@ -378,6 +387,202 @@ public:
 
   match* isMatch(match* currentMatch, context* context);
   void print();
+};
+
+/* computation stuff */
+class compstmt : public expr {
+public:
+  compstmt(){};
+
+  virtual void print() = 0;
+  virtual eresults evaluate(std::unordered_map<std::string, eresults>* ctxt) = 0;
+};
+
+class compsetstmt : public compstmt {
+public:
+  std::string _id;
+  expr* _expression;
+
+  compsetstmt(std::string identifier, expr* expression) {
+    _id = identifier;
+    _expression = expression;
+  }
+
+  void print();
+  eresults evaluate(std::unordered_map<std::string, eresults>* ctxt);
+};
+
+class outputstmt : public compstmt {
+public:
+  expr* _expression;
+
+  outputstmt(expr* expression) {
+    _expression = expression;
+  }
+
+  void print();
+  eresults evaluate(std::unordered_map<std::string, eresults>* ctxt);
+};
+
+/*
+class flipstmt : public compstmt {
+public:
+  expr* _expression;
+
+  flipstmt(expr* expression) {
+    _expression = expression;
+  }
+
+  void print();
+  void evaluate();
+};
+
+class randomstmt : public compstmt {
+public:
+  expr* _expression;
+
+  randomstmt(expr* expression) {
+    _expression = expression;
+  }
+
+  void print();
+  void evaluate();
+};
+
+class splitbystmt : public compstmt {
+public:
+  expr* _split;
+  expr* _by;
+
+  splitbystmt(expr* split, expr* by) {
+    _split = split;
+    _by = by;
+  }
+
+  void print();
+  void evaluate();
+};
+*/
+
+class funcdec : public expr {
+public:
+  std::vector<std::string>* _params;
+  std::vector<compstmt*>* _stmts;
+
+  funcdec(std::vector<char*>* params, std::vector<compstmt*>* stmts) {
+    //convert char* to string for ease
+    _params = new std::vector<std::string>();
+    for (auto str : *params) {
+      _params->push_back(str);
+    }
+    
+    _stmts = stmts;
+  }
+
+  void print();
+  eresults evaluate(std::unordered_map<std::string, eresults>* ctxt);
+};
+
+enum class ops : int {
+  AND, OR,
+  EQ, NEQ, LT, GT, LTE, GTE,
+  ADD, SUB, 
+  MULT, DIV, MOD,
+};
+
+class binop : public expr {
+public:
+  ops _op;
+  expr* _lhs;
+  expr* _rhs;
+
+  binop(expr* lhs, ops op, expr* rhs) {
+    _op = op;
+    _lhs = lhs;
+    _rhs = rhs;
+  }
+
+  void print();
+  eresults evaluate(std::unordered_map<std::string, eresults>* ctxt);
+};
+
+class call : public expr {
+public:
+  std::string _id;
+  std::vector<expr*>* _params;
+
+  call(std::string id, std::vector<expr*>* params)
+  {
+    _id = id;
+    _params = params;
+  }
+
+  void print();
+  eresults evaluate(std::unordered_map<std::string, eresults>* ctxt);
+};
+
+class when : public expr {
+public:
+  expr* _condition;
+  expr* _then;
+
+  when(expr* cond, expr* then) {
+    _condition = cond;
+    _then = then;
+  }
+
+  void print();
+  eresults evaluate(std::unordered_map<std::string, eresults>* ctxt);
+};
+
+class caseexpr : public expr {
+public:
+  std::vector<when*>* _when;
+  expr* _expr;
+
+  caseexpr(std::vector<when*>* whenList, expr* express) {
+    _when = whenList;
+    _expr = express;
+  }
+
+  void print();
+  eresults evaluate(std::unordered_map<std::string, eresults>* ctxt);
+};
+
+class compnum : public expr {
+public:
+  u_int64_t _value;
+
+  compnum(u_int64_t value) {
+    _value = value;
+  }
+
+  void print();
+  eresults evaluate(std::unordered_map<std::string, eresults>* ctxt);
+};
+
+class compstr : public expr {
+public:
+  std::string _value;
+
+  compstr(std::string value) {
+    _value = value;
+  }
+
+  void print();
+  eresults evaluate(std::unordered_map<std::string, eresults>* ctxt);
+};
+
+class compid : public expr {
+public:
+  std::string _value;
+
+  compid(std::string value) {
+    _value = value;
+  }
+
+  void print();
+  eresults evaluate(std::unordered_map<std::string, eresults>* ctxt);
 };
 
 #endif

@@ -28,12 +28,13 @@ void InvalidToken();
 int ProcessToken(const char* name, int token_parser_id, int type);
 %}
 
-/* Rules Section  */
+/* Rules Section */
 %%
 "find"     { return ProcessToken("FIND",     FIND, 0); }
 "replace"  { return ProcessToken("REPLACE",  REPLACE, 0); }
 "with"     { return ProcessToken("WITH",     WITH, 0); }
 "use"      { return ProcessToken("USE",      USE, 0); }
+"repeat"   { return ProcessToken("REPEAT",   REPEAT, 0); }
 "top"      { return ProcessToken("TOP",      TOP, 0); }
 "skip"     { return ProcessToken("SKIP",     SKIP, 0); }
 "take"     { return ProcessToken("TAKE",     TAKE, 0); }
@@ -58,6 +59,29 @@ int ProcessToken(const char* name, int token_parser_id, int type);
 "eof"        { return ProcessToken("mEOF", mEOF, 0); }
 "whitespace" { return ProcessToken("WHITESPACE", WHITESPACE, 0); }
 "digit"      { return ProcessToken("DIGIT",      DIGIT, 0); }
+
+"case"       { return ProcessToken("CASE",      CASE, 0); }
+"when"       { return ProcessToken("WHEN",      WHEN, 0); }
+"then"       { return ProcessToken("THEN",      THEN, 0); }
+"otherwise"  { return ProcessToken("OTHERWISE", OTHERWISE, 0); }
+
+"set"        { return ProcessToken("SET",       SET, 0); }
+"to"         { return ProcessToken("TO",        TO, 0); }
+"function"   { return ProcessToken("FUNCTION",  FUNCTION, 0); }
+"start"      { return ProcessToken("START",     START, 0); }
+"end"        { return ProcessToken("END",       END, 0); }
+"output"     { return ProcessToken("OUTPUT",    OUTPUT, 0); }
+
+"is"           { return ProcessToken("IS",        IS, 0); }
+"equal to"     { return ProcessToken("EQUALS",    EQUALS, 0); }
+"less than"    { return ProcessToken("LESS",      LESS, 0); }
+"greater than" { return ProcessToken("GREATER",   GREATER, 0); }
+
+"plus"       { return ProcessToken("PLUS",      PLUS, 0); }
+"minus"      { return ProcessToken("MINUS",     MINUS, 0); }
+"times"      { return ProcessToken("TIMES",     TIMES, 0); }
+"divided by" { return ProcessToken("DIVIDE",    DIVIDE, 0); }
+"modulo"     { return ProcessToken("MODULO",    MODULO, 0); }
 
 (\"([^\"]|\\\")*\"|\'([^\']|\\\')*\') { return ProcessToken("STRING", STRING, 1); }
 [0-9]+    { return ProcessToken("NUMBER",     NUMBER, 2); }
