@@ -37,7 +37,7 @@ set(VORE_HEADERS
   ${CMAKE_CURRENT_BINARY_DIR}/match.hpp
 )
 
-add_executable(vore main.cpp ${VORE_SOURCES})
+add_library(voreLib OBJECT ${VORE_SOURCES})
+set_target_properties(voreLib PROPERTIES EXCLUDE_FROM_ALL 1)
 
-add_library(voreTestLib OBJECT ${VORE_SOURCES})
-set_target_properties(voreTestLib PROPERTIES EXCLUDE_FROM_ALL 1)
+add_executable(vore main.cpp $<TARGET_OBJECTS:voreLib>)

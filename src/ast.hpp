@@ -7,6 +7,7 @@
 
 #include <vector>
 
+#include "vore_options.hpp"
 #include "match.hpp"
 
 class node {
@@ -24,7 +25,8 @@ public:
 
 class stmt : public node {
 public:
-  stmt() {}
+  bool _multifile = false;
+  stmt(bool multifile) : _multifile(multifile) {}
   virtual void execute(context* ctxt) = 0;
   virtual void print() = 0;
 };
@@ -88,8 +90,8 @@ public:
     _stmts = stmts;
   }
 
-  std::vector<context*> execute(FILE* file);
-  std::vector<context*> execute(std::string input);
+  std::vector<context*> execute(std::vector<std::string> files, vore_options vo);
+  std::vector<context*> execute(std::string input, vore_options vo);
 
   void print();
 };
@@ -100,7 +102,7 @@ public:
   element* _start_element;
   std::vector<expr*>* _atoms;
 
-  replacestmt(amount* matchNumber, element* start, std::vector<expr*>* atoms) {
+  replacestmt(amount* matchNumber, element* start, std::vector<expr*>* atoms) : stmt(true) {
     _matchNumber = matchNumber;
     _start_element = start;
     _atoms = atoms;
@@ -115,7 +117,7 @@ public:
   amount* _matchNumber;
   element* _start_element;
  
-  findstmt(amount* matchNumber, element* start) {
+  findstmt(amount* matchNumber, element* start) : stmt(true) {
     _matchNumber = matchNumber;
     _start_element = start;
   }
@@ -128,7 +130,7 @@ class usestmt : public stmt {
 public:
   std::string _filename;
   
-  usestmt(std::string filename) {
+  usestmt(std::string filename) : stmt(false) {
     _filename = filename;
   }
 
@@ -141,9 +143,12 @@ public:
   u_int64_t _number;
   stmt* _statement;
 
-  repeatstmt(u_int64_t number, stmt* statement) {
+  repeatstmt(u_int64_t number, stmt* statement) : stmt(false) {
     _number = number;
     _statement = statement;
+    if(_statement != nullptr) {
+      _multifile = _statement->_multifile;
+    }
   }
 
   void execute(context* ctxt);
@@ -155,7 +160,7 @@ public:
   std::string _id;
   expr* _expression;
 
-  setstmt(std::string id, expr* expression) {
+  setstmt(std::string id, expr* expression) : stmt(false) {
     _id = id;
     _expression = expression;
   }

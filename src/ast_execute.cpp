@@ -3,27 +3,60 @@
 #include <iostream>
 #include <sstream>
 
-std::vector<context*> program::execute(FILE* file)
+std::vector<context*> program::execute(std::vector<std::string> files, vore_options vo)
 {
-  FILE* ctxtFile = file;
+  std::vector<FILE*> opened_files = std::vector<FILE*>();
   std::vector<context*> contexts = std::vector<context*>();
   std::unordered_map<std::string, eresults> global = std::unordered_map<std::string, eresults>();
   
-  for (auto stmt : *_stmts) {
-    context* toAdd = new context(file);
-    toAdd->global = global;
-    
-    stmt->execute(toAdd);
+  for (auto file : files) {
+    FILE* ofile = fopen(file.c_str(), "r");
+    if (ofile == nullptr) {
+      std::cout << "ERROR : the input file '" << file << "' could not be opened." << std::endl;
+      //TODO Close all of the previously opened files
+      return std::vector<context*>();
+    }
+    opened_files.push_back(ofile);
+  }
 
-    global = toAdd->global;
-    if (toAdd->changeFile) ctxtFile = toAdd->file;
-    if (!toAdd->dontStore) contexts.push_back(toAdd);
+  for (auto stmt : *_stmts) {
+    //TODO think of a better way to do this
+    if (stmt->_multifile) {
+      for (auto ofile : opened_files) {
+        context* toAdd = new context(ofile);
+        toAdd->global = global;
+        
+        stmt->execute(toAdd);
+
+        global = toAdd->global;
+        if (toAdd->changeFile) opened_files.push_back(toAdd->file);
+        if (!toAdd->dontStore) contexts.push_back(toAdd);
+
+        //we could probably close the ofile here and do ofile = fopen. I think that may work even though it may look a little sketchy
+      }
+    }
+    else
+    {
+      FILE* ofile = opened_files[0];
+      context* toAdd = new context(ofile);
+      toAdd->global = global;
+        
+      stmt->execute(toAdd);
+
+      global = toAdd->global;
+      if (toAdd->changeFile) opened_files.push_back(toAdd->file);
+      if (!toAdd->dontStore) contexts.push_back(toAdd);
+    }
+  }
+
+  for(auto ofile : opened_files) {
+    fclose(ofile);
   }
 
   return contexts;
 }
 
-std::vector<context*> program::execute(std::string input)
+std::vector<context*> program::execute(std::string input, vore_options vo)
 {
   FILE* ctxtFile = nullptr;
   std::vector<context*> contexts = std::vector<context*>();
@@ -109,7 +142,6 @@ void replacestmt::execute(context* ctxt)
   }
 
   //TODO do the file modification
-  //? should we do that here? or somewhere else
 }
 
 void findstmt::execute(context* ctxt)
@@ -122,10 +154,6 @@ void usestmt::execute(context* ctxt)
   ctxt->dontStore = true;
   ctxt->changeFile = true;
   ctxt->input = "";
-  
-  if(ctxt->file != nullptr) {
-    fclose(ctxt->file);
-  }
   ctxt->file = fopen(_filename.c_str(), "r");
 }
 

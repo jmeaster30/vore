@@ -8,7 +8,7 @@ set(TEST_SOURCES
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-add_executable(test_runner ${TEST_SOURCES} $<TARGET_OBJECTS:voreTestLib>)
+add_executable(test_runner ${TEST_SOURCES} $<TARGET_OBJECTS:voreLib>)
 target_include_directories(test_runner PRIVATE ../src)
 
 #exclude this stuff from the "make" target

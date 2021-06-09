@@ -20,23 +20,15 @@ TEST_CASE("find any", "[any, atmost]") {
 
 TEST_CASE("find sol line eol", "[string, sol, eol]") {
   Vore::compile("find all sol 'line' eol");
-  FILE* test_file = fopen("test_files/multiline.txt", "r");
-  REQUIRE(test_file != nullptr);
 
-  auto results = Vore::execute(test_file);
+  auto results = Vore::execute((std::vector<std::string>){ "test_files/multiline.txt" });
   SINGLE_MATCH(results, 70, 4, "line");
-
-  if(test_file != nullptr) {
-    fclose(test_file);
-  }
 }
 
 TEST_CASE("find eol newline", "[eol, string]") {
   Vore::compile("find all eol '\n'");
-  FILE* test_file = fopen("test_files/multiline.txt", "r");
-  REQUIRE(test_file != nullptr);
 
-  auto results = Vore::execute(test_file);
+  auto results = Vore::execute((std::vector<std::string>){ "test_files/multiline.txt" });
   REQUIRE(results.size() == 1);
   REQUIRE(results[0]->matches.size() == 5);
 
@@ -45,49 +37,27 @@ TEST_CASE("find eol newline", "[eol, string]") {
   IS_MATCH(results[0]->matches[2], 74, 1, "\n");
   IS_MATCH(results[0]->matches[3], 82, 1, "\n");
   IS_MATCH(results[0]->matches[4], 119, 1, "\n");
-
-  if(test_file != nullptr) {
-    fclose(test_file);
-  }
 }
 
 TEST_CASE("find sof This", "[sof, string]") {
   Vore::compile("find all sof 'This'");
-  FILE* test_file = fopen("test_files/multiline.txt", "r");
-  REQUIRE(test_file != nullptr);
 
-  auto results = Vore::execute(test_file);
-  SINGLE_MATCH(results, 0, 4, "This");  
-
-  if(test_file != nullptr) {
-    fclose(test_file);
-  }
+  auto results = Vore::execute((std::vector<std::string>){ "test_files/multiline.txt" });
+  SINGLE_MATCH(results, 0, 4, "This");
 }
 
 TEST_CASE("find eol", "[eol, string]") {
   Vore::compile("find all ':)' eol");
-  FILE* test_file = fopen("test_files/multiline.txt", "r");
-  REQUIRE(test_file != nullptr);
 
-  auto results = Vore::execute(test_file);
-  SINGLE_MATCH(results, 130, 2, ":)");  
-
-  if(test_file != nullptr) {
-    fclose(test_file);
-  }
+  auto results = Vore::execute((std::vector<std::string>){ "test_files/multiline.txt" });
+  SINGLE_MATCH(results, 130, 2, ":)");
 }
 
 TEST_CASE("find eof", "[eof, any]") {
   Vore::compile("find all exactly 9 any eof");
-  FILE* test_file = fopen("test_files/multiline.txt", "r");
-  REQUIRE(test_file != nullptr);
 
-  auto results = Vore::execute(test_file);
-  SINGLE_MATCH(results, 123, 9, "source :)");  
-
-  if(test_file != nullptr) {
-    fclose(test_file);
-  }
+  auto results = Vore::execute((std::vector<std::string>){ "test_files/multiline.txt" });
+  SINGLE_MATCH(results, 123, 9, "source :)");
 }
 
 TEST_CASE("find escape chars", "[string]") {
@@ -98,15 +68,9 @@ TEST_CASE("find escape chars", "[string]") {
 
 TEST_CASE("find whitespace", "[whitepsace, string]") {
   Vore::compile("find all whitespace 'source' whitespace");
-  FILE* test_file = fopen("test_files/multiline.txt", "r");
-  REQUIRE(test_file != nullptr);
 
-  auto results = Vore::execute(test_file);
+  auto results = Vore::execute((std::vector<std::string>){ "test_files/multiline.txt" });
   SINGLE_MATCH(results, 122, 8, "\tsource ");
-
-  if(test_file != nullptr) {
-    fclose(test_file);
-  }
 }
 
 TEST_CASE("find not whitespace", "[not, whitespace, atleast]") {

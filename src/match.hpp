@@ -23,23 +23,17 @@ struct eresults {
 
 class match {
 public:
-  std::string value;
-  std::string replacement;
-  std::string lastMatch;
-  u_int64_t file_offset;
-  u_int64_t lineNumber;
-  u_int64_t match_length;
-  std::unordered_map<std::string, std::string> variables;
-  std::unordered_map<std::string, primary*> subroutines;
+  std::string value = "";
+  std::string replacement = "";
+  std::string lastMatch = "";
+  u_int64_t file_offset = 0;
+  u_int64_t lineNumber = 0;
+  u_int64_t match_length = 0;
+  std::unordered_map<std::string, std::string> variables = std::unordered_map<std::string, std::string>();
+  std::unordered_map<std::string, primary*> subroutines = std::unordered_map<std::string, primary*>();
 
   match(u_int64_t startOffset){
-    value = "";
-    replacement = "";
-    lastMatch = "";
     file_offset = startOffset;
-    match_length = 0;
-    variables = std::unordered_map<std::string, std::string>();
-    subroutines = std::unordered_map<std::string, primary*>();
   };
 
   match* copy();
@@ -48,12 +42,12 @@ public:
 
 class context {
 public:
-  bool changeFile;
-  bool dontStore;
-  FILE* file;
-  std::string input;
-  std::vector<match*> matches;
-  std::unordered_map<std::string, eresults> global;
+  bool changeFile = false;
+  bool dontStore = false;
+  FILE* file = nullptr;
+  std::string input = "";
+  std::vector<match*> matches = std::vector<match*>();
+  std::unordered_map<std::string, eresults> global  = std::unordered_map<std::string, eresults>();
 
   context() {
     context(nullptr);
@@ -61,22 +55,10 @@ public:
 
   context(FILE* _file){
     file = _file;
-    input = "";
-    inputPointer = 0;
-    matches = std::vector<match*>();
-    global = std::unordered_map<std::string, eresults>();
-    changeFile = false;
-    dontStore = false;
   };
 
   context(std::string _input) {
-    file = nullptr;
     input = _input;
-    inputPointer = 0;
-    matches = std::vector<match*>();
-    global = std::unordered_map<std::string, eresults>();
-    changeFile = false;
-    dontStore = false;
   }
 
   std::string getChars(u_int64_t amount);
@@ -91,8 +73,7 @@ public:
   context* copy();
 
 private:
-  u_int64_t inputPointer;
-  u_int64_t lineNumber;
+  u_int64_t inputPointer = 0;
 };
 
 #endif
