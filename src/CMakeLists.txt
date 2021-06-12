@@ -20,21 +20,21 @@ FLEX_TARGET(BASE_SCANNER base.l ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.cpp)
 ADD_FLEX_BISON_DEPENDENCY(BASE_SCANNER BASE_PARSER)
 
 set(VORE_SOURCES
-  ${CMAKE_CURRENT_BINARY_DIR}/vore.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/match.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/ast_execute.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/ast_match.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/ast_print.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/ast_string.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/ast_evaluate.cpp
+  vore.cpp
+  match.cpp
+  ast_execute.cpp
+  ast_match.cpp
+  ast_print.cpp
+  ast_string.cpp
+  ast_evaluate.cpp
   ${BISON_BASE_PARSER_OUTPUTS}
   ${FLEX_BASE_SCANNER_OUTPUTS}
 )
 
 set(VORE_HEADERS
-  ${CMAKE_CURRENT_BINARY_DIR}/vore.hpp
-  ${CMAKE_CURRENT_BINARY_DIR}/ast.hpp
-  ${CMAKE_CURRENT_BINARY_DIR}/match.hpp
+  vore.hpp
+  ast.hpp
+  match.hpp
 )
 
 add_library(voreLib OBJECT ${VORE_SOURCES})
