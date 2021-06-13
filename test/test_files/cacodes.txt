@@ -1,0 +1,5 @@
+1	Deductible Amount
+
+2	Coinsurance Amount
+
+3	Co-payment Amount

@@ -53,7 +53,7 @@ extern program* root;
 %token<str> EXACTLY LEAST OR MOST BETWEEN
 %token<str> AND NOT FEWEST IN ANY
 %token<str> SOL EOL SOF mEOF
-%token<str> WHITESPACE DIGIT
+%token<str> WHITESPACE DIGIT LETTER UPPER LOWER
 %token<str> STRING IDENTIFIER SUBROUTINE
 %token<num> NUMBER
 %token<str> ASSIGN LEFTPAREN RIGHTPAREN
@@ -169,6 +169,12 @@ ATOM : ANY { $$ = new any(); }
      | NOT WHITESPACE { $$ = new whitespace(true); }
      | DIGIT { $$ = new digit(false); }
      | NOT DIGIT { $$ = new digit(true); }
+     | LETTER { $$ = new letter(false); }
+     | NOT LETTER { $$ = new letter(true); }
+     | UPPER { $$ = new upper(false); }
+     | NOT UPPER { $$ = new upper(true); }
+     | LOWER { $$ = new lower(false); }
+     | NOT LOWER { $$ = new lower(true); }
      | IDENTIFIER { $$ = new identifier($1); }
      | STRING { $$ = new string($1, false); }
      | NOT STRING { $$ = new string($2, true); }

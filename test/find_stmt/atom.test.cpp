@@ -84,3 +84,42 @@ TEST_CASE("find not digit", "[not, digit, atleast]") {
   auto results = Vore::execute("09834745:)0299432718");
   SINGLE_MATCH(results, 8, 2, ":)");
 }
+
+TEST_CASE("find letter", "[letter, atleast]") {
+  Vore::compile("find all at least 5 letter");
+  auto results = Vore::execute("432bfs_ad09nifdo0909j0ng0");
+  SINGLE_MATCH(results, 11, 5, "nifdo");
+}
+
+TEST_CASE("find upper followed by lower", "[upper, lower, atleast, atmost]") {
+  Vore::compile("find all at most 3 upper at least 3 lower");
+  auto results = Vore::execute("j0f82b3HFjfoj9HQi0jfnaI0");
+  REQUIRE(results.size() == 1);
+  REQUIRE(results[0]->matches.size() == 2);
+
+  IS_MATCH(results[0]->matches[0], 7, 6, "HFjfoj");
+  IS_MATCH(results[0]->matches[1], 18, 4, "jfna");
+}
+
+TEST_CASE("find not upper", "[upper, not, atmost]") {
+  Vore::compile("find all at most 3 not upper");
+  auto results = Vore::execute("JBFOVIU23aBEOIBCS");
+  SINGLE_MATCH(results, 7, 3, "23a");
+}
+
+TEST_CASE("find not lower", "[lower, not, atmost]") {
+  Vore::compile("find all at most 5 not lower");
+  auto results = Vore::execute("blaieru12.&Rbaelirbv");
+  SINGLE_MATCH(results, 7, 5, "12.&R");
+}
+
+
+TEST_CASE("find not letter", "[letter, not, atmost]") {
+  Vore::compile("find all at most 5 not letter");
+  auto results = Vore::execute("flibasldiBA12/ %LIFsdfasdf*0()BEILBAF");
+  REQUIRE(results.size() == 1);
+  REQUIRE(results[0]->matches.size() == 2);
+
+  IS_MATCH(results[0]->matches[0], 11, 5, "12/ %");
+  IS_MATCH(results[0]->matches[1], 26, 4, "*0()");
+}

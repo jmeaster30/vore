@@ -2,10 +2,11 @@
 
 #include <iostream>
 #include <sstream>
+#include <filesystem>
 
 std::vector<context*> program::execute(std::vector<std::string> files, vore_options vo)
 {
-  std::vector<FILE*> opened_files = std::vector<FILE*>();
+  std::vector<std::pair<std::string, FILE*>*> opened_files = std::vector<std::pair<std::string, FILE*>*>();
   std::vector<context*> contexts = std::vector<context*>();
   std::unordered_map<std::string, eresults> global = std::unordered_map<std::string, eresults>();
   
@@ -13,44 +14,55 @@ std::vector<context*> program::execute(std::vector<std::string> files, vore_opti
     FILE* ofile = fopen(file.c_str(), "r");
     if (ofile == nullptr) {
       std::cout << "ERROR : the input file '" << file << "' could not be opened." << std::endl;
-      //TODO Close all of the previously opened files
+      for (auto fpair : opened_files) {
+        fclose(fpair->second);
+        free(fpair);
+      }
       return std::vector<context*>();
     }
-    opened_files.push_back(ofile);
+    opened_files.push_back(new std::pair(file, ofile));
   }
 
   for (auto stmt : *_stmts) {
-    //TODO think of a better way to do this
     if (stmt->_multifile) {
-      for (auto ofile : opened_files) {
-        context* toAdd = new context(ofile);
+      for (auto fpair : opened_files) {
+        auto& [filename, file] = *fpair;
+        context* toAdd = new context(filename, file);
         toAdd->global = global;
         
-        stmt->execute(toAdd);
+        stmt->execute(toAdd, vo);
 
         global = toAdd->global;
-        if (toAdd->changeFile) opened_files.push_back(toAdd->file);
+        if (toAdd->appendFile) opened_files.push_back(new std::pair(toAdd->filename, toAdd->file));
+        if (toAdd->changeFile) 
+        {
+          free(fpair);
+          fpair = new std::pair(toAdd->filename, toAdd->file);
+        }
         if (!toAdd->dontStore) contexts.push_back(toAdd);
-
-        //we could probably close the ofile here and do ofile = fopen. I think that may work even though it may look a little sketchy
       }
     }
     else
     {
-      FILE* ofile = opened_files[0];
-      context* toAdd = new context(ofile);
+      auto& [filename, file] = *opened_files[0];
+      context* toAdd = new context(filename, file);
       toAdd->global = global;
         
-      stmt->execute(toAdd);
+      stmt->execute(toAdd, vo);
 
       global = toAdd->global;
-      if (toAdd->changeFile) opened_files.push_back(toAdd->file);
+      if (toAdd->appendFile) opened_files.push_back(new std::pair(toAdd->filename, toAdd->file));
+      if (toAdd->changeFile) {
+        free(opened_files[0]);
+        opened_files[0] = new std::pair(toAdd->filename, toAdd->file);
+      }
       if (!toAdd->dontStore) contexts.push_back(toAdd);
     }
   }
 
-  for(auto ofile : opened_files) {
-    fclose(ofile);
+  for(auto fpair : opened_files) {
+    fclose(fpair->second);
+    free(fpair);
   }
 
   return contexts;
@@ -66,7 +78,7 @@ std::vector<context*> program::execute(std::string input, vore_options vo)
     context* toAdd = new context(input);
     toAdd->global = global;
 
-    stmt->execute(toAdd);
+    stmt->execute(toAdd, vo);
 
     global = toAdd->global;
     if (toAdd->changeFile) ctxtFile = toAdd->file;
@@ -90,6 +102,7 @@ context* findMatches(context* ctxt, element* start, amount* amt)
     if(newMatch != nullptr && newMatch->match_length > 0) {
       newMatch->lineNumber = lineNumber;
       numMatches += 1;
+      newMatch->matchNumber = numMatches;
       if (numMatches > amt->_start && numMatches <= amt->_start + amt->_length) {
         ctxt->matches.push_back(newMatch);
       }
@@ -108,25 +121,76 @@ context* findMatches(context* ctxt, element* start, amount* amt)
   return ctxt;
 }
 
-eresults convertvar(std::string value) {
-  return {1, false, value, 0, nullptr};
+void replaceFile(context* ctxt, vore_options vo)
+{
+  auto originalFile = ctxt->file;
+  //make sure we are at the beginning of the file
+  fseek(originalFile, 0, SEEK_SET);
+
+  std::filesystem::path filepath = ctxt->filename;
+  std::string newFileName = filepath.stem().string() + ".vore" + filepath.extension().string();
+  filepath.replace_filename(newFileName);
+
+  FILE* newFile = fopen(filepath.c_str(), "w");
+  if (newFile == nullptr) {
+    std::cout << "uh oh : " << filepath.c_str() << std::endl;
+    exit(1);
+  }
+
+  u_int64_t currentFileOffset = 0;
+  u_int64_t matchNumber = 0;
+  for(;;) {
+    std::cout << "hmm" << std::endl;
+    if (matchNumber < ctxt->matches.size() && ctxt->matches[matchNumber]->file_offset == currentFileOffset) {
+      match* currentMatch = ctxt->matches[matchNumber];
+      std::cout << "match" << std::endl;
+      fputs(currentMatch->replacement.c_str(), newFile);
+      matchNumber += 1;
+      currentFileOffset += currentMatch->match_length;
+      fseek(originalFile, currentMatch->match_length, SEEK_CUR);
+    } else {
+      std::cout << "ddiiiiesss" << std::endl;
+      int c = fgetc(originalFile);
+      currentFileOffset += 1;
+      if (c == EOF) {
+        std::cout << "BREAK" << std::endl;
+        break;
+      }
+      std::cout << "putc" << std::endl;
+      fputc(c, newFile);
+    }
+  }
+
+  std::cout << "done" << std::endl;
+
+  fclose(ctxt->file);
+
+  std::cout << "close" << std::endl;
+
+  fclose(newFile);
+
+  ctxt->file = fopen(filepath.c_str(), "r");
+  ctxt->filename = filepath;
 }
 
-void replacestmt::execute(context* ctxt)
+void replacestmt::execute(context* ctxt, vore_options vo)
 {
   findMatches(ctxt, _start_element, _matchNumber);
+
+  ctxt->changeFile = true;
 
   for (auto match : ctxt->matches) {
     std::unordered_map<std::string, eresults> vars = ctxt->global;
     for (auto var : match->variables) {
-      vars[var.first] = convertvar(var.second);
+      vars[var.first] = estring(var.second);
     }
 
     //add in match variables here
-    vars["match"] = {1, false, match->value, 0, nullptr};
-    vars["matchLength"] = {2, false, "", match->match_length, nullptr};
-    vars["fileOffset"] = {2, false, "", match->file_offset, nullptr};
-    vars["lineNumber"] = {2, false, "", match->lineNumber, nullptr};
+    vars["match"] = estring(match->value);
+    vars["matchLength"] = enumber(match->match_length);
+    vars["matchNumber"] = enumber(match->matchNumber);
+    vars["fileOffset"] = enumber(match->file_offset);
+    vars["lineNumber"] = enumber(match->lineNumber);
 
     std::stringstream ss = std::stringstream();
     for (auto a : *_atoms) {
@@ -141,23 +205,23 @@ void replacestmt::execute(context* ctxt)
     match->replacement = ss.str();
   }
 
-  //TODO do the file modification
+  replaceFile(ctxt, vo);
 }
 
-void findstmt::execute(context* ctxt)
+void findstmt::execute(context* ctxt, vore_options vo)
 {
   findMatches(ctxt, _start_element, _matchNumber);
 }
 
-void usestmt::execute(context* ctxt)
+void usestmt::execute(context* ctxt, vore_options vo)
 {
   ctxt->dontStore = true;
-  ctxt->changeFile = true;
+  ctxt->appendFile = true;
   ctxt->input = "";
   ctxt->file = fopen(_filename.c_str(), "r");
 }
 
-void repeatstmt::execute(context* ctxt)
+void repeatstmt::execute(context* ctxt, vore_options vo)
 {
   for(u_int64_t i = 0; i < _number; i++) {
     context* new_ctxt = new context();
@@ -168,14 +232,14 @@ void repeatstmt::execute(context* ctxt)
       new_ctxt->input = ctxt->input;
     }
 
-    _statement->execute(new_ctxt);
+    _statement->execute(new_ctxt, vo);
 
     ctxt->global = new_ctxt->global;
     ctxt->matches.insert(ctxt->matches.end(), new_ctxt->matches.begin(), new_ctxt->matches.end());
   }
 }
 
-void setstmt::execute(context* ctxt)
+void setstmt::execute(context* ctxt, vore_options vo)
 {
   ctxt->dontStore = true;
   ctxt->changeFile = false;

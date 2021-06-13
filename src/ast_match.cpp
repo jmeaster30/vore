@@ -1,5 +1,7 @@
 #include "ast.hpp"
 
+#include <iostream>
+
 match* string_match(match* currentMatch, context* ctxt, std::string _value, u_int64_t _value_len, bool _not, element* _next);
 
 match* maxToMinMatch(match* currentMatch, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next);
@@ -198,6 +200,7 @@ match* in::isMatch(match* currentMatch, context* ctxt)
 
 match* assign::isMatch(match* currentMatch, context* ctxt)
 {
+  //we need to backtrack into the primary if we fail the next match
   match* assignMatch = _primary->isMatch(currentMatch, ctxt);
 
   if(assignMatch == nullptr) return nullptr;
@@ -209,6 +212,7 @@ match* assign::isMatch(match* currentMatch, context* ctxt)
 
 match* rassign::isMatch(match* currentMatch, context* ctxt)
 {
+  //this probably does not backtrack correctly either
   currentMatch->subroutines[_id] = _primary;
   match* subroutineMatch = _primary->isMatch(currentMatch, ctxt);
 
@@ -351,6 +355,7 @@ match* sol::isMatch(match* currentMatch, context* ctxt)
 match* eol::isMatch(match* currentMatch, context* ctxt)
 {
   if(ctxt->endOfFile()) {
+    std::cout << "matched end of file" << std::endl;
     return (_next == nullptr) ? currentMatch : _next->isMatch(currentMatch, ctxt);
   }
 
@@ -358,9 +363,11 @@ match* eol::isMatch(match* currentMatch, context* ctxt)
   if(c == "\n")
   {
     ctxt->seekBack(1);
+    std::cout << "matched end of line" << c << std::endl;
     return (_next == nullptr) ? currentMatch : _next->isMatch(currentMatch, ctxt);
   }
 
+  std::cout << "no matched end of line : " << c << std::endl;
   ctxt->seekBack(1);
   return nullptr;
 }
@@ -383,20 +390,15 @@ match* eof::isMatch(match* currentMatch, context* ctxt)
   return nullptr;
 }
 
-match* whitespace::isMatch(match* currentMatch, context* ctxt)
+match* charClassTest(match* currentMatch, context* ctxt, element* next, bool n, std::string nextChar, bool test)
 {
   match* newMatch = currentMatch->copy();
 
-  std::string nextChar = ctxt->getChars(1);
-
-  bool whitespace = nextChar[0] == ' ' || nextChar[0] == '\t' || nextChar[0] == '\v' ||
-      nextChar[0] == '\r' || nextChar[0] == '\n' || nextChar[0] == '\f';
-
-  if ((whitespace && !_not) || (!whitespace && _not)) {
+  if ((test && !n) || (!test && n)) {
     newMatch->value += nextChar[0];
     newMatch->match_length += 1;
     newMatch->lastMatch = nextChar;
-    return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
+    return (next == nullptr) ? newMatch : next->isMatch(newMatch, ctxt);
   }
 
   free(newMatch);
@@ -404,24 +406,45 @@ match* whitespace::isMatch(match* currentMatch, context* ctxt)
   return nullptr;
 }
 
+match* whitespace::isMatch(match* currentMatch, context* ctxt)
+{
+  std::string nextChar = ctxt->getChars(1);
+  bool whitespace = nextChar[0] == ' ' || nextChar[0] == '\t' || nextChar[0] == '\v' ||
+      nextChar[0] == '\r' || nextChar[0] == '\n' || nextChar[0] == '\f';
+
+  return charClassTest(currentMatch, ctxt, _next, _not, nextChar, whitespace);
+}
+
 match* digit::isMatch(match* currentMatch, context* ctxt)
 {
-  match* newMatch = currentMatch->copy();
-
   std::string nextChar = ctxt->getChars(1);
-
   bool digit = nextChar[0] >= '0' && nextChar[0] <= '9';
 
-  if ((digit && !_not) || (!digit && _not)) {
-    newMatch->value += nextChar[0];
-    newMatch->match_length += 1;
-    newMatch->lastMatch = nextChar;
-    return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
-  }
+  return charClassTest(currentMatch, ctxt, _next, _not, nextChar, digit);
+}
 
-  free(newMatch);
-  ctxt->seekBack(1);
-  return nullptr;
+match* letter::isMatch(match* currentMatch, context* ctxt)
+{
+  std::string nextChar = ctxt->getChars(1);
+  bool letter = (nextChar[0] >= 'a' && nextChar[0] <= 'z') || (nextChar[0] >= 'A' && nextChar[0] <= 'Z');
+
+  return charClassTest(currentMatch, ctxt, _next, _not, nextChar, letter);
+}
+
+match* lower::isMatch(match* currentMatch, context* ctxt)
+{
+  std::string nextChar = ctxt->getChars(1);
+  bool letter = nextChar[0] >= 'a' && nextChar[0] <= 'z';
+
+  return charClassTest(currentMatch, ctxt, _next, _not, nextChar, letter);
+}
+
+match* upper::isMatch(match* currentMatch, context* ctxt)
+{
+  std::string nextChar = ctxt->getChars(1);
+  bool letter = nextChar[0] >= 'A' && nextChar[0] <= 'Z';
+
+  return charClassTest(currentMatch, ctxt, _next, _not, nextChar, letter);
 }
 
 match* identifier::isMatch(match* currentMatch, context* ctxt)
@@ -464,6 +487,7 @@ match* string_match(match* currentMatch, context* ctxt, std::string _value, u_in
     newMatch->value += peekedString;
     newMatch->lastMatch = peekedString;
     newMatch->match_length += _value_len;
+    std::cout << "found match (string_match) : " << newMatch->value << std::endl;
     return (_next == nullptr) ? newMatch : _next->isMatch(newMatch, ctxt);
   }
 

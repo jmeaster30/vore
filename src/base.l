@@ -59,6 +59,9 @@ int ProcessToken(const char* name, int token_parser_id, int type);
 "eof"        { return ProcessToken("mEOF", mEOF, 0); }
 "whitespace" { return ProcessToken("WHITESPACE", WHITESPACE, 0); }
 "digit"      { return ProcessToken("DIGIT",      DIGIT, 0); }
+"letter"     { return ProcessToken("LETTER",     LETTER, 0); }
+"upper"      { return ProcessToken("UPPER",      UPPER, 0); }
+"lower"      { return ProcessToken("LOWER",      LOWER, 0); }
 
 "case"       { return ProcessToken("CASE",      CASE, 0); }
 "when"       { return ProcessToken("WHEN",      WHEN, 0); }

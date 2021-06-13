@@ -4,6 +4,7 @@ set(TEST_SOURCES
   find_stmt/initial.test.cpp
   find_stmt/atom.test.cpp
   find_stmt/in.test.cpp
+  find_stmt/extra.test.cpp
 )
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

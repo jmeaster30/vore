@@ -40,10 +40,9 @@ void Vore::compile(std::string source, bool stringSource)
   }
 
   if (root == nullptr) {
-      std::cout << "ERROR :: ParsingError - There was an error while parsing the source." << std::endl;
-      return;
-    }
-  
+    std::cout << "ERROR :: ParsingError - There was an error while parsing the source." << std::endl;
+    return;
+  }
 
   prog = root;
 }
@@ -57,6 +56,8 @@ std::vector<context*> Vore::execute(std::vector<std::string> files, vore_options
   if(prog == nullptr) {
     return std::vector<context*>();
   }
+
+  prog->print();
 
   return prog->execute(files, vo);
 }

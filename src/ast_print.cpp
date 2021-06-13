@@ -182,6 +182,21 @@ void digit::print()
   std::cout << "[DIGIT]";
 }
 
+void letter::print()
+{
+  std::cout << "[LETTER]";
+}
+
+void lower::print()
+{
+  std::cout << "[LOWER]";
+}
+
+void upper::print()
+{
+  std::cout << "[UPPER]";
+}
+
 void identifier::print()
 {
   std::cout << "[ID " << _id << "]";
