@@ -1,12 +1,10 @@
-#ifndef __match_h__
-#define __match_h__
+#ifndef __context_h__
+#define __context_h__
 
 #include <stdio.h>
 #include <string>
 #include <string.h> // for memset
-#include <vector>
 #include <unordered_map>
-#include <stack>
 
 //forward declarations
 class primary;
@@ -26,26 +24,6 @@ inline eresults estring(std::string value) { return {1, false, value, 0, nullptr
 inline eresults enumber(u_int64_t value) { return {2, false, "", value, nullptr}; }
 inline eresults efunc(funcdec* value) { return {3, false, "", 0, value}; }
 
-class match {
-public:
-  std::string value = "";
-  std::string replacement = "";
-  std::string lastMatch = "";
-  u_int64_t file_offset = 0;
-  u_int64_t lineNumber = 0;
-  u_int64_t matchNumber = 0;
-  u_int64_t match_length = 0;
-  std::unordered_map<std::string, std::string> variables = std::unordered_map<std::string, std::string>();
-  std::unordered_map<std::string, primary*> subroutines = std::unordered_map<std::string, primary*>();
-
-  match(u_int64_t startOffset){
-    file_offset = startOffset;
-  };
-
-  match* copy();
-  void print();
-};
-
 class context {
 public:
   bool appendFile = false;
@@ -54,8 +32,9 @@ public:
   FILE* file = nullptr;
   std::string filename = "";
   std::string input = "";
-  std::vector<match*> matches = std::vector<match*>();
   std::unordered_map<std::string, eresults> global  = std::unordered_map<std::string, eresults>();
+  std::unordered_map<std::string, std::string> variables = std::unordered_map<std::string, std::string>();
+  std::unordered_map<std::string, primary*> subroutines = std::unordered_map<std::string, primary*>();
 
   context() {
     context(nullptr);

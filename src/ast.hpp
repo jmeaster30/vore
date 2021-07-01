@@ -7,8 +7,9 @@
 
 #include <vector>
 
+#include "vore.hpp"
 #include "vore_options.hpp"
-#include "match.hpp"
+#include "context.hpp"
 
 class node {
 public:
@@ -27,7 +28,7 @@ class stmt : public node {
 public:
   bool _multifile = false;
   stmt(bool multifile) : _multifile(multifile) {}
-  virtual void execute(context* ctxt, vore_options vo) = 0;
+  virtual MatchGroup execute(context* ctxt, vore_options vo) = 0;
   virtual void print() = 0;
 };
 
@@ -35,22 +36,28 @@ class element : public node {
 public:
   bool _fewest;
   element* _next;
-  element* _previous;
+
+  std::string _value;
 
   element(bool fewest) {
     _fewest = fewest;
     _next = nullptr;
-    _previous = nullptr;
+    _value = "";
   }
-  virtual match* isMatch(match* currentMatch, context* context) = 0;
+  virtual bool isMatch(context* context) = 0;
   virtual void print() = 0;
+  virtual void clear();
+  std::string getValue();
+  virtual element* copy() = 0;
 };
 
 class primary : public element {
 public:
   primary():element(false){}
-  virtual match* isMatch(match* currentMatch, context* context) = 0;
+  virtual bool isMatch(context* context) = 0;
   virtual void print() = 0;
+  virtual void clear();
+  virtual primary* copy() = 0;
 };
 
 class atom : public primary {
@@ -60,8 +67,11 @@ public:
   atom(bool n){
     _not = n;
   }
-  virtual match* isMatch(match* currentMatch, context* context) = 0;
+  virtual bool isMatch(context* context) = 0;
   virtual void print() = 0;
+  virtual void clear();
+  virtual atom* copy() = 0;
+  virtual u_int64_t getMaxLength(context* ctxt);
 };
 
 class amount : public node {
@@ -90,8 +100,8 @@ public:
     _stmts = stmts;
   }
 
-  std::vector<context*> execute(std::vector<std::string> files, vore_options vo);
-  std::vector<context*> execute(std::string input, vore_options vo);
+  std::vector<MatchGroup> execute(std::vector<std::string> files, vore_options vo);
+  std::vector<MatchGroup> execute(std::string input, vore_options vo);
 
   void print();
 };
@@ -108,7 +118,7 @@ public:
     _atoms = atoms;
   }
 
-  void execute(context* ctxt, vore_options vo);
+  MatchGroup execute(context* ctxt, vore_options vo);
   void print();
 };
 
@@ -122,7 +132,7 @@ public:
     _start_element = start;
   }
 
-  void execute(context* ctxt, vore_options vo);
+  MatchGroup execute(context* ctxt, vore_options vo);
   void print();
 };
 
@@ -134,7 +144,7 @@ public:
     _filename = filename;
   }
 
-  void execute(context* ctxt, vore_options vo);
+  MatchGroup execute(context* ctxt, vore_options vo);
   void print();
 };
 
@@ -151,7 +161,7 @@ public:
     }
   }
 
-  void execute(context* ctxt, vore_options vo);
+  MatchGroup execute(context* ctxt, vore_options vo);
   void print();
 };
 
@@ -165,7 +175,7 @@ public:
     _expression = expression;
   }
 
-  void execute(context* ctxt, vore_options vo);
+  MatchGroup execute(context* ctxt, vore_options vo);
   void print();
 };
 
@@ -179,8 +189,10 @@ public:
     _primary = primary;
   }
 
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  void clear();
+  element* copy();
 };
 
 class least : public element {
@@ -193,8 +205,10 @@ public:
     _primary = primary;
   }
 
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  void clear();
+  element* copy();
 };
 
 class most : public element {
@@ -207,8 +221,10 @@ public:
     _primary = primary;
   }
 
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  void clear();
+  element* copy();
 };
 
 class between : public element {
@@ -223,8 +239,10 @@ public:
     _primary = primary;
   }
 
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  void clear();
+  element* copy();
 };
 
 class in : public element {
@@ -238,8 +256,10 @@ public:
     _atoms = atoms;
   }
 
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  void clear();
+  element* copy();
 };
 
 class assign : public element {
@@ -252,8 +272,10 @@ public:
     _primary = primary;
   }
 
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  void clear();
+  element* copy();
 };
 
 class rassign : public element {
@@ -266,8 +288,10 @@ public:
     _primary = primary;
   }
 
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  void clear();
+  element* copy();
 };
 
 class orelement : public element {
@@ -280,8 +304,10 @@ public:
     _rhs = rhs;
   }
 
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  void clear();
+  element* copy();
 };
 
 class subelement : public primary {
@@ -292,8 +318,10 @@ public:
     _element = element;
   }
 
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  void clear();
+  primary* copy();
 };
 
 class range : public atom {
@@ -306,78 +334,90 @@ public:
     _to = to;
   }
 
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  atom* copy();
+  u_int64_t getMaxLength(context* ctxt);
 };
 
 class any : public atom {
 public:
   any() : atom(false) {}
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  atom* copy();
 };
 
 class sol : public atom {
 public:
   sol() : atom(false) {}
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  atom* copy();
 };
 
 class eol : public atom {
 public:
   eol() : atom(false) {}
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  atom* copy();
 };
 
 class sof : public atom {
 public:
   sof() : atom(false) {}
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  atom* copy();
 };
 
 class eof : public atom {
 public:
   eof() : atom(false) {}
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  atom* copy();
 };
 
 class whitespace : public atom {
 public:
   whitespace(bool n) : atom(n) {}
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  atom* copy();
 };
 
 class digit : public atom {
 public:
   digit(bool n) : atom(n) {}
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  atom* copy();
 };
 
 class letter : public atom {
 public:
   letter(bool n) : atom(n) {}
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  atom* copy();
 };
 
 class upper : public atom {
 public:
   upper(bool n) : atom(n) {}
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  atom* copy();
 };
 
 class lower : public atom {
 public:
   lower(bool n) : atom(n) {}
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  atom* copy();
 };
 
 class identifier : public atom {
@@ -388,8 +428,10 @@ public:
     _id = id;
   }
 
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  atom* copy();
+  u_int64_t getMaxLength(context* ctxt);
 };
 
 class subroutine : public primary {
@@ -400,19 +442,22 @@ public:
     _id = id;
   }
 
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  primary* copy();
 };
 
 class string : public atom {
 public:
-  std::string _value;
-  u_int64_t _value_len;
+  std::string _string_val;
+  u_int64_t _string_len;
 
   string(std::string value, bool n);
 
-  match* isMatch(match* currentMatch, context* context);
+  bool isMatch(context* context);
   void print();
+  atom* copy();
+  u_int64_t getMaxLength(context* ctxt);
 };
 
 /* computation stuff */

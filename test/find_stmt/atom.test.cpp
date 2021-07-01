@@ -30,13 +30,13 @@ TEST_CASE("find eol newline", "[eol, string]") {
 
   auto results = Vore::execute((std::vector<std::string>){ "test_files/multiline.txt" });
   REQUIRE(results.size() == 1);
-  REQUIRE(results[0]->matches.size() == 5);
+  REQUIRE(results[0].matches.size() == 5);
 
-  IS_MATCH(results[0]->matches[0], 32, 1, "\n");
-  IS_MATCH(results[0]->matches[1], 69, 1, "\n");
-  IS_MATCH(results[0]->matches[2], 74, 1, "\n");
-  IS_MATCH(results[0]->matches[3], 82, 1, "\n");
-  IS_MATCH(results[0]->matches[4], 119, 1, "\n");
+  IS_MATCH(results[0].matches[0], 32, 1, "\n");
+  IS_MATCH(results[0].matches[1], 69, 1, "\n");
+  IS_MATCH(results[0].matches[2], 74, 1, "\n");
+  IS_MATCH(results[0].matches[3], 82, 1, "\n");
+  IS_MATCH(results[0].matches[4], 119, 1, "\n");
 }
 
 TEST_CASE("find sof This", "[sof, string]") {
@@ -95,10 +95,10 @@ TEST_CASE("find upper followed by lower", "[upper, lower, atleast, atmost]") {
   Vore::compile("find all at most 3 upper at least 3 lower");
   auto results = Vore::execute("j0f82b3HFjfoj9HQi0jfnaI0");
   REQUIRE(results.size() == 1);
-  REQUIRE(results[0]->matches.size() == 2);
+  REQUIRE(results[0].matches.size() == 2);
 
-  IS_MATCH(results[0]->matches[0], 7, 6, "HFjfoj");
-  IS_MATCH(results[0]->matches[1], 18, 4, "jfna");
+  IS_MATCH(results[0].matches[0], 7, 6, "HFjfoj");
+  IS_MATCH(results[0].matches[1], 18, 4, "jfna");
 }
 
 TEST_CASE("find not upper", "[upper, not, atmost]") {
@@ -118,8 +118,8 @@ TEST_CASE("find not letter", "[letter, not, atmost]") {
   Vore::compile("find all at most 5 not letter");
   auto results = Vore::execute("flibasldiBA12/ %LIFsdfasdf*0()BEILBAF");
   REQUIRE(results.size() == 1);
-  REQUIRE(results[0]->matches.size() == 2);
+  REQUIRE(results[0].matches.size() == 2);
 
-  IS_MATCH(results[0]->matches[0], 11, 5, "12/ %");
-  IS_MATCH(results[0]->matches[1], 26, 4, "*0()");
+  IS_MATCH(results[0].matches[0], 11, 5, "12/ %");
+  IS_MATCH(results[0].matches[1], 26, 4, "*0()");
 }

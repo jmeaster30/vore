@@ -6,7 +6,7 @@ TEST_CASE("Find all bois", "[string, assign]") {
   auto results = Vore::execute("big boy :)");
   SINGLE_MATCH(results, 4, 3, "boy");
 
-  auto vars = results[0]->matches[0]->variables;
+  auto vars = results[0].matches[0].variables;
   REQUIRE(vars.size() == 1);
   
   auto var = vars.begin();
@@ -19,7 +19,7 @@ TEST_CASE("Find two bois", "[string, assign, identifier]") {
    auto results = Vore::execute("big boyboy!");
    SINGLE_MATCH(results, 4, 6, "boyboy");
    
-   auto vars = results[0]->matches[0]->variables;
+   auto vars = results[0].matches[0].variables;
    REQUIRE(vars.size() == 1);
 
    auto var = vars.begin();
@@ -40,18 +40,18 @@ TEST_CASE("Find OR Test", "[string, or]") {
   auto results = Vore::execute("cowaihefb");
   REQUIRE(results.size() == 1);
 
-  auto singleContext = results[0];
-  REQUIRE(singleContext->matches.size() == 2);
+  auto group = results[0];
+  REQUIRE(group.matches.size() == 2);
 
-  auto firstMatch = singleContext->matches[0];
-  REQUIRE(firstMatch->file_offset == 3);
-  REQUIRE(firstMatch->match_length == 1);
-  REQUIRE(firstMatch->value == "a");
+  auto firstMatch = group.matches[0];
+  REQUIRE(firstMatch.file_offset == 3);
+  REQUIRE(firstMatch.match_length == 1);
+  REQUIRE(firstMatch.value == "a");
 
-  auto secondMatch = singleContext->matches[1];
-  REQUIRE(secondMatch->file_offset == 8);
-  REQUIRE(secondMatch->match_length == 1);
-  REQUIRE(secondMatch->value == "b");
+  auto secondMatch = group.matches[1];
+  REQUIRE(secondMatch.file_offset == 8);
+  REQUIRE(secondMatch.match_length == 1);
+  REQUIRE(secondMatch.value == "b");
 }
 
 TEST_CASE("Find Or/Assign/Subexpression", "[string, or, assign, sub]") {
@@ -60,7 +60,7 @@ TEST_CASE("Find Or/Assign/Subexpression", "[string, or, assign, sub]") {
   auto results = Vore::execute("I hope this is a success");
   SINGLE_MATCH(results, 17, 7, "success");
   
-  auto vars = results[0]->matches[0]->variables;
+  auto vars = results[0].matches[0].variables;
   REQUIRE(vars.size() == 1);
   
   auto var = vars.begin();
@@ -95,12 +95,12 @@ TEST_CASE("Find between 2 and 4", "[string, between]") {
   REQUIRE(fiveResults.size() == 1);
 
   auto fiveContext = fiveResults[0];
-  REQUIRE(fiveContext->matches.size() == 1);
+  REQUIRE(fiveContext.matches.size() == 1);
 
-  auto fiveMatch = fiveContext->matches[0];
-  REQUIRE(fiveMatch->file_offset == 6);
-  REQUIRE(fiveMatch->match_length != 15);
-  REQUIRE(fiveMatch->value != "wowwowwowwowwow");
+  auto fiveMatch = fiveContext.matches[0];
+  REQUIRE(fiveMatch.file_offset == 6);
+  REQUIRE(fiveMatch.match_length != 15);
+  REQUIRE(fiveMatch.value != "wowwowwowwowwow");
 }
 
 TEST_CASE("Find between 2 and 4 FEWEST", "[string, between, fewest]") {
@@ -133,13 +133,18 @@ TEST_CASE("at least zero no match", "[string, atleast]") {
   Vore::compile("find all at least 0 'waaa'");
   auto firstResults = Vore::execute("there will be not matches");
   REQUIRE(firstResults.size() == 1);
-  REQUIRE(firstResults[0]->matches.size() == 0);
+  REQUIRE(firstResults[0].matches.size() == 0);
 }
 
 TEST_CASE("find at most 5", "[string, atleast]") {
   Vore::compile("find all at most 5 'lo'");
-  auto firstResults = Vore::execute("aaa lolololololol");
-  SINGLE_MATCH(firstResults, 4, 10, "lololololo");
+  auto results = Vore::execute("aaa lolololololol");
+  REQUIRE(results.size() == 1);
+
+  auto group = results[0];
+  REQUIRE(group.matches.size() == 2);
+  IS_MATCH(group.matches[0], 4, 10, "lololololo");
+  IS_MATCH(group.matches[1], 14, 2, "lo");
 }
 
 TEST_CASE("find at most 3 fewest", "[string, atleast, fewest]") {
@@ -153,12 +158,12 @@ TEST_CASE("find with subroutine or", "[string, subroutine, or]") {
   auto results = Vore::execute("please ba ab bb aa");
   REQUIRE(results.size() == 1);
 
-  auto ctxt = results[0];
-  REQUIRE(ctxt->matches.size() == 4);
-  IS_MATCH(ctxt->matches[0], 7, 2, "ba");
-  IS_MATCH(ctxt->matches[1], 10, 2, "ab");
-  IS_MATCH(ctxt->matches[2], 13, 2, "bb");
-  IS_MATCH(ctxt->matches[3], 16, 2, "aa");
+  auto group = results[0];
+  REQUIRE(group.matches.size() == 4);
+  IS_MATCH(group.matches[0], 7, 2, "ba");
+  IS_MATCH(group.matches[1], 10, 2, "ab");
+  IS_MATCH(group.matches[2], 13, 2, "bb");
+  IS_MATCH(group.matches[3], 16, 2, "aa");
 }
 
 TEST_CASE("find with recursive subroutine", "[string, subroutine, atleast]") {

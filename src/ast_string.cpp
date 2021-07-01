@@ -79,8 +79,8 @@ std::string FixEscapeCharacters(std::string val) {
 
 string::string(std::string val, bool n) : atom(n) {
   std::string fixed = FixEscapeCharacters(val);
-  _value = fixed;
-  _value_len = fixed.length();
+  _string_val = fixed;
+  _string_len = fixed.length();
 }
 
 compstr::compstr(std::string val) {

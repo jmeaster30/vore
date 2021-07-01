@@ -1,4 +1,5 @@
 #include "vore.hpp"
+#include "ast.hpp"
 #include "base.tab.hpp"
 
 #include <iostream>
@@ -47,30 +48,53 @@ void Vore::compile(std::string source, bool stringSource)
   prog = root;
 }
 
-std::vector<context*> Vore::execute(std::vector<std::string> files) {
+std::vector<MatchGroup> Vore::execute(std::vector<std::string> files) {
   vore_options vo;
   return Vore::execute(files, vo);
 };
 
-std::vector<context*> Vore::execute(std::vector<std::string> files, vore_options vo = {}) {
+std::vector<MatchGroup> Vore::execute(std::vector<std::string> files, vore_options vo = {}) {
   if(prog == nullptr) {
-    return std::vector<context*>();
+    return std::vector<MatchGroup>();
   }
-
-  prog->print();
 
   return prog->execute(files, vo);
 }
 
-std::vector<context*> Vore::execute(std::string input) {
+std::vector<MatchGroup> Vore::execute(std::string input) {
   vore_options vo;
   return Vore::execute(input, vo);
 };
 
-std::vector<context*> Vore::execute(std::string input, vore_options vo = {}) {
+std::vector<MatchGroup> Vore::execute(std::string input, vore_options vo = {}) {
   if(prog == nullptr) {
-    return std::vector<context*>();
+    return std::vector<MatchGroup>();
   }
 
   return prog->execute(input, vo);
+}
+
+void Match::print()
+{
+  std::cout << "value - '" << value << "'" << std::endl;
+  std::cout << "replacement - '" << replacement << "'" << std::endl;
+  std::cout << "file_offset - '" << file_offset << "'" << std::endl;
+  std::cout << "line_number - '" << line_number << "'" << std::endl;
+  std::cout << "match_number - '" << match_number << "'" << std::endl;
+  std::cout << "match_length - '" << match_length << "'" << std::endl;
+  std::cout << "variables: " << std::endl;\
+  for(auto& [name, value] : variables) {
+    std::cout << "\t" << name << " = " << value << std::endl;
+  }
+}
+
+void MatchGroup::print()
+{
+  std::cout << "MATCHES - " << (filename == "" ? "String Input" : filename) << std::endl;
+  u_int64_t numMatches = matches.size();
+  for (u_int64_t i = 0; i < numMatches; i++)
+  {
+    std::cout << "[" << (i + 1) << "/" << numMatches << "] ==============" << std::endl;
+    matches[i].print();
+  }
 }

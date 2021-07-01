@@ -47,8 +47,8 @@ int main(int argc, char** argv) {
   }
 
   auto results = Vore::execute(args.files, vo);
-  for(auto ctxt : results) {
-    ctxt->print();
+  for(auto group : results) {
+    group.print();
   }
   
   return 0;
