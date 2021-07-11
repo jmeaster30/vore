@@ -58,7 +58,7 @@ public:
   bool endOfFile();
 
   void print();
-  context* copy();
+  context* copy(bool reentrance);
 
 private:
   u_int64_t inputPointer = 0;

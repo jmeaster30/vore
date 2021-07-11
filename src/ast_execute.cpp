@@ -107,8 +107,7 @@ MatchGroup findMatches(context* ctxt, element* start, amount* amt)
     Match match = Match(currentPos);
 
     bool noMatch = true;
-    if (start->isMatch(ctxt)) {
-
+    if (start->isMatch(ctxt, false)) {
       match.value = start->getValue();
       match.match_length = match.value.length();
       match.variables = ctxt->variables;
@@ -129,7 +128,6 @@ MatchGroup findMatches(context* ctxt, element* start, amount* amt)
     }
 
     if (noMatch) {
-      ctxt->setPos(currentPos);
       if (ctxt->getChars(1) == "\n") lineNumber += 1;
     }
 
@@ -158,10 +156,8 @@ void replaceFile(MatchGroup group, context* ctxt, vore_options vo)
   u_int64_t currentFileOffset = 0;
   u_int64_t matchNumber = 0;
   for(;;) {
-    std::cout << "hmm" << std::endl;
     if (matchNumber < group.matches.size() && group.matches[matchNumber].file_offset == currentFileOffset) {
       Match currentMatch = group.matches[matchNumber];
-      std::cout << "match" << std::endl;
       fputs(currentMatch.replacement.c_str(), newFile);
       matchNumber += 1;
       currentFileOffset += currentMatch.match_length;

@@ -180,8 +180,7 @@ ATOM : ANY { $$ = new any(); }
      | NOT STRING { $$ = new string($2, true); }
      ;
 
-RANGE : STRING DASH STRING { $$ = new range($1, $3, false); }
-      | NOT STRING DASH STRING { $$ = new range($2, $4, true); }
+RANGE : STRING DASH STRING { $$ = new range($1, $3); }
       ;
 
 PRIMARY : ATOM { $$ = $1; }

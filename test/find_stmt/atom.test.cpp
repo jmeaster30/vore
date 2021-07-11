@@ -20,15 +20,14 @@ TEST_CASE("find any", "[any, atmost]") {
 
 TEST_CASE("find sol line eol", "[string, sol, eol]") {
   Vore::compile("find all sol 'line' eol");
-
   auto results = Vore::execute((std::vector<std::string>){ "test_files/multiline.txt" });
   SINGLE_MATCH(results, 70, 4, "line");
 }
 
 TEST_CASE("find eol newline", "[eol, string]") {
   Vore::compile("find all eol '\n'");
-
   auto results = Vore::execute((std::vector<std::string>){ "test_files/multiline.txt" });
+
   REQUIRE(results.size() == 1);
   REQUIRE(results[0].matches.size() == 5);
 
@@ -41,21 +40,18 @@ TEST_CASE("find eol newline", "[eol, string]") {
 
 TEST_CASE("find sof This", "[sof, string]") {
   Vore::compile("find all sof 'This'");
-
   auto results = Vore::execute((std::vector<std::string>){ "test_files/multiline.txt" });
   SINGLE_MATCH(results, 0, 4, "This");
 }
 
 TEST_CASE("find eol", "[eol, string]") {
   Vore::compile("find all ':)' eol");
-
   auto results = Vore::execute((std::vector<std::string>){ "test_files/multiline.txt" });
   SINGLE_MATCH(results, 130, 2, ":)");
 }
 
 TEST_CASE("find eof", "[eof, any]") {
   Vore::compile("find all exactly 9 any eof");
-
   auto results = Vore::execute((std::vector<std::string>){ "test_files/multiline.txt" });
   SINGLE_MATCH(results, 123, 9, "source :)");
 }
@@ -68,7 +64,6 @@ TEST_CASE("find escape chars", "[string]") {
 
 TEST_CASE("find whitespace", "[whitepsace, string]") {
   Vore::compile("find all whitespace 'source' whitespace");
-
   auto results = Vore::execute((std::vector<std::string>){ "test_files/multiline.txt" });
   SINGLE_MATCH(results, 122, 8, "\tsource ");
 }
@@ -117,6 +112,7 @@ TEST_CASE("find not lower", "[lower, not, atmost]") {
 TEST_CASE("find not letter", "[letter, not, atmost]") {
   Vore::compile("find all at most 5 not letter");
   auto results = Vore::execute("flibasldiBA12/ %LIFsdfasdf*0()BEILBAF");
+  
   REQUIRE(results.size() == 1);
   REQUIRE(results[0].matches.size() == 2);
 

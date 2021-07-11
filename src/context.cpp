@@ -27,7 +27,6 @@ void context::seekForward(u_int64_t value) {
   if(file != nullptr) {
     fseek(file, value, SEEK_CUR);
   }else{
-
     inputPointer += value;
   }
 }

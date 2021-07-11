@@ -1,18 +1,22 @@
 #include "ast.hpp"
 
+#include <optional>
+
 #include <iostream>
 
-bool string_match(std::string* value, context* ctxt, std::string _value, u_int64_t _value_len, bool _not, element* next);
+bool string_match(std::string* value, context* ctxt, std::string _value, u_int64_t _value_len, bool _not, bool reentrance, element* next);
 
-bool maxToMinMatch(std::string* value, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next);
-bool minToMaxMatch(std::string* value, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next);
+bool maxToMinMatch(std::string* value, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next, u_int64_t* iteration, bool reentrance);
+bool minToMaxMatch(std::string* value, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next, u_int64_t* iteration, bool reentrance);
 
-bool exactly::isMatch(context* ctxt)
+bool exactly::isMatch(context* ctxt, bool reentrance)
 {
+  if (reentrance && _iteration == 0) return false;
+  _iteration = 0;
   u_int64_t currentFileOffset = ctxt->getPos();
   for (int i = 0; i < _number; i++)
   {
-    if (!_primary->isMatch(ctxt)) {
+    if (!_primary->isMatch(ctxt, reentrance)) {
       ctxt->setPos(currentFileOffset);
       _value = "";
       return false;
@@ -21,58 +25,69 @@ bool exactly::isMatch(context* ctxt)
     _value += _primary->_value;
   }
 
-  return _next == nullptr ? true : _next->isMatch(ctxt);
+  if (_next == nullptr) {
+    return true;
+  } else {
+    if (!_next->isMatch(ctxt, reentrance)) {
+      ctxt->setPos(currentFileOffset);
+      _value = "";
+      return false;
+    }
+    return true;
+  }
 }
 
-bool least::isMatch(context* ctxt)
+bool least::isMatch(context* ctxt, bool reentrance)
 {
   bool result = false;
   if (_fewest) {
-    result = minToMaxMatch(&_value, ctxt, _primary, _number, -1, _next); //-1 wraps to the max 64bit integer
+    result = minToMaxMatch(&_value, ctxt, _primary, _number, -1, _next, &_iteration, reentrance);
   } else {
-    result = maxToMinMatch(&_value, ctxt, _primary, _number, -1, _next);
+    result = maxToMinMatch(&_value, ctxt, _primary, _number, -1, _next, &_iteration, reentrance);
   }
   return result;
 }
 
-bool most::isMatch(context* ctxt)
+bool most::isMatch(context* ctxt, bool reentrance)
 {
   bool result = false;
   if (_fewest) {
-    result = minToMaxMatch(&_value, ctxt, _primary, 0, _number, _next);
+    result = minToMaxMatch(&_value, ctxt, _primary, 0, _number, _next, &_iteration, reentrance);
   } else {
-    result = maxToMinMatch(&_value, ctxt, _primary, 0, _number, _next);
+    result = maxToMinMatch(&_value, ctxt, _primary, 0, _number, _next, &_iteration, reentrance);
   }
   return result;
 }
 
-bool between::isMatch(context* ctxt)
+bool between::isMatch(context* ctxt, bool reentrance)
 {
   bool result = false;
   if (_fewest) {
-    result = minToMaxMatch(&_value, ctxt, _primary, _min, _max, _next);
+    result = minToMaxMatch(&_value, ctxt, _primary, _min, _max, _next, &_iteration, reentrance);
   } else {
-    result = maxToMinMatch(&_value, ctxt, _primary, _min, _max, _next);
+    result = maxToMinMatch(&_value, ctxt, _primary, _min, _max, _next, &_iteration, reentrance);
   }
   return result;
 }
 
 //helpers
 //bactracks from the largest value to the smallest
-bool maxToMinMatch(std::string* value, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next)
+bool maxToMinMatch(std::string* value, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next, u_int64_t* iteration, bool reentrance)
 {
   //there is probably a much nicer way to do this but all of the other ways I thought of were a lot of effort
-  for (u_int64_t matchNum = max; matchNum >= min; matchNum--) {
+  for (u_int64_t matchNum = (reentrance ? *iteration : max); matchNum >= min; matchNum--) {
     u_int64_t currentFileOffset = ctxt->getPos();
     for (u_int64_t i = 0; i < matchNum; i++)
     {
-      if (!toMatch->isMatch(ctxt)) {
+      if (!toMatch->isMatch(ctxt, reentrance)) {
         matchNum = i; //if we didn't reach the match length then we can shrink the max to what we reached
         break; //break out of this inner for loop
       }
 
       *value += toMatch->_value;
     }
+
+    *iteration = matchNum;
 
     if (matchNum < min) {
       ctxt->setPos(currentFileOffset);
@@ -82,8 +97,12 @@ bool maxToMinMatch(std::string* value, context* ctxt, primary* toMatch, u_int64_
     if (next == nullptr) {
       return matchNum != 0;
     } else {
-      bool nextResult = next->isMatch(ctxt);
-      if (matchNum == 0 && !nextResult) return false;
+      bool nextResult = next->isMatch(ctxt, reentrance);
+      if (matchNum == 0 && !nextResult) {
+        *value = "";
+        ctxt->setPos(currentFileOffset);
+        return false;
+      }
       if (nextResult) return true;
     }
 
@@ -94,17 +113,22 @@ bool maxToMinMatch(std::string* value, context* ctxt, primary* toMatch, u_int64_
 }
 
 //backtracks from the smallest value to the largest
-bool minToMaxMatch(std::string* value, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next)
+bool minToMaxMatch(std::string* value, context* ctxt, primary* toMatch, u_int64_t min, u_int64_t max, element* next, u_int64_t* iteration, bool reentrance)
 {
   //this could be cleaned up too but again this is the best I can think of currently
-  for (u_int64_t matchNum = min; matchNum <= max; matchNum++)
+  for (u_int64_t matchNum = (reentrance ? *iteration : min); matchNum <= max; matchNum++)
   {
     u_int64_t currentFileOffset = ctxt->getPos();
+    *iteration = matchNum;
     for (u_int64_t i = 0; i < matchNum; i++)
     {
-      if (!toMatch->isMatch(ctxt)) {
-        if (matchNum > i) return false; //quit if we cant find at least matchNum matches otherwise we will be caught in an infinite loop since the file offset resets after each loop
-        break; //break out of this inner for loop
+      if (!toMatch->isMatch(ctxt, reentrance)) {
+        if (matchNum > i) {
+          *value = "";
+          ctxt->setPos(currentFileOffset);
+          return false; 
+        }
+        break;
       }
 
       *value += toMatch->_value;
@@ -118,7 +142,7 @@ bool minToMaxMatch(std::string* value, context* ctxt, primary* toMatch, u_int64_
     if (next == nullptr) {
       return matchNum != 0;
     } else {
-      if (next->isMatch(ctxt)) {
+      if (next->isMatch(ctxt, reentrance)) {
         return true;
       }
     }
@@ -129,7 +153,7 @@ bool minToMaxMatch(std::string* value, context* ctxt, primary* toMatch, u_int64_
   return false;
 }
 
-bool in::isMatch(context* ctxt)
+bool in::isMatch(context* ctxt, bool reentrance)
 {
   u_int64_t currentFileOffset = ctxt->getPos();
 
@@ -142,104 +166,143 @@ bool in::isMatch(context* ctxt)
       }
     }
 
-    for (; longestMatch > 0; longestMatch--) {
-      bool isMatch = false;
+    u_int64_t offset = (reentrance ? _iteration - 1 : longestMatch);
+    ctxt->setPos(currentFileOffset);
 
-      for (auto atom : *_atoms) {
-        if (atom->isMatch(ctxt)) {
-          isMatch = true;
+    if (!reentrance || (reentrance && _iteration == 0)) {
+      std::string possibleArea = ctxt->getChars(longestMatch * 2);
+      _match_length = 0;
+      u_int64_t matchOffset = 0;
+      in* toMatch = new in(false, _atoms);
+      for (; matchOffset < longestMatch && matchOffset < possibleArea.length(); matchOffset++) {
+        context* subCtxt = new context(possibleArea.substr(matchOffset));
+
+        if (toMatch->isMatch(subCtxt, reentrance)) {
+          std::string val = toMatch->getValue();
+          offset = matchOffset;
+          _match_length = val.length();
           break;
         }
-        ctxt->setPos(currentFileOffset);
-      }
-
-      if (isMatch) {
-        ctxt->setPos(currentFileOffset);
-        continue;
-      }
-
-      _value = ctxt->getChars(longestMatch);
-      if (_next == nullptr) {
-        return true;
-      } else {
-        if (_next->isMatch(ctxt)) return true;
+        toMatch->clear();
       }
     }
-  } else {
-    for (auto atom : *_atoms) {
-      if (atom->isMatch(ctxt)) {
-        _value = atom->_value;
-        if (_next == nullptr) {
-          return true;
-        } else {
-          if (_next->isMatch(ctxt)) return true;
-        }
+
+    for (; offset > 0; offset--) {
+      _value = ctxt->getChars(offset);
+      _iteration = offset;
+      if (_next == nullptr || _next->isMatch(ctxt, reentrance)) {
+        return true;
       }
       ctxt->setPos(currentFileOffset);
     }
+    if (_match_length > 0) ctxt->seekForward(_match_length - 1);
+  } else {
+    int i = (reentrance ? _iteration + 1 : 0);
+    for (; i < _size; i++) {
+      atom* m_atom = _atoms->at(i);
+      if (m_atom->isMatch(ctxt, reentrance)) {
+        _value = m_atom->_value;
+        if (_next == nullptr) {
+          _iteration = i;
+          return true;
+        } else {
+          if (_next->isMatch(ctxt, reentrance)) {
+            _iteration = i;
+            return true;
+          }
+        }
+      }
+      ctxt->setPos(currentFileOffset);
+      m_atom->clear();
+    }
+
+    _iteration = i;
   }
+
   return false;
 }
 
-bool assign::isMatch(context* ctxt)
+bool assign::isMatch(context* ctxt, bool reentrance)
 {
-  //we need to backtrack into the primary if we fail the next match
-  if(!_primary->isMatch(ctxt)) return false;
+  auto previous = ctxt->variables[_id];
 
-  ctxt->variables[_id] = _primary->_value;
+  for(;;) {
+    if(!_primary->isMatch(ctxt, true)) break;
+
+    ctxt->variables[_id] = _primary->_value;
+    
+    _value = _primary->_value;
+
+    if (_next == nullptr || _next->isMatch(ctxt, reentrance))
+      return true;
+    else if (!reentrance)
+      break;
+  }
   
-  _value = _primary->_value;
-
-  return (_next == nullptr) ? true : _next->isMatch(ctxt);
+  ctxt->variables[_id] = previous;
+  _primary->clear();
+  return false;
 }
 
-bool rassign::isMatch(context* ctxt)
+bool rassign::isMatch(context* ctxt, bool reentrance)
 {
-  //this probably does not backtrack correctly either
+  auto previous = ctxt->subroutines[_id];
   ctxt->subroutines[_id] = _primary;
 
-  if (!_primary->isMatch(ctxt)) {
-    ctxt->subroutines[_id] = nullptr;
-    return false;
-  }
+  for(;;) {
+    if (!_primary->isMatch(ctxt, true)) break;
 
-  _value = _primary->_value;
+    _value = _primary->_value;
 
-  return (_next == nullptr) ? true : _next->isMatch(ctxt);
-}
-
-bool orelement::isMatch(context* ctxt)
-{
-  if (_lhs->isMatch(ctxt)) {
-    if (_next == nullptr || _next->isMatch(ctxt)) {
-      _value = _lhs->_value;
+    if (_next == nullptr || _next->isMatch(ctxt, reentrance))
       return true;
-    }
+    else if (!reentrance)
+      break;
   }
 
-  if(_rhs->isMatch(ctxt)) {
-    if (_next == nullptr || _next->isMatch(ctxt)) {
-      _value = _rhs->_value;
-      return true;
-    }
-  }
-
+  ctxt->subroutines[_id] = previous;
+  _primary->clear();
   return false;
 }
 
-bool subelement::isMatch(context* ctxt)
+bool orelement::isMatch(context* ctxt, bool reentrance)
 {
-  if(!_element->isMatch(ctxt)) {
+  auto loopTest = [&, this](primary* sub){
+    for(;;) {
+      if (!sub->isMatch(ctxt, true))
+        break;
+      _value = sub->_value;
+      if (_next == nullptr || _next->isMatch(ctxt, reentrance)) 
+        return true;
+      else if (!reentrance)
+        break;
+    }
+    sub->clear();
     return false;
-  }
+  };
 
-  _value = _element->getValue();
-
-  return (_next == nullptr) ? true : _next->isMatch(ctxt);
+  if (loopTest(_lhs)) return true;
+  return loopTest(_rhs);
 }
 
-//TODO do "not" in range
-bool range::isMatch(context* ctxt)
+bool subelement::isMatch(context* ctxt, bool reentrance)
+{
+  for(;;) {
+    if(!_element->isMatch(ctxt, true)) break;
+
+    _value = _element->getValue();
+
+    if (_next == nullptr || _next->isMatch(ctxt, reentrance))
+      return true;
+    else if (!reentrance)
+      break;
+  }
+
+  _element->clear();
+  return false;
+}
+
+bool range::isMatch(context* ctxt, bool reentrance)
 {
   int fromlen = _from.length();
   int tolen = _to.length();
@@ -248,7 +311,8 @@ bool range::isMatch(context* ctxt)
     return false;
 
   int match_length;
-  for(int i = tolen; i >= fromlen; i--)
+  int i = (reentrance ? _iteration - 1 : tolen);
+  for(; i >= fromlen; i--)
   {
     std::string buffer = ctxt->getChars(i);
     i = buffer.length();
@@ -269,31 +333,40 @@ bool range::isMatch(context* ctxt)
     if (isMatch) {
       _value = buffer;
       if (_next != nullptr) {
-        if (_next->isMatch(ctxt)) break;
+        if (_next->isMatch(ctxt, reentrance)) {
+          _iteration = i;
+          return true;
+        }
       } else {
-        break;
+        _iteration = i;
+        return true;
       }
     }
   }
 
-  return true;
+  _iteration = i;//I dont think this is needed
+  return false;
 }
 
-bool any::isMatch(context* ctxt)
+bool any::isMatch(context* ctxt, bool reentrance)
 {
+  if (_iteration == 0 && reentrance) return false;
+  _iteration = 0;
   std::string anyChar = ctxt->getChars(1);
   if(anyChar == "")
     return false;
 
   _value = anyChar;
-  return (_next == nullptr) ? true : _next->isMatch(ctxt);
+  return (_next == nullptr) ? true : _next->isMatch(ctxt, reentrance);
 }
 
-bool sol::isMatch(context* ctxt)
+bool sol::isMatch(context* ctxt, bool reentrance)
 {
+  if (_iteration == 0 && reentrance) return false;
+  _iteration = 0;
   //check if we are at the start of the file
   if(ctxt->getPos() == 0) {
-    return (_next == nullptr) ? true : _next->isMatch(ctxt);
+    return (_next == nullptr) ? true : _next->isMatch(ctxt, reentrance);
   }
 
   std::string c = ctxt->getChars(1);
@@ -301,131 +374,150 @@ bool sol::isMatch(context* ctxt)
   ctxt->seekBack(2);
   std::string newline = ctxt->getChars(1);
   if (newline == "\n") {
-    return (_next == nullptr) ? true : _next->isMatch(ctxt);
+    return (_next == nullptr) ? true : _next->isMatch(ctxt, reentrance);
   }
 
   return false;
 }
 
-bool eol::isMatch(context* ctxt)
+bool eol::isMatch(context* ctxt, bool reentrance)
 {
+  if (_iteration == 0 && reentrance) return false;
+  _iteration = 0;
   if(ctxt->endOfFile()) {
-    return (_next == nullptr) ? true : _next->isMatch(ctxt);
+    return (_next == nullptr) ? true : _next->isMatch(ctxt, reentrance);
   }
 
   std::string c = ctxt->getChars(1);
   if(c == "\n")
   {
     ctxt->seekBack(1);
-    return (_next == nullptr) ? true : _next->isMatch(ctxt);
+    return (_next == nullptr) ? true : _next->isMatch(ctxt, reentrance);
   }
 
   ctxt->seekBack(1);
   return false;
 }
 
-bool sof::isMatch(context* ctxt)
+bool sof::isMatch(context* ctxt, bool reentrance)
 {
+  if (_iteration == 0 && reentrance) return false;
+  _iteration = 0;
   if(ctxt->getPos() == 0) {
-    return (_next == nullptr) ? true : _next->isMatch(ctxt);
+    return (_next == nullptr) ? true : _next->isMatch(ctxt, reentrance);
   }
 
   return false;
 }
 
-bool eof::isMatch(context* ctxt)
+bool eof::isMatch(context* ctxt, bool reentrance)
 {
+  if (_iteration == 0 && reentrance) return false;
+  _iteration = 0;
   if(ctxt->endOfFile()) {
-    return (_next == nullptr) ? true : _next->isMatch(ctxt);
+    return (_next == nullptr) ? true : _next->isMatch(ctxt, reentrance);
   }
-
+  
   return false;
 }
 
-bool charClassTest(std::string* value, context* ctxt, element* next, bool isNot, std::string nextChar, bool test)
+bool charClassTest(std::string* value, context* ctxt, element* next, bool isNot, bool reentrance, std::string nextChar, bool test)
 {
   if((test && !isNot) || (!test && isNot))
   {
     *value = nextChar;
-    return (next == nullptr) ? true : next->isMatch(ctxt);
+    return (next == nullptr) ? true : next->isMatch(ctxt, reentrance);
   }
 
   ctxt->seekBack(nextChar.length());
   return false;
 }
 
-bool whitespace::isMatch(context* ctxt)
+bool whitespace::isMatch(context* ctxt, bool reentrance)
 {
   std::string nextChar = ctxt->getChars(1);
   bool whitespace = nextChar[0] == ' ' || nextChar[0] == '\t' || nextChar[0] == '\v' ||
       nextChar[0] == '\r' || nextChar[0] == '\n' || nextChar[0] == '\f';
-
-  return charClassTest(&_value, ctxt, _next, _not, nextChar, whitespace);
+  if (_iteration == 0 && reentrance) return false;
+  _iteration = 0;
+  return charClassTest(&_value, ctxt, _next, _not, reentrance, nextChar, whitespace);
 }
 
-bool digit::isMatch(context* ctxt)
+bool digit::isMatch(context* ctxt, bool reentrance)
 {
   std::string nextChar = ctxt->getChars(1);
   bool digit = nextChar[0] >= '0' && nextChar[0] <= '9';
-
-  return charClassTest(&_value, ctxt, _next, _not, nextChar, digit);
+  if (_iteration == 0 && reentrance) return false;
+  _iteration = 0;
+  return charClassTest(&_value, ctxt, _next, _not, reentrance, nextChar, digit);
 }
 
-bool letter::isMatch(context* ctxt)
+bool letter::isMatch(context* ctxt, bool reentrance)
 {
   std::string nextChar = ctxt->getChars(1);
   bool letter = (nextChar[0] >= 'a' && nextChar[0] <= 'z') || (nextChar[0] >= 'A' && nextChar[0] <= 'Z');
-
-  return charClassTest(&_value, ctxt, _next, _not, nextChar, letter);
+  if (_iteration == 0 && reentrance) return false;
+  _iteration = 0;
+  return charClassTest(&_value, ctxt, _next, _not, reentrance, nextChar, letter);
 }
 
-bool lower::isMatch(context* ctxt)
+bool lower::isMatch(context* ctxt, bool reentrance)
 {
   std::string nextChar = ctxt->getChars(1);
   bool letter = nextChar[0] >= 'a' && nextChar[0] <= 'z';
-
-  return charClassTest(&_value, ctxt, _next, _not, nextChar, letter);
+  if (_iteration == 0 && reentrance) return false;
+  _iteration = 0;
+  return charClassTest(&_value, ctxt, _next, _not, reentrance, nextChar, letter);
 }
 
-bool upper::isMatch(context* ctxt)
+bool upper::isMatch(context* ctxt, bool reentrance)
 {
   std::string nextChar = ctxt->getChars(1);
   bool letter = nextChar[0] >= 'A' && nextChar[0] <= 'Z';
-
-  return charClassTest(&_value, ctxt, _next, _not, nextChar, letter);
+  if (_iteration == 0 && reentrance) return false;
+  _iteration = 0;
+  return charClassTest(&_value, ctxt, _next, _not, reentrance, nextChar, letter);
 }
 
-bool identifier::isMatch(context* ctxt)
+bool identifier::isMatch(context* ctxt, bool reentrance)
 {
   std::string var_val = ctxt->variables[_id];
   u_int64_t var_val_len = var_val.length();
-
-  return string_match(&_value, ctxt, var_val, var_val_len, false, _next);
+  if (_iteration == 0 && reentrance) return false;
+  _iteration = 0;
+  return string_match(&_value, ctxt, var_val, var_val_len, false, reentrance, _next);
 }
 
-bool subroutine::isMatch(context* ctxt)
+bool subroutine::isMatch(context* ctxt, bool reentrance)
 {
+
   primary* subElement = ctxt->subroutines[_id];
 
   if (subElement == nullptr) return false;
 
-  primary* subCopy = subElement->copy();
+  primary* subCopy = subElement->copy(false);
+  for(;;) { 
+    if(!subCopy->isMatch(ctxt, reentrance)) break;
+    
+    _value = subCopy->getValue();
 
-  if(!subCopy->isMatch(ctxt))
-    return false;
+    if (_next == nullptr || _next->isMatch(ctxt, reentrance)) 
+      return true;
+    else if (!reentrance)
+      break;
+  }
 
-  _value = subCopy->getValue();
-
-  //! free subcopy
-  return (_next == nullptr) ? true : _next->isMatch(ctxt);
+  return false;
 }
 
-bool string::isMatch(context* ctxt)
+bool string::isMatch(context* ctxt, bool reentrance)
 {
-  return string_match(&_value, ctxt, _string_val, _string_len, _not, _next);
+  if (_iteration == 0 && reentrance) return false;
+  _iteration = 0;
+  return string_match(&_value, ctxt, _string_val, _string_len, _not, reentrance, _next);
 }
 
-bool string_match(std::string* value, context* ctxt, std::string string_val, u_int64_t string_len, bool _not, element* _next)
+bool string_match(std::string* value, context* ctxt, std::string string_val, u_int64_t string_len, bool _not, bool reentrance, element* _next)
 {
   std::string peekedString = ctxt->getChars(string_len);
 
@@ -434,7 +526,7 @@ bool string_match(std::string* value, context* ctxt, std::string string_val, u_i
   if((isMatch && !_not) || (!isMatch && _not))
   {
     *value = peekedString;
-    return (_next == nullptr) ? true : _next->isMatch(ctxt);
+    return (_next == nullptr) ? true : _next->isMatch(ctxt, reentrance);
   }
 
   ctxt->seekBack(peekedString.length());

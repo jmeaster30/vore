@@ -30,9 +30,8 @@ public:
   void print();
 };
 
-class program; //forward declare
+class program;
 
-//TODO this can be improved
 class Vore {
 public:
   static void compile(std::string source);
