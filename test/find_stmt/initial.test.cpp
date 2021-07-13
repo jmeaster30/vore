@@ -171,3 +171,10 @@ TEST_CASE("find with recursive subroutine", "[string, subroutine, atleast]") {
   auto results = Vore::execute("omg aaabbb");
   SINGLE_MATCH(results, 4, 6, "aaabbb");
 }
+
+TEST_CASE("find with recursive subroutine then something else", "[string, subroutine, atleast]") {
+  Vore::compile("find all ('a' at least 0 $sub 'b') = $sub 'b'");
+  auto results = Vore::execute("omg aaabbb");
+  SINGLE_MATCH(results, 5, 5, "aabbb");
+}
+

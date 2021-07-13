@@ -469,11 +469,9 @@ bool string_match(std::string* value, context* ctxt, std::string string_val, u_i
     std::string possibleArea = ctxt->getChars(string_len * 2);
     u_int64_t match_length = 0;
     u_int64_t offset = string_len;
-    std::cout << "'" << possibleArea << "'" << std::endl;
     for (u_int64_t matchOffset = 0; matchOffset < string_len && matchOffset < possibleArea.length(); matchOffset++)
     {
       std::string subString = possibleArea.substr(matchOffset, string_len);
-      std::cout << "'" << subString << "'" << std::endl;
 
       if (subString == string_val) {
         offset = matchOffset;
@@ -483,8 +481,7 @@ bool string_match(std::string* value, context* ctxt, std::string string_val, u_i
     }
 
     ctxt->setPos(currentFileOffset);
-
-    std::cout << offset << std::endl;
+    
     for (; offset > 0; offset--) {
       *value = ctxt->getChars(offset);
 
