@@ -107,7 +107,7 @@ MatchGroup findMatches(context* ctxt, element* start, amount* amt)
     Match match = Match(currentPos);
 
     bool noMatch = true;
-    if (start->isMatch(ctxt, false)) {
+    if (start->isMatch(ctxt)) {
       match.value = start->getValue();
       match.match_length = match.value.length();
       match.variables = ctxt->variables;

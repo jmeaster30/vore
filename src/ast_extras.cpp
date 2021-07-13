@@ -6,59 +6,59 @@ std::string element::getValue() {
 
 void element::clear() {
   _value = "";
-  _iteration = 0;
+
   if(_next != nullptr) _next->clear();
 }
 
 void primary::clear() {
   _value = "";
-  _iteration = 1;
+
   if(_next != nullptr) _next->clear();
 }
 
 void atom::clear() {
   _value = "";
-  _iteration = 1;
+
   if (_next != nullptr) _next->clear();
 }
 
 void range::clear() {
   _value = "";
-  _iteration = _to.length();
+
   if (_next != nullptr) _next->clear();
 }
 
 void exactly::clear() {
   _value = "";
-  _iteration  = 1;
+
   if (_primary != nullptr) _primary->clear();
   if (_next != nullptr) _next->clear();
 }
 
 void least::clear() {
   _value = "";
-  _iteration = _fewest ? _number : -1;
+
   if (_primary != nullptr) _primary->clear();
   if (_next != nullptr) _next->clear();
 }
 
 void most::clear() {
   _value = "";
-  _iteration = _fewest ? 0 : _number;
+
   if (_primary != nullptr) _primary->clear();
   if (_next != nullptr) _next->clear();
 }
 
 void between::clear() {
   _value = "";
-  _iteration = _fewest ? _min : _max;
+
   if (_primary != nullptr) _primary->clear();
   if (_next != nullptr) _next->clear();
 }
 
 void in::clear() {
   _value = "";
-  _iteration = 0;
+
   if (_atoms != nullptr) {
     for (auto atom : *_atoms) {
       atom->clear();
@@ -95,203 +95,201 @@ void subelement::clear() {
   if (_next != nullptr) _next->clear();
 }
 
-element* exactly::copy(bool reentrance)
+element* exactly::copy()
 {
-  primary* primaryCopy = _primary->copy(reentrance);
+  primary* primaryCopy = _primary->copy();
   exactly* newEx = new exactly(_number, primaryCopy);
-  if (reentrance) newEx->_iteration = _iteration;
-  if (_next != nullptr) newEx->_next = _next->copy(reentrance);
+  if (_next != nullptr) newEx->_next = _next->copy();
   return newEx;
 }
 
-element* least::copy(bool reentrance)
+element* least::copy()
 {
-  primary* primaryCopy = _primary->copy(reentrance);
+  primary* primaryCopy = _primary->copy();
   least* newEx = new least(_number, primaryCopy, _fewest);
-  if (reentrance) newEx->_iteration = _iteration;
-  if (_next != nullptr) newEx->_next = _next->copy(reentrance);
+  if (_next != nullptr) newEx->_next = _next->copy();
   return newEx;
 }
 
-element* most::copy(bool reentrance)
+element* most::copy()
 {
-  primary* primaryCopy = _primary->copy(reentrance);
+  primary* primaryCopy = _primary->copy();
   most* newEx = new most(_number, primaryCopy, _fewest); 
-  if (reentrance) newEx->_iteration = _iteration;
-  if (_next != nullptr) newEx->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) newEx->_next = _next->copy();
   return newEx;
 }
 
-element* between::copy(bool reentrance)
+element* between::copy()
 {
-  primary* primaryCopy = _primary->copy(reentrance);
+  primary* primaryCopy = _primary->copy();
   between* newEx = new between(_min, _max, primaryCopy, _fewest);
-  if (reentrance) newEx->_iteration = _iteration;
-  if (_next != nullptr) newEx->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) newEx->_next = _next->copy();
   return newEx;
 }
 
-element* in::copy(bool reentrance)
+element* in::copy()
 {
   std::vector<atom*>* newAtoms = new std::vector<atom*>();
   for(auto _atom : *_atoms)
   {
-    newAtoms->push_back(_atom->copy(reentrance));  
+    newAtoms->push_back(_atom->copy());  
   }
 
   in* newIn = new in(_notIn, newAtoms);
-  if (reentrance) newIn->_iteration = _iteration;
-  if (_next != nullptr) newIn->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) newIn->_next = _next->copy();
   return newIn;
 }
 
-element* assign::copy(bool reentrance)
+element* assign::copy()
 {
-  primary* primaryCopy = _primary->copy(reentrance);
+  primary* primaryCopy = _primary->copy();
   assign* newAssign = new assign(_id, primaryCopy);
-  if (reentrance) newAssign->_iteration = _iteration;
-  if (_next != nullptr) newAssign->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) newAssign->_next = _next->copy();
   return newAssign;
 }
 
-element* rassign::copy(bool reentrance)
+element* rassign::copy()
 {
-  primary* primaryCopy = _primary->copy(reentrance);
+  primary* primaryCopy = _primary->copy();
   rassign* newRAssign = new rassign(_id, primaryCopy);
-  if (reentrance) newRAssign->_iteration = _iteration;
-  if (_next != nullptr) newRAssign->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) newRAssign->_next = _next->copy();
   return newRAssign;
 }
 
-element* orelement::copy(bool reentrance)
+element* orelement::copy()
 {
-  primary* newlhs = _lhs->copy(reentrance);
-  primary* newrhs = _rhs->copy(reentrance);
+  primary* newlhs = _lhs->copy();
+  primary* newrhs = _rhs->copy();
   orelement* newOr = new orelement(newlhs, newrhs);
-  if (reentrance) newOr->_iteration = _iteration;
-  if (_next != nullptr) newOr->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) newOr->_next = _next->copy();
   return newOr;
 }
 
-primary* subelement::copy(bool reentrance)
+primary* subelement::copy()
 {
-  element* newElement = _element->copy(reentrance);
+  element* newElement = _element->copy();
   subelement* newSub = new subelement(newElement);
-  if (reentrance) newSub->_iteration = _iteration;
-  if (_next != nullptr) newSub->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) newSub->_next = _next->copy();
   return newSub;
 }
 
-atom* range::copy(bool reentrance)
+atom* range::copy()
 { 
   range* newRange = new range(_from, _to);
-  if (reentrance) newRange->_iteration = _iteration;
-  if (_next != nullptr) newRange->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) newRange->_next = _next->copy();
   return newRange;
 }
 
-atom* any::copy(bool reentrance)
+atom* any::copy()
 {  
   any* newAny = new any();
-  if (reentrance) newAny->_iteration = _iteration;
-  if (_next != nullptr) newAny->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) newAny->_next = _next->copy();
   return newAny;
 }
 
-atom* sol::copy(bool reentrance)
+atom* sol::copy()
 {
   sol* a = new sol();
-  if (reentrance) a->_iteration = _iteration;
-  if (_next != nullptr) a->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) a->_next = _next->copy();
   return a;
 }
 
-atom* eol::copy(bool reentrance)
+atom* eol::copy()
 {
   eol* a = new eol();
-  if (reentrance) a->_iteration = _iteration;
-  if (_next != nullptr) a->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) a->_next = _next->copy();
   return a;
 }
 
-atom* sof::copy(bool reentrance)
+atom* sof::copy()
 {
   sof* a = new sof();
-  if (reentrance) a->_iteration = _iteration;
-  if (_next != nullptr) a->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) a->_next = _next->copy();
   return a;
 }
 
-atom* eof::copy(bool reentrance)
+atom* eof::copy()
 {
   eof* a = new eof();
-  if (reentrance) a->_iteration = _iteration;
-  if (_next != nullptr) a->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) a->_next = _next->copy();
   return a;
 }
 
-atom* whitespace::copy(bool reentrance)
+atom* whitespace::copy()
 {
   whitespace* a = new whitespace(_not);
-  if (reentrance) a->_iteration = _iteration;
-  if (_next != nullptr) a->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) a->_next = _next->copy();
   return a;
 }
 
-atom* digit::copy(bool reentrance)
+atom* digit::copy()
 {
   digit* a = new digit(_not);
-  if (reentrance) a->_iteration = _iteration;
-  if (_next != nullptr) a->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) a->_next = _next->copy();
   return a;
 }
 
-atom* letter::copy(bool reentrance)
+atom* letter::copy()
 {
   letter* a = new letter(_not);
-  if (reentrance) a->_iteration = _iteration;
-  if (_next != nullptr) a->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) a->_next = _next->copy();
   return a;
 }
 
 //this repeated stuff can probably be fixed with a c++ template
-atom* upper::copy(bool reentrance)
+atom* upper::copy()
 {
   upper* a = new upper(_not);
-  if (reentrance) a->_iteration = _iteration;
-  if (_next != nullptr) a->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) a->_next = _next->copy();
   return a;
 }
 
-atom* lower::copy(bool reentrance)
+atom* lower::copy()
 {
   lower* a = new lower(_not);
-  if (reentrance) a->_iteration = _iteration;
-  if (_next != nullptr) a->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) a->_next = _next->copy();
   return a;
 }
 
-atom* identifier::copy(bool reentrance)
+atom* identifier::copy()
 {
   identifier* id = new identifier(_id);
-  if (reentrance) id->_iteration = _iteration;
-  if (_next != nullptr) id->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) id->_next = _next->copy();
   return id;
 }
 
-primary* subroutine::copy(bool reentrance)
+primary* subroutine::copy()
 {
   subroutine* id = new subroutine(_id);
-  if (reentrance) id->_iteration = _iteration;
-  if (_next != nullptr) id->_next = _next->copy(reentrance);
+  
+  if (_next != nullptr) id->_next = _next->copy();
   return id;
 }
 
-atom* string::copy(bool reentrance)
+atom* string::copy()
 {
   string* str = new string(_string_val, _not);
-  if (reentrance) str->_iteration = _iteration;
-  if(_next != nullptr) str->_next = _next->copy(reentrance);
+  
+  if(_next != nullptr) str->_next = _next->copy();
   return str;
 }
 

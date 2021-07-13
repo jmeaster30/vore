@@ -38,23 +38,23 @@ public:
   element* _next = nullptr;
 
   std::string _value = "";
-  u_int64_t _iteration = 0;
+
 
   element(bool fewest) : _fewest(fewest) {}
-  virtual bool isMatch(context* context, bool reentrance) = 0;
+  virtual bool isMatch(context* context) = 0;
   virtual void print() = 0;
   virtual void clear();
   std::string getValue();
-  virtual element* copy(bool reentrance) = 0;
+  virtual element* copy() = 0;
 };
 
 class primary : public element {
 public:
   primary():element(false){}
-  virtual bool isMatch(context* context, bool reentrance) = 0;
+  virtual bool isMatch(context* context) = 0;
   virtual void print() = 0;
   virtual void clear();
-  virtual primary* copy(bool reentrance) = 0;
+  virtual primary* copy() = 0;
 };
 
 class atom : public primary {
@@ -62,12 +62,12 @@ public:
   bool _not;
 
   atom(bool n) : _not(n){
-    _iteration = 1;
+
   }
-  virtual bool isMatch(context* context, bool reentrance) = 0;
+  virtual bool isMatch(context* context) = 0;
   virtual void print() = 0;
   virtual void clear();
-  virtual atom* copy(bool reentrance) = 0;
+  virtual atom* copy() = 0;
   virtual u_int64_t getMaxLength(context* ctxt);
 };
 
@@ -165,13 +165,13 @@ public:
 
   exactly(u_int64_t number, primary* primary)
     : _number(number), _primary(primary), element(false) {
-    _iteration = 1;
+
   }
 
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
   void clear();
-  element* copy(bool reentrance);
+  element* copy();
 };
 
 class least : public element {
@@ -181,13 +181,13 @@ public:
 
   least(u_int64_t number, primary* primary, bool fewest)
     : _number(number), _primary(primary), element(fewest){
-    _iteration = _fewest ? _number : -1;
+
   }
 
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
   void clear();
-  element* copy(bool reentrance);
+  element* copy();
 };
 
 class most : public element {
@@ -197,13 +197,13 @@ public:
 
   most(u_int64_t number, primary* primary, bool fewest)
     : _number(number), _primary(primary), element(fewest){
-    _iteration = _fewest ? 0 : _number;
+
   }
 
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
   void clear();
-  element* copy(bool reentrance);
+  element* copy();
 };
 
 class between : public element {
@@ -214,13 +214,13 @@ public:
 
   between(u_int64_t min, u_int64_t max, primary* primary, bool fewest)
     : _min(min), _max(max), _primary(primary), element(fewest){
-    _iteration = _fewest ? _min : _max;
+
   }
 
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
   void clear();
-  element* copy(bool reentrance);
+  element* copy();
 };
 
 class in : public element {
@@ -230,18 +230,15 @@ public:
   u_int64_t _size = 0;
   std::vector<atom*>* _atoms;
 
-  u_int64_t _match_length = 0;
-
   in(bool notIn, std::vector<atom*>* atoms)
     : _notIn(notIn), _atoms(atoms), element(false) {
-    _iteration = 0;
     _size = _atoms->size();
   }
 
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
   void clear();
-  element* copy(bool reentrance);
+  element* copy();
 };
 
 class assign : public element {
@@ -252,10 +249,10 @@ public:
   assign(std::string id, primary* primary)
     : _id(id), _primary(primary), element(false) {}
 
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
   void clear();
-  element* copy(bool reentrance);
+  element* copy();
 };
 
 class rassign : public element {
@@ -266,10 +263,10 @@ public:
   rassign(std::string id, primary* primary)
     : _id(id), _primary(primary), element(false) {}
 
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
   void clear();
-  element* copy(bool reentrance);
+  element* copy();
 };
 
 class orelement : public element {
@@ -280,10 +277,10 @@ public:
   orelement(primary* lhs, primary* rhs)
     : _lhs(lhs), _rhs(rhs), element(false) {}
 
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
   void clear();
-  element* copy(bool reentrance);
+  element* copy();
 };
 
 class subelement : public primary {
@@ -292,10 +289,10 @@ public:
 
   subelement(element* element) : _element(element) {}
 
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
   void clear();
-  primary* copy(bool reentrance);
+  primary* copy();
 };
 
 class range : public atom {
@@ -304,12 +301,12 @@ public:
   std::string _to;
   
   range(std::string from, std::string to) : _from(from), _to(to), atom(false) {
-    _iteration = _to.length();
+
   }
 
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  atom* copy(bool reentrance);
+  atom* copy();
   u_int64_t getMaxLength(context* ctxt);
   void clear();
 };
@@ -317,81 +314,81 @@ public:
 class any : public atom {
 public:
   any() : atom(false) {}
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  atom* copy(bool reentrance);
+  atom* copy();
 };
 
 class sol : public atom {
 public:
   sol() : atom(false) {}
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  atom* copy(bool reentrance);
+  atom* copy();
 };
 
 class eol : public atom {
 public:
   eol() : atom(false) {}
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  atom* copy(bool reentrance);
+  atom* copy();
 };
 
 class sof : public atom {
 public:
   sof() : atom(false) {}
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  atom* copy(bool reentrance);
+  atom* copy();
 };
 
 class eof : public atom {
 public:
   eof() : atom(false) {}
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  atom* copy(bool reentrance);
+  atom* copy();
 };
 
 class whitespace : public atom {
 public:
   whitespace(bool n) : atom(n) {}
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  atom* copy(bool reentrance);
+  atom* copy();
 };
 
 class digit : public atom {
 public:
   digit(bool n) : atom(n) {}
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  atom* copy(bool reentrance);
+  atom* copy();
 };
 
 class letter : public atom {
 public:
   letter(bool n) : atom(n) {}
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  atom* copy(bool reentrance);
+  atom* copy();
 };
 
 class upper : public atom {
 public:
   upper(bool n) : atom(n) {}
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  atom* copy(bool reentrance);
+  atom* copy();
 };
 
 class lower : public atom {
 public:
   lower(bool n) : atom(n) {}
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  atom* copy(bool reentrance);
+  atom* copy();
 };
 
 class identifier : public atom {
@@ -400,9 +397,9 @@ public:
 
   identifier(std::string id) : _id(id), atom(false){}
 
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  atom* copy(bool reentrance);
+  atom* copy();
   u_int64_t getMaxLength(context* ctxt);
 };
 
@@ -412,9 +409,9 @@ public:
 
   subroutine(std::string id) : _id(id) {}
 
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  primary* copy(bool reentrance);
+  primary* copy();
 };
 
 class string : public atom {
@@ -424,9 +421,9 @@ public:
 
   string(std::string value, bool n);
 
-  bool isMatch(context* context, bool reentrance);
+  bool isMatch(context* context);
   void print();
-  atom* copy(bool reentrance);
+  atom* copy();
   u_int64_t getMaxLength(context* ctxt);
 };
 

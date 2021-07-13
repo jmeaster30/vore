@@ -6,6 +6,18 @@ TEST_CASE("find string", "[string]") {
   SINGLE_MATCH(results, 4, 3, "yay");
 }
 
+TEST_CASE("find not string", "[string]") {
+  Vore::compile("find all not 'yay'");
+  auto results = Vore::execute("OMG yay :)");
+
+  REQUIRE(results.size() == 1);
+  REQUIRE(results[0].matches.size() == 3);
+
+  IS_MATCH(results[0].matches[0], 0, 3, "OMG");
+  IS_MATCH(results[0].matches[1], 3, 1, " ");
+  IS_MATCH(results[0].matches[2], 7, 3, " :)");
+}
+
 TEST_CASE("find digit", "[digit, atleast]") {
   Vore::compile("find all at least 1 digit");
   auto results = Vore::execute("please 1234567890 wow");
