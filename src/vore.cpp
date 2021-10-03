@@ -46,6 +46,8 @@ void Vore::compile(std::string source, bool stringSource)
   }
 
   prog = root;
+  prog->compile();
+  prog->print();
 }
 
 std::vector<MatchGroup> Vore::execute(std::vector<std::string> files) {

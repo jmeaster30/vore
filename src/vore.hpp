@@ -1,5 +1,4 @@
-#ifndef __VORE_H__
-#define __VORE_H__
+#pragma once
 
 #include "vore_options.hpp"
 #include <string>
@@ -43,5 +42,3 @@ public:
 private:
   static program* prog;
 };
-
-#endif

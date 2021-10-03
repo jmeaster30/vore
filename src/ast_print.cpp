@@ -20,10 +20,8 @@ void replacestmt::print()
 {
   std::cout << "[REPLACE: ";
   _matchNumber->print();
-  element* current = _start_element;
-  while(current != nullptr) {
-    current->print();
-    current = current->_next;
+  for(auto elem : *_elements) {
+    elem->print();
   }
   if(_atoms != nullptr) {
     std::cout << " with";
@@ -39,10 +37,8 @@ void findstmt::print()
 {
   std::cout << "[FIND: ";
   _matchNumber->print();
-  element* current = _start_element;
-  while(current != nullptr) {
-    current->print();
-    current = current->_next;
+  for(auto elem : *_elements) {
+    elem->print();
   }
   std::cout << "]";
 }
@@ -115,7 +111,7 @@ void assign::print()
   std::cout << "]";
 }
 
-void rassign::print()
+void subassign::print()
 {
   std::cout << "[RASSIGN " << _id << " ";
   _primary->print();
@@ -134,10 +130,8 @@ void orelement::print()
 void subelement::print()
 {
   std::cout << "[SUBEXP ";
-  element* current = _element;
-  while(current != nullptr) {
-    current->print();
-    current = current->_next;
+  for(auto elem : *_elements) {
+    elem->print();
   }
   std::cout << "]";
 }
@@ -174,27 +168,27 @@ void eof::print()
 
 void whitespace::print()
 {
-  std::cout << "[WHITESPACE]";
+  std::cout << "[" << (_not ? "NOT " : "") << "WHITESPACE]";
 }
 
 void digit::print()
 {
-  std::cout << "[DIGIT]";
+  std::cout << "[" << (_not ? "NOT " : "") << "DIGIT]";
 }
 
 void letter::print()
 {
-  std::cout << "[LETTER]";
+  std::cout << "[" << (_not ? "NOT " : "") << "LETTER]";
 }
 
 void lower::print()
 {
-  std::cout << "[LOWER]";
+  std::cout << "[" << (_not ? "NOT " : "") << "LOWER]";
 }
 
 void upper::print()
 {
-  std::cout << "[UPPER]";
+  std::cout << "[" << (_not ? "NOT " : "") << "UPPER]";
 }
 
 void identifier::print()
@@ -209,7 +203,7 @@ void subroutine::print()
 
 void string::print()
 {
-  std::cout << "[" << _value << "]";
+  std::cout << "[" << (_not ? "NOT " : "") << _string_val << "]";
 }
 
 void compid::print()

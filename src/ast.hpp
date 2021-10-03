@@ -1,5 +1,4 @@
-#ifndef __ast_h__
-#define __ast_h__
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +9,7 @@
 #include "vore.hpp"
 #include "vore_options.hpp"
 #include "context.hpp"
+#include "fsm.hpp"
 
 class node {
 public:
@@ -30,45 +30,35 @@ public:
   stmt(bool multifile) : _multifile(multifile) {}
   virtual MatchGroup execute(context* ctxt, vore_options vo) = 0;
   virtual void print() = 0;
+  virtual void compile() = 0;
 };
 
 class element : public node {
 public:
   bool _fewest;
-  element* _next = nullptr;
-
-  std::string _value = "";
-
 
   element(bool fewest) : _fewest(fewest) {}
-  virtual bool isMatch(context* context) = 0;
   virtual void print() = 0;
-  virtual void clear();
-  std::string getValue();
   virtual element* copy() = 0;
+  virtual FSM* compile() = 0;
 };
 
 class primary : public element {
 public:
   primary():element(false){}
-  virtual bool isMatch(context* context) = 0;
   virtual void print() = 0;
-  virtual void clear();
   virtual primary* copy() = 0;
+  virtual FSM* compile() = 0;
 };
 
 class atom : public primary {
 public:
   bool _not;
 
-  atom(bool n) : _not(n){
-
-  }
-  virtual bool isMatch(context* context) = 0;
+  atom(bool n) : _not(n) {}
   virtual void print() = 0;
-  virtual void clear();
   virtual atom* copy() = 0;
-  virtual u_int64_t getMaxLength(context* ctxt);
+  virtual FSM* compile() = 0;
 };
 
 class amount : public node {
@@ -92,31 +82,38 @@ public:
   std::vector<MatchGroup> execute(std::string input, vore_options vo);
 
   void print();
+  void compile();
 };
 
 class replacestmt : public stmt {
 public:
   amount* _matchNumber;
-  element* _start_element;
+  std::vector<element*>* _elements;
   std::vector<expr*>* _atoms;
 
-  replacestmt(amount* matchNumber, element* start, std::vector<expr*>* atoms)
-    : _matchNumber(matchNumber), _start_element(start), _atoms(atoms), stmt(true) {}
+  FSM* _stateMachine;
+
+  replacestmt(amount* matchNumber, std::vector<element*>* elements, std::vector<expr*>* atoms)
+    : _matchNumber(matchNumber), _elements(elements), _atoms(atoms), stmt(true) {}
 
   MatchGroup execute(context* ctxt, vore_options vo);
   void print();
+  void compile();
 };
 
 class findstmt : public stmt {
 public:
   amount* _matchNumber;
-  element* _start_element;
+  std::vector<element*>* _elements;
+
+  FSM* _stateMachine;
  
-  findstmt(amount* matchNumber, element* start)
-    : _matchNumber(matchNumber), _start_element(start), stmt(true) {}
+  findstmt(amount* matchNumber, std::vector<element*>* elements)
+    : _matchNumber(matchNumber), _elements(elements), stmt(true) {}
 
   MatchGroup execute(context* ctxt, vore_options vo);
   void print();
+  void compile();
 };
 
 class usestmt : public stmt {
@@ -127,6 +124,7 @@ public:
 
   MatchGroup execute(context* ctxt, vore_options vo);
   void print();
+  void compile();
 };
 
 class repeatstmt : public stmt {
@@ -144,6 +142,7 @@ public:
 
   MatchGroup execute(context* ctxt, vore_options vo);
   void print();
+  void compile();
 };
 
 class setstmt : public stmt {
@@ -156,6 +155,7 @@ public:
 
   MatchGroup execute(context* ctxt, vore_options vo);
   void print();
+  void compile();
 };
 
 class exactly : public element {
@@ -164,14 +164,11 @@ public:
   primary* _primary;
 
   exactly(u_int64_t number, primary* primary)
-    : _number(number), _primary(primary), element(false) {
+    : _number(number), _primary(primary), element(false) {}
 
-  }
-
-  bool isMatch(context* context);
   void print();
-  void clear();
   element* copy();
+  FSM* compile();
 };
 
 class least : public element {
@@ -180,14 +177,11 @@ public:
   primary* _primary;
 
   least(u_int64_t number, primary* primary, bool fewest)
-    : _number(number), _primary(primary), element(fewest){
+    : _number(number), _primary(primary), element(fewest) {}
 
-  }
-
-  bool isMatch(context* context);
   void print();
-  void clear();
   element* copy();
+  FSM* compile();
 };
 
 class most : public element {
@@ -196,14 +190,11 @@ public:
   primary* _primary;
 
   most(u_int64_t number, primary* primary, bool fewest)
-    : _number(number), _primary(primary), element(fewest){
+    : _number(number), _primary(primary), element(fewest) {}
 
-  }
-
-  bool isMatch(context* context);
   void print();
-  void clear();
   element* copy();
+  FSM* compile();
 };
 
 class between : public element {
@@ -213,32 +204,24 @@ public:
   primary* _primary;
 
   between(u_int64_t min, u_int64_t max, primary* primary, bool fewest)
-    : _min(min), _max(max), _primary(primary), element(fewest){
+    : _min(min), _max(max), _primary(primary), element(fewest) {}
 
-  }
-
-  bool isMatch(context* context);
   void print();
-  void clear();
   element* copy();
+  FSM* compile();
 };
 
 class in : public element {
 public:
   bool _notIn;
-  //group
-  u_int64_t _size = 0;
   std::vector<atom*>* _atoms;
 
   in(bool notIn, std::vector<atom*>* atoms)
-    : _notIn(notIn), _atoms(atoms), element(false) {
-    _size = _atoms->size();
-  }
+    : _notIn(notIn), _atoms(atoms), element(false) {}
 
-  bool isMatch(context* context);
   void print();
-  void clear();
   element* copy();
+  FSM* compile();
 };
 
 class assign : public element {
@@ -249,24 +232,22 @@ public:
   assign(std::string id, primary* primary)
     : _id(id), _primary(primary), element(false) {}
 
-  bool isMatch(context* context);
   void print();
-  void clear();
   element* copy();
+  FSM* compile();
 };
 
-class rassign : public element {
+class subassign : public element {
 public:
   std::string _id;
   primary* _primary;
 
-  rassign(std::string id, primary* primary)
+  subassign(std::string id, primary* primary)
     : _id(id), _primary(primary), element(false) {}
 
-  bool isMatch(context* context);
   void print();
-  void clear();
   element* copy();
+  FSM* compile();
 };
 
 class orelement : public element {
@@ -277,22 +258,20 @@ public:
   orelement(primary* lhs, primary* rhs)
     : _lhs(lhs), _rhs(rhs), element(false) {}
 
-  bool isMatch(context* context);
   void print();
-  void clear();
   element* copy();
+  FSM* compile();
 };
 
 class subelement : public primary {
 public:
-  element* _element;
+  std::vector<element*>* _elements;
 
-  subelement(element* element) : _element(element) {}
+  subelement(std::vector<element*>* elements) : _elements(elements) {}
 
-  bool isMatch(context* context);
   void print();
-  void clear();
   primary* copy();
+  FSM* compile();
 };
 
 class range : public atom {
@@ -300,95 +279,101 @@ public:
   std::string _from;
   std::string _to;
   
-  range(std::string from, std::string to) : _from(from), _to(to), atom(false) {
+  range(std::string from, std::string to) : _from(from), _to(to), atom(false) {}
 
-  }
-
-  bool isMatch(context* context);
   void print();
   atom* copy();
-  u_int64_t getMaxLength(context* ctxt);
-  void clear();
+  FSM* compile();
 };
 
 class any : public atom {
 public:
   any() : atom(false) {}
-  bool isMatch(context* context);
+
   void print();
   atom* copy();
+  FSM* compile();
 };
 
 class sol : public atom {
 public:
   sol() : atom(false) {}
-  bool isMatch(context* context);
+
   void print();
   atom* copy();
+  FSM* compile();
 };
 
 class eol : public atom {
 public:
   eol() : atom(false) {}
-  bool isMatch(context* context);
+
   void print();
   atom* copy();
+  FSM* compile();
 };
 
 class sof : public atom {
 public:
   sof() : atom(false) {}
-  bool isMatch(context* context);
+
   void print();
   atom* copy();
+  FSM* compile();
 };
 
 class eof : public atom {
 public:
   eof() : atom(false) {}
-  bool isMatch(context* context);
+
   void print();
   atom* copy();
+  FSM* compile();
 };
 
 class whitespace : public atom {
 public:
   whitespace(bool n) : atom(n) {}
-  bool isMatch(context* context);
+
   void print();
   atom* copy();
+  FSM* compile();
 };
 
 class digit : public atom {
 public:
   digit(bool n) : atom(n) {}
-  bool isMatch(context* context);
+
   void print();
   atom* copy();
+  FSM* compile();
 };
 
 class letter : public atom {
 public:
   letter(bool n) : atom(n) {}
-  bool isMatch(context* context);
+
   void print();
   atom* copy();
+  FSM* compile();
 };
 
 class upper : public atom {
 public:
   upper(bool n) : atom(n) {}
-  bool isMatch(context* context);
+
   void print();
   atom* copy();
+  FSM* compile();
 };
 
 class lower : public atom {
 public:
   lower(bool n) : atom(n) {}
-  bool isMatch(context* context);
+
   void print();
   atom* copy();
+  FSM* compile();
 };
 
 class identifier : public atom {
@@ -397,10 +382,9 @@ public:
 
   identifier(std::string id) : _id(id), atom(false){}
 
-  bool isMatch(context* context);
   void print();
   atom* copy();
-  u_int64_t getMaxLength(context* ctxt);
+  FSM* compile();
 };
 
 class subroutine : public primary {
@@ -409,9 +393,9 @@ public:
 
   subroutine(std::string id) : _id(id) {}
 
-  bool isMatch(context* context);
   void print();
   primary* copy();
+  FSM* compile();
 };
 
 class string : public atom {
@@ -421,10 +405,9 @@ public:
 
   string(std::string value, bool n);
 
-  bool isMatch(context* context);
   void print();
   atom* copy();
-  u_int64_t getMaxLength(context* ctxt);
+  FSM* compile();
 };
 
 /* computation stuff */
@@ -620,5 +603,3 @@ public:
   void print();
   eresults evaluate(std::unordered_map<std::string, eresults>* ctxt);
 };
-
-#endif

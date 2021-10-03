@@ -22,10 +22,11 @@ ADD_FLEX_BISON_DEPENDENCY(BASE_SCANNER BASE_PARSER)
 set(VORE_SOURCES
   vore.cpp
   context.cpp
+  fsm.cpp
+  ast_compile.cpp
   ast_evaluate.cpp
   ast_execute.cpp
   ast_extras.cpp
-  ast_match.cpp
   ast_print.cpp
   ast_string.cpp
   ${BISON_BASE_PARSER_OUTPUTS}

@@ -1,5 +1,4 @@
-#ifndef __context_h__
-#define __context_h__
+#pragma once
 
 #include <stdio.h>
 #include <string>
@@ -62,5 +61,3 @@ public:
 private:
   u_int64_t inputPointer = 0;
 };
-
-#endif

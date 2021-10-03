@@ -31,6 +31,7 @@ extern program* root;
 
   program* prog;
   std::vector<stmt*>* stmts;
+  std::vector<element*>* elems;
   std::vector<atom*>* atoms;
   std::vector<when*>* whens;
   std::vector<expr*>* exprs;
@@ -69,7 +70,7 @@ extern program* root;
 %type<stmts> STMT_LIST
 %type<statement> STMT
 
-%type<elem> ELEMENTS
+%type<elems> ELEMENTS
 %type<elem> ELEMENT
 %type<few> FELEMENT
 
@@ -121,10 +122,10 @@ STMT : FIND AMOUNT ELEMENTS {
      ;
 
 ELEMENTS : ELEMENT ELEMENTS { 
-            $$ = $1;
-            $$->_next = $2;
+            $$ = $2;
+            $$->insert($$->begin(), $1);
           }
-         | { $$ = nullptr; }
+         | { $$ = new std::vector<element*>(); }
          ;
 
 ELEMENT : EXACTLY NUMBER PRIMARY { $$ = new exactly($2, $3); }
@@ -134,7 +135,7 @@ ELEMENT : EXACTLY NUMBER PRIMARY { $$ = new exactly($2, $3); }
         | NOT IN LEFTSQUARE GROUP RIGHTSQUARE { $$ = new in(true, $4); }
         | IN LEFTSQUARE GROUP RIGHTSQUARE { $$ = new in(false, $3); }
         | PRIMARY ASSIGN IDENTIFIER { $$ = new assign($3, $1); }
-        | PRIMARY ASSIGN SUBROUTINE { $$ = new rassign($3, $1); }
+        | PRIMARY ASSIGN SUBROUTINE { $$ = new subassign($3, $1); }
         | PRIMARY OR PRIMARY { $$ = new orelement($1, $3); }
         | PRIMARY { $$ = (element*)$1; }
         ;

@@ -107,8 +107,8 @@ MatchGroup findMatches(context* ctxt, element* start, amount* amt)
     Match match = Match(currentPos);
 
     bool noMatch = true;
-    if (start->isMatch(ctxt)) {
-      match.value = start->getValue();
+    if (false) {//start->isMatch(ctxt)) {
+      match.value = ""; // start->getValue();
       match.match_length = match.value.length();
       match.variables = ctxt->variables;
       match.line_number = lineNumber;
@@ -131,7 +131,7 @@ MatchGroup findMatches(context* ctxt, element* start, amount* amt)
       if (ctxt->getChars(1) == "\n") lineNumber += 1;
     }
 
-    start->clear();
+    //start->clear();
   }
 
   return result;
@@ -180,7 +180,7 @@ void replaceFile(MatchGroup group, context* ctxt, vore_options vo)
 
 MatchGroup replacestmt::execute(context* ctxt, vore_options vo)
 {
-  MatchGroup group = findMatches(ctxt, _start_element, _matchNumber);
+  MatchGroup group = {};//findMatches(ctxt, _start_element, _matchNumber);
 
   ctxt->changeFile = true;
 
@@ -216,7 +216,7 @@ MatchGroup replacestmt::execute(context* ctxt, vore_options vo)
 
 MatchGroup findstmt::execute(context* ctxt, vore_options vo)
 {
-  return findMatches(ctxt, _start_element, _matchNumber);
+  return {};//findMatches(ctxt, _start_element, _matchNumber);
 }
 
 MatchGroup usestmt::execute(context* ctxt, vore_options vo)

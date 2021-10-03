@@ -46,10 +46,10 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  auto results = Vore::execute(args.files, vo);
-  for(auto group : results) {
-    group.print();
-  }
+  //auto results = Vore::execute(args.files, vo);
+  //for(auto group : results) {
+  //  group.print();
+  //}
   
   return 0;
 }
