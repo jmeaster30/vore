@@ -18,13 +18,33 @@ namespace Compiler
 
   void FSMState::addEpsilonTransition(FSMState* state)
   {
-    addTransition({ConditionType::Special, SpecialCondition::None, false, "", ""}, state);
+    addTransition({ConditionType::Special, SpecialCondition::None}, state);
   }
 
   FSM* FSM::FromBasic(Condition cond)
   {
     FSM* result = new FSM();
     result->start->addTransition(cond, result->accept);
+    return result;
+  }
+
+  FSM* FSM::Whitespace(bool negative)
+  {
+    FSM* result = new FSM();
+    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, " ", "", negative}, result->accept);
+    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\n", "", negative}, result->accept);
+    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\t", "", negative}, result->accept);
+    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\v", "", negative}, result->accept);
+    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\r", "", negative}, result->accept);
+    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\v", "", negative}, result->accept);
+    return result;
+  }
+
+  FSM* FSM::Letter(bool negative)
+  {
+    FSM* result = new FSM();
+    result->start->addTransition({ConditionType::Special, SpecialCondition::Range, "a", "z", negative}, result->accept);
+    result->start->addTransition({ConditionType::Special, SpecialCondition::Range, "A", "Z", negative}, result->accept);
     return result;
   }
 
@@ -43,6 +63,9 @@ namespace Compiler
 
   FSM* FSM::Concatenate(FSM* first, FSM* second)
   {
+    if (first == nullptr) return second;
+    if (second == nullptr) return first;
+
     FSM* result = new FSM();
     delete result->start;
     delete result->accept;

@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "fsm.hpp"
+
 namespace Compiler
 {
   class Statement
@@ -29,7 +31,7 @@ namespace Compiler
   {
   public:
     Amount amount;
-    //state machine
+    FSM* machine;
 
     FindStatement() {};
 
@@ -40,7 +42,7 @@ namespace Compiler
   {
   public:
     Amount amount;
-    //state machine
+    FSM* machine;
     std::vector<Value*> replacement;
 
     ReplaceStatement() {};

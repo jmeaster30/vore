@@ -19,13 +19,13 @@ namespace Compiler
   {
     ConditionType type;
     SpecialCondition specCondition;
-    bool anti;
-    std::string from;
-    std::string to;
+    std::string from = "";
+    std::string to = "";
+    bool negative = false;
 
     bool operator==(const Condition &o) const {
       return type == o.type && specCondition == o.specCondition &&
-             from == o.from && to == o.to && anti == o.anti;
+             from == o.from && to == o.to && negative == o.negative;
     }
   };
 
@@ -34,7 +34,7 @@ namespace Compiler
     {
       unsigned long h1 = std::hash<std::string>()(cond.from);
       unsigned long h2 = std::hash<std::string>()(cond.to);
-      return h1 ^ h2 ^ ((char)cond.type << 8) ^ (char)cond.specCondition ^ ((int)cond.anti << 9);
+      return h1 ^ h2 ^ ((char)cond.type << 8) ^ (char)cond.specCondition ^ ((int)cond.negative << 9);
     }
   };
 
@@ -71,6 +71,8 @@ namespace Compiler
   public:
     void execute() {}
 
+    static FSM* Whitespace(bool negative);
+    static FSM* Letter(bool negative);
     static FSM* FromBasic(Condition cond);
     static FSM* Alternate(FSM* left, FSM* right);
     static FSM* Concatenate(FSM* first, FSM* second);
