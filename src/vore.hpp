@@ -1,6 +1,8 @@
 #pragma once
 
 #include "vore_options.hpp"
+#include "compiler/ast.hpp"
+
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -29,16 +31,15 @@ public:
   void print();
 };
 
-class program;
-
 class Vore {
 public:
-  static void compile(std::string source);
-  static void compile(std::string source, bool stringSource);
-  static std::vector<MatchGroup> execute(std::vector<std::string> files);
-  static std::vector<MatchGroup> execute(std::vector<std::string> files, vore_options vo);
-  static std::vector<MatchGroup> execute(std::string input);
-  static std::vector<MatchGroup> execute(std::string input, vore_options vo);
+  static Vore compile(std::string source);
+  static Vore compile(std::string source, bool stringSource);
+  std::vector<MatchGroup> execute(std::vector<std::string> files);
+  std::vector<MatchGroup> execute(std::vector<std::string> files, vore_options vo);
+  std::vector<MatchGroup> execute(std::string input);
+  std::vector<MatchGroup> execute(std::string input, vore_options vo);
+
 private:
-  static program* prog;
+  std::vector<Compiler::Statement> statements;
 };

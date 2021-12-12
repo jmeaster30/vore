@@ -1,6 +1,7 @@
 set(TEST_SOURCES
   test_main.cpp
   helper.cpp
+  utilities_test/utilities.test.cpp
   find_stmt/initial.test.cpp
   find_stmt/atom.test.cpp
   find_stmt/in.test.cpp

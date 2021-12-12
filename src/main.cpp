@@ -2,12 +2,13 @@
 #include <iomanip>
 #include <vector>
 
-#include <cxxopts.hpp>
-
 #include "vore.hpp"
 
-class options {
-public:
+#include "compiler/lexer.hpp"
+#include "compiler/parser.hpp"
+
+struct options
+{
   bool gui = false;
   bool help = false;
   bool prompt = false;
@@ -16,21 +17,28 @@ public:
   bool create = false;
   bool overwrite = false;
 
-  std::string source;
-  std::vector<std::string> files;
-
-  options(){};
+  std::string source = "";
+  std::vector<std::string> files = std::vector<std::string>();
 };
 
 options parse_args(int argc, char** argv);
-void printHelp();
+void print_help();
 
 int main(int argc, char** argv) {
-  options args = parse_args(argc, argv);
+
+  auto lexer = Compiler::Lexer::FromFile("test_vore/new.v");
+  auto stmts = Compiler::parse(&lexer);
+  for (auto stmt : stmts)
+  {
+    stmt->print();
+  }
+  std::cout << stmts.size() << std::endl;
+
+  /*options args = parse_args(argc, argv);
   vore_options vo = {args.prompt, args.newfile, args.create, args.overwrite, args.recurse};
 
   if(args.help) {
-    printHelp();
+    print_help();
     return 0;
   }
 
@@ -50,7 +58,7 @@ int main(int argc, char** argv) {
   //for(auto group : results) {
   //  group.print();
   //}
-  
+  */
   return 0;
 }
 
@@ -110,7 +118,7 @@ options parse_args(int argc, char** argv) {
   return o;
 }
 
-void printHelp()
+void print_help()
 {
   std::cout << "VORE - VerbOse Regular Expressions" << std::endl;
   std::cout << "Find and replace text with regular expressions that have an english-like syntax." << std::endl << std::endl;

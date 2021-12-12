@@ -1,8 +1,8 @@
 #include "helper.hpp"
 
 TEST_CASE("basic in test", "[in]") {
-  Vore::compile("find all in ['a', 'b', 'c']");
-  auto results = Vore::execute("a or b or c");
+  auto vore = Vore::compile("find all in ['a', 'b', 'c']");
+  auto results = vore.execute("a or b or c");
   REQUIRE(results.size() == 1);
 
   auto group = results[0];
@@ -13,8 +13,8 @@ TEST_CASE("basic in test", "[in]") {
 }
 
 TEST_CASE("variable length in test", "[in]") {
-  Vore::compile("find all in ['this', 'the', 'a']");
-  auto results = Vore::execute("this or that");
+  auto vore  = Vore::compile("find all in ['this', 'the', 'a']");
+  auto results = vore.execute("this or that");
   REQUIRE(results.size() == 1);
 
   auto group = results[0];
@@ -24,8 +24,8 @@ TEST_CASE("variable length in test", "[in]") {
 }
 
 TEST_CASE("basic not in test", "[not, in]") {
-  Vore::compile("find all not in ['a', 'b', 'c']");
-  auto results = Vore::execute("a or b or c");
+  auto vore = Vore::compile("find all not in ['a', 'b', 'c']");
+  auto results = vore.execute("a or b or c");
   REQUIRE(results.size() == 1);
 
   auto group = results[0];
@@ -41,8 +41,8 @@ TEST_CASE("basic not in test", "[not, in]") {
 }
 
 TEST_CASE("variable length not in test", "[not, in]") {
-  Vore::compile("find all not in ['this', 'or', 'that', 'a']");
-  auto results = Vore::execute("not this or that");
+  auto vore = Vore::compile("find all not in ['this', 'or', 'that', 'a']");
+  auto results = vore.execute("not this or that");
   REQUIRE(results.size() == 1);
  
   auto group = results[0];

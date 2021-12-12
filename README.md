@@ -10,7 +10,7 @@ Here are some examples of the language...
 
 >This example replaces all instances of "test - error" or "test - fail" with "test - success"
 >
->``` replace all "test - " = a "error" or "fail" with a "success"```
+>``` replace all "test - " = prefix "error" or "fail" with prefix "success"```
 
 In the above example you can see the functionality of replacing text but it also is an example of using variables in regular expressions. Original regular expressions had the ability to use numeric references and named capture groups but I feel this syntax is significantly easier.
 
@@ -26,7 +26,7 @@ You can also use the variables to find that sequence again in the match. This ne
 
 >Vore example:
 >
->```find all "a" = $varA $varA "b" = $varB $varB```
+>```find all "a" = varA varA "b" = varB varB```
 >
 >Equivalent regular expression (using numeric references)
 >
@@ -60,25 +60,26 @@ N/A          | ```eol``` (end of line)**
 ```\n``` (escaped character) | ```"\n"```
 ```\@``` (escaped at sign) | ```'@'```
 **Groups & References** |
-```\1``` (numeric reference) | ```@1``` (variables)
+```\1``` (numeric reference) | ```myVar``` (variables)
 ```\k<name>``` (named back reference) | ```name``` (variables)
 ```(?<name>ABC)``` (named capturing group) | ```"ABC" = name``` (assigning variables)
-```(ABC)``` (capturing group) (capturing behavior) | ```'ABC' = 1``` (assigning variables)
+```(ABC)``` (capturing group) (capturing behavior) | ```'ABC' = myVar``` (assigning variables)
 ```(ABC)``` (capturing group) (subexpression behavior) | ```("ABC")``` (subexpression)
 ```(?:ABC)``` (non-capturing group) | ```("ABC")``` (subexpression)
 **Subroutines** |
 ```(?P<name>[abc])``` (subroutine) | ```[abc] = $name```
 ```(?P>name)``` (call subroutine) | ```$name```
 **Recursion**
-```a(?R)?b``` (Recurses on the entire regex) | ```("a" at most 1 $recurse 'b') = $recurse``` (Recursion only within calls to $recurse)
-```(a(?1)?b)``` (Recurses only on that capture group) | ```("a" at most 1 $recurse 'b') = $recurse``` (same as before)
+```a(?R)?b``` (Recurses on the entire regex) | ```("a" maybe $mySub 'b') = $mySub``` (Recursion only within the subroutine)
+```(a(?1)?b)``` (Recurses only on that capture group) | ```("a" maybe $mySub 'b') = $mySub``` (same as before)
 **Quantifiers & Alternation**
 ```a+``` (plus) | ```at least 1 'a'``` (at least)
 ```a*``` (start) | ```at least 0 "a"``` (at least)
 ```a{3}``` (quantifier) | ```exactly 3 'a'``` (exactly)
 ```a{4,}``` (quantifier) | ```at least 4 'a'``` (at least)
 ```a{5,8}``` (quantifier) | ```between 5 and 8 'a'``` (between)
-```a?``` (optional) | ```at most 1 'a'``` (at most)
+```a{0,4}``` (quantifier) | ```at most 4 'a'``` (at most)
+```a?``` (optional) | ```maybe 'a'``` (maybe)
 ```a+?``` (lazy) | ```at least 1 'a' fewest``` (at least followed by fewest)
 ```a\|b``` (alternation) | ```'a' or "b"``` (or)
 
