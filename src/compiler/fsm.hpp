@@ -4,6 +4,8 @@
 #include <vector>
 #include <unordered_map>
 
+#include "../visualizer/viz.hpp"
+
 namespace Compiler
 {
   enum class ConditionType : char {
@@ -38,13 +40,15 @@ namespace Compiler
     }
   };
 
-  class FSMState
+  class FSMState : public Viz::Viz
   {
   public:
     bool accepted = false;
     std::unordered_map<Condition, std::vector<FSMState*>*, condition_hash_fn> transitions = {};
 
     FSMState() {}
+
+    void visualize();
 
     void addTransition(Condition cond, FSMState* state);
     void addEpsilonTransition(FSMState* state);
@@ -56,6 +60,8 @@ namespace Compiler
     bool end = false;
     std::string identifier;
     VariableState(std::string id, bool e = false) : identifier(id), end(e), FSMState() {}
+
+    void visualize();
   };
 
   class SubroutineState : public FSMState
@@ -64,12 +70,15 @@ namespace Compiler
     bool end = false;
     std::string identifier;
     SubroutineState(std::string id, bool e = false) : identifier(id), end(e), FSMState() {}
+  
+    void visualize();
   };
 
-  class FSM
+  class FSM : public Viz::Viz
   {
   public:
-    void execute() {}
+    void execute();
+    void visualize();
 
     static FSM* Whitespace(bool negative);
     static FSM* Letter(bool negative);
@@ -77,6 +86,7 @@ namespace Compiler
     static FSM* Alternate(FSM* left, FSM* right);
     static FSM* Concatenate(FSM* first, FSM* second);
     static FSM* Maybe(FSM* machine);
+    static FSM* In(std::vector<FSM*> group);
     static FSM* Loop(FSM* machine); // TODO this will need more arguments to work properly
     static FSM* VariableDefinition(FSM* machine, std::string identifier);
     static FSM* SubroutineDefinition(FSM* machine, std::string identifier);

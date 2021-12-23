@@ -32,13 +32,29 @@ namespace Compiler
 
   Token Lexer::peek()
   {
-    if (current_token.type == TokenType::NONE) get_next_token();
-    return current_token;
+    return peek(1);
+  }
+
+  Token Lexer::peek(int i)
+  {
+    if (i < 1) return {TokenType::NONE};
+    while (token_buffer.size() < i) {
+      get_next_token();
+    }
+    return token_buffer[i - 1];
   }
 
   Token Lexer::consume()
   {
-    Token value = current_token;
+    return consume(1);
+  }
+
+  Token Lexer::consume(int i)
+  {
+    if (i < 1) return {TokenType::NONE};
+    Token value = token_buffer[i - 1];
+    //token_buffer is never going to be large enough where this is ineffecient
+    token_buffer.erase(token_buffer.begin(), token_buffer.begin() + i);
     get_next_token();
     return value;
   }
@@ -51,6 +67,16 @@ namespace Compiler
       consume();
       top = peek();
     }
+  }
+
+  Token Lexer::try_consume(TokenType type, std::function<void(Token)> fail_callback)
+  {
+    auto top = peek();
+    if (top.type != type) {
+      fail_callback(top);
+      return top; // is this the best thing to return?
+    }
+    return consume();
   }
 
   bool identifierStartCharacter(char c)
@@ -151,7 +177,7 @@ namespace Compiler
     size_t start_column = column;
 
     if (index == source_length) {
-      current_token = {TokenType::ENDOFINPUT, start_index, index + 1, start_column, column + 1, line, ""};
+      token_buffer.push_back({TokenType::ENDOFINPUT, start_index, index + 1, start_column, column + 1, line, ""});
       return;
     }
 
@@ -397,12 +423,14 @@ namespace Compiler
     else
       column += lexeme.length();
     
-    current_token = {type, start_index, index, start_column, column, current_line, lexeme, error_message};
     //these tokens are just dropped.
     if (type == TokenType::COMMENT || type == TokenType::WS)
     {
       get_next_token();
+      return;
     }
+
+    token_buffer.push_back({type, start_index, index, start_column, column, current_line, lexeme, error_message});
   }
 
   std::string token_type_to_string(TokenType type)

@@ -5,19 +5,22 @@
 #include <vector>
 
 #include "fsm.hpp"
+#include "../visualizer/viz.hpp"
 
 namespace Compiler
 {
-  class Statement
+  class Statement : public Viz::Viz
   {
   public:
     virtual void print() {};
+    virtual void visualize() {};
   };
 
-  class Value
+  class Value : public Viz::Viz
   {
   public:
     virtual void print() {};
+    virtual void visualize() {};
   };
 
   struct Amount
@@ -36,6 +39,7 @@ namespace Compiler
     FindStatement() {};
 
     void print();
+    void visualize();
   };
 
   class ReplaceStatement : public Statement
@@ -48,6 +52,7 @@ namespace Compiler
     ReplaceStatement() {};
 
     void print();
+    void visualize();
   };
 
   class ParseException : public std::exception
@@ -76,6 +81,7 @@ namespace Compiler
     IdentifierValue(std::string id) : identifier(id) {}
 
     void print();
+    void visualize();
   };
 
   class StringValue : public Value
@@ -86,6 +92,7 @@ namespace Compiler
     StringValue(std::string val) : value(val) {}
 
     void print();
+    void visualize();
   };
 
   class NumberValue : public Value
@@ -96,5 +103,6 @@ namespace Compiler
     NumberValue(std::string val) : value(std::stoll(val, nullptr, 10)) {}
 
     void print();
+    void visualize();
   };
 }

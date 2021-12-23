@@ -31,7 +31,7 @@ namespace Compiler
   FSM* FSM::Whitespace(bool negative)
   {
     FSM* result = new FSM();
-    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, " ", "", negative}, result->accept);
+    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, " ",  "", negative}, result->accept);
     result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\n", "", negative}, result->accept);
     result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\t", "", negative}, result->accept);
     result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\v", "", negative}, result->accept);
@@ -84,6 +84,20 @@ namespace Compiler
     result->start->addEpsilonTransition(result->accept);
     machine->accept->accepted = false;
     machine->accept->addEpsilonTransition(result->accept);
+    return result;
+  }
+
+  FSM* FSM::In(std::vector<FSM*> group)
+  {
+    FSM* result = new FSM();
+
+    for(auto g : group)
+    {
+      result->start->addEpsilonTransition(g->start);
+      g->accept->addEpsilonTransition(result->accept);
+      g->accept->accepted = false;
+    }
+
     return result;
   }
 

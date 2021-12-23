@@ -7,6 +7,8 @@
 #include "compiler/lexer.hpp"
 #include "compiler/parser.hpp"
 
+#include "visualizer/viz.hpp"
+
 struct options
 {
   bool gui = false;
@@ -16,6 +18,7 @@ struct options
   bool newfile = false;
   bool create = false;
   bool overwrite = false;
+  bool visualize = false;
 
   std::string source = "";
   std::vector<std::string> files = std::vector<std::string>();
@@ -33,8 +36,8 @@ int main(int argc, char** argv) {
     stmt->print();
   }
   std::cout << stmts.size() << std::endl;
-
-  /*options args = parse_args(argc, argv);
+/*
+  options args = parse_args(argc, argv);
   vore_options vo = {args.prompt, args.newfile, args.create, args.overwrite, args.recurse};
 
   if(args.help) {
@@ -47,6 +50,12 @@ int main(int argc, char** argv) {
     return 0;
   }
 
+  if(args.visualize) {
+    Viz::render("results.png", stmts);
+    return 0;
+  }
+*/
+  /*
   if (args.source != "") {
     Vore::compile(args.source, false);
   } else {
@@ -85,6 +94,15 @@ options parse_args(int argc, char** argv) {
   else if (firstArg == "help") {
     o.help = true;
   }
+#ifdef WITH_VIZ
+  else if (firstArg == "viz") {
+    o.visualize = true;
+    for (int i = 1; i < argc; i++)
+    {
+      o.files.push_back(argv[i]);
+    }
+  }
+#endif
   else {
     bool options = true;
     for (int i = 0; i < argc; i++)
@@ -127,6 +145,10 @@ void print_help()
   std::cout << "  You know this..." << std::endl;
   std::cout << std::endl << "vore gui [source file / 'new'] [input file(s)]" << std::endl;
   std::cout << "  opens the gui vore editor. If you use 'new' instead of a filename for a source file then the editor opens with a blank source file" << std::endl;
+#ifdef WITH_VIZ
+  std::cout << std::endl << "vore viz [source file]" << std::endl;
+  std::cout << "  generates a visualization of the NFA generated from the provided source code." << std::endl;
+#endif
   std::cout << std::endl << "vore [options] [source file] [input file(s)]" << std::endl;
   std::cout << "  runs the command line vore tool with the given options and source and outputs all the matches that are in the input files." << std::endl;
   std::cout << "-r : recursively goes through each file in the supplied directory." << std::endl;

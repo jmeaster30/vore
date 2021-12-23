@@ -5,6 +5,7 @@ set(VORE_SOURCES
   compiler/parser.cpp
   compiler/ast.cpp
   compiler/fsm.cpp
+  visualizer/viz.cpp
 )
 
 set(VORE_HEADERS
@@ -14,9 +15,13 @@ set(VORE_HEADERS
   compiler/parser.hpp
   compiler/ast.hpp
   compiler/fsm.hpp
+  visualizer/viz.hpp
 )
+
 
 add_library(voreLib OBJECT ${VORE_SOURCES})
 set_target_properties(voreLib PROPERTIES EXCLUDE_FROM_ALL 1)
 
+add_compile_definitions(WITH_VIZ)
 add_executable(vore main.cpp $<TARGET_OBJECTS:voreLib>)
+target_link_libraries(vore PUBLIC cgraph gvc)

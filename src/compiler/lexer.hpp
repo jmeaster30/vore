@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 //TODO this lexer is case sensitive with lowercase and should be case insensitive
 namespace Compiler 
@@ -44,8 +45,12 @@ namespace Compiler
   {
   public:
     Token peek();
+    Token peek(int i);
     Token consume();
+    Token consume(int i);
     void consume_until(std::vector<TokenType> tokens);
+
+    Token try_consume(TokenType type, std::function<void(Token)> fail_callback);
 
     Lexer(std::string source);
     ~Lexer();
@@ -59,7 +64,7 @@ namespace Compiler
 
     std::string source;
 
-    Token current_token = {TokenType::NONE};
+    std::vector<Token> token_buffer = {};
 
     void get_next_token();
   };

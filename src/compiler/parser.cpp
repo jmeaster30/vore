@@ -58,9 +58,34 @@ namespace Compiler
     }
   }
 
+  FSM* parse_element(Lexer* lexer);
+
   FSM* parse_subexpression(Lexer* lexer)
   {
-    return nullptr;
+    FSM* result = nullptr;
+    auto top = lexer->peek();
+    while (elements_start(top.type))
+    {
+      FSM* next = parse_element(lexer);
+      if (result != nullptr) {
+        result = FSM::Concatenate(result, next);
+      } else {
+        result = next;
+      }
+    }
+
+    auto last = lexer->peek();
+    if (result == nullptr) {
+      lexer->consume_until({TokenType::RIGHTP});
+      throw ParseException("Unexpected token (" + token_type_to_string(last.type) + "). Expected a non-empty subexpression.");
+    }
+
+    if (last.type != TokenType::RIGHTP) {
+      lexer->consume_until({TokenType::RIGHTP});
+      throw ParseException("Unexpected token (" + token_type_to_string(last.type) + "), Expected ')'.");
+    }
+
+    return result;
   }
 
   FSM* parse_primary(Lexer* lexer)
@@ -83,7 +108,6 @@ namespace Compiler
       case TokenType::STRING: result = FSM::FromBasic({ConditionType::Literal, SpecialCondition::None, top.lexeme}); break;
       case TokenType::LEFTP: {
         lexer->consume(); //consume left paren
-        // TODO do sub expression
         result = parse_subexpression(lexer);
         break;
       }
@@ -108,6 +132,48 @@ namespace Compiler
     return result;
   }
 
+  FSM* parse_range_or_primary(Lexer* lexer)
+  {
+    return nullptr;
+  }
+
+  FSM* parse_in(Lexer* lexer)
+  {
+    bool not_in = false;
+    FSM* result = nullptr;
+    auto top = lexer->consume();
+    if (top.type == TokenType::NOT) {
+      not_in = true;
+      top = lexer->consume();
+    }
+
+    lexer->try_consume(TokenType::LEFTS, [&](Token fail_token){
+      lexer->consume_until({TokenType::WITH, TokenType::FIND, TokenType::REPLACE, TokenType::USE, TokenType::REPEAT, TokenType::SET});
+      throw ParseException("Unexpected Token (" + token_type_to_string(fail_token.type) + "). Expected a '[' after the 'in' keyword.");
+    });
+
+    std::vector<FSM*> group = {};
+
+    auto current = lexer->peek();
+    while(current.type != TokenType::RIGHTS)
+    {
+      auto group_element = parse_range_or_primary(lexer);
+      if (group_element == nullptr) {
+        std::cout << "NULL GROUP ELEMENT IN IN :(" << std::endl;
+        exit(1); //shouldn't happen here just for testing purposes
+      }
+      group.push_back(group_element);
+      lexer->try_consume(TokenType::COMMA, [&](Token fail_token){
+        lexer->consume_until({TokenType::WITH, TokenType::FIND, TokenType::REPLACE, TokenType::USE, TokenType::REPEAT, TokenType::SET});
+        throw ParseException("Unexpected Token (" + token_type_to_string(fail_token.type) + "). Expected a ',' in the group list for the in statement.");
+      });
+      current = lexer->peek();
+    }
+
+
+
+  }
+
   FSM* parse_element(Lexer* lexer)
   {
     FSM* result = nullptr;
@@ -116,26 +182,42 @@ namespace Compiler
     {
       case TokenType::EXACTLY:
         //exactly number primary
-      case TokenType::MAYBE:
+        break;
+      case TokenType::MAYBE: {
         //maybe primary
+        lexer->consume();
+        auto subres = parse_primary(lexer);
+        result = FSM::Maybe(subres);
+        break;
+      }
       case TokenType::ATLEAST:
         //at least number primary
+        break;
       case TokenType::ATMOST:
         //at least number primary
+        break;
       case TokenType::BETWEEN:
         //between number and number primary
         break;
-      case TokenType::NOT:
-        //in or not primary
+      case TokenType::NOT: {
+        //not in or not primary
+        auto maybe_in = lexer->peek(2);
+        if (maybe_in.type == TokenType::IN)
+          result = parse_in(lexer);
+        else
+          result = parse_primary(lexer);
         break;
+      }
       case TokenType::IN:
         //in lefts group rights
+        result = parse_in(lexer);
         break;
       default:
         if (primary_start(top.type)) {
           result = parse_primary(lexer);
         } else {
           // error
+          std::cout << "ERROR :(" << std::endl;
         }
         break;
     }
@@ -155,6 +237,7 @@ namespace Compiler
       } else {
         result = next;
       }
+      top = lexer->peek();
     }
 
     auto last = lexer->peek();
@@ -165,7 +248,7 @@ namespace Compiler
 
     if (!elements_follow(last.type)) {
       lexer->consume_until({TokenType::WITH, TokenType::FIND, TokenType::REPLACE, TokenType::USE, TokenType::REPEAT, TokenType::SET});
-      throw ParseException("Unexpected token (" + token_type_to_string(last.type) + "), Expected 'with', 'find', 'replace', 'use', 'repeat', or 'set'.");
+      throw ParseException("Unexpected token (" + token_type_to_string(last.type) + "). Expected 'with', 'find', 'replace', 'use', 'repeat', or 'set'.");
     }
 
     return result;
@@ -176,66 +259,57 @@ namespace Compiler
     Amount result = {};
 
     auto top = lexer->peek();
-    if (top.type == TokenType::ALL) {
+    if (top.type == TokenType::ALL)
+    {
       lexer->consume();
       result = {true, 0, 0};
-    } else if (top.type == TokenType::TOP) {
+    }
+    else if (top.type == TokenType::TOP)
+    {
       lexer->consume(); //consume top
-      top = lexer->peek();
-      if (top.type == TokenType::NUMBER) {
-        auto num = lexer->consume();
-        auto value = std::stoll(num.lexeme, nullptr, 10);
-        result = {false, 0, value};
-      }
-      else
-      {
-        lexer->consume();
-        throw ParseException("Unexpected token (" + token_type_to_string(top.type) + "). Expected a number to follow the 'top' keyword.");
-      }
-    } else if (top.type == TokenType::SKIP) {
+      auto number = lexer->try_consume(TokenType::NUMBER, [&](Token fail_token){
+        lexer->consume_until({TokenType::WITH, TokenType::FIND, TokenType::REPLACE, TokenType::USE, TokenType::REPEAT, TokenType::SET});
+        throw ParseException("Unexpected token (" + token_type_to_string(fail_token.type) + "). Expected a number to follow the 'top' keyword.");
+      });
+      auto value = std::stoll(number.lexeme, nullptr, 10);
+      result = {false, 0, value};
+    }
+    else if (top.type == TokenType::SKIP)
+    {
       lexer->consume(); //consume skip
+      auto skip_number = lexer->try_consume(TokenType::NUMBER, [&](Token fail_token){
+        lexer->consume_until({TokenType::WITH, TokenType::FIND, TokenType::REPLACE, TokenType::USE, TokenType::REPEAT, TokenType::SET});
+        throw ParseException("Unexpected token (" + token_type_to_string(fail_token.type) + "). Expected a number to follow the 'skip' keyword.");
+      });
+      auto skip_value = std::stoll(skip_number.lexeme, nullptr, 10);
+      result = {true, skip_value, 0};
+
       top = lexer->peek();
-      if (top.type == TokenType::NUMBER) {
-        auto num = lexer->consume();
-        auto skip_value = std::stoll(num.lexeme, nullptr, 10);
-        top = lexer->peek();
-        result = {true, skip_value, 0};
-        if (top.type == TokenType::TAKE) {
-          lexer->consume(); //consume take
-          top = lexer->peek();
-          if (top.type == TokenType::NUMBER) {
-            auto num = lexer->consume();
-            auto value = std::stoll(num.lexeme, nullptr, 10);
-            result.all = false;
-            result.take = value;
-          }
-          else
-          {
-            lexer->consume();
-            throw ParseException("Unexpected token (" + token_type_to_string(top.type) + "). Expected a number to follow the 'take' keyword.");
-          }
-        }
+      //check for the optional take portion
+      if (top.type == TokenType::TAKE) {
+        lexer->consume(); //consume take
+
+        auto take_number = lexer->try_consume(TokenType::NUMBER, [&](Token fail_token){
+          lexer->consume_until({TokenType::WITH, TokenType::FIND, TokenType::REPLACE, TokenType::USE, TokenType::REPEAT, TokenType::SET});
+          throw ParseException("Unexpected token (" + token_type_to_string(fail_token.type) + "). Expected a number to follow the 'take' keyword.");
+        });
+        result.take = std::stoll(take_number.lexeme, nullptr, 10);
+        result.all = false;
       }
-      else
-      {
-        lexer->consume();
-        throw ParseException("Unexpected token (" + token_type_to_string(top.type) + "). Expected a number to follow the 'skip' keyword.");
-      }
-    } else if (top.type == TokenType::TAKE) {
+    }
+    else if (top.type == TokenType::TAKE)
+    {
       lexer->consume(); //consume take
-      top = lexer->peek();
-      if (top.type == TokenType::NUMBER) {
-        auto num = lexer->consume();
-        auto value = std::stoll(num.lexeme, nullptr, 10);
-        result = {false, 0, value};
-      }
-      else
-      {
-        lexer->consume();
-        throw ParseException("Unexpected token (" + token_type_to_string(top.type) + "). Expected a number to follow the 'take' keyword.");
-      }
-    } else {
-      lexer->consume();
+      auto number = lexer->try_consume(TokenType::NUMBER, [&](Token fail_token){
+        lexer->consume_until({TokenType::WITH, TokenType::FIND, TokenType::REPLACE, TokenType::USE, TokenType::REPEAT, TokenType::SET});
+        throw ParseException("Unexpected token (" + token_type_to_string(fail_token.type) + "). Expected a number to follow the 'take' keyword.");
+      });
+      auto value = std::stoll(number.lexeme, nullptr, 10);
+      result = {false, 0, value};
+    }
+    else
+    {
+      lexer->consume_until({TokenType::WITH, TokenType::FIND, TokenType::REPLACE, TokenType::USE, TokenType::REPEAT, TokenType::SET});
       throw ParseException("Unexpected token (" + token_type_to_string(top.type) + "). Expected 'all', 'top', 'skip', or 'take'");
     }
 
