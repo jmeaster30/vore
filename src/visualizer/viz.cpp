@@ -3,12 +3,14 @@
 #include "../compiler/ast.hpp"
 #include "../compiler/fsm.hpp"
 
+//TODO Make some more macros so this WITH_VIZ ifdef can surround this entire file
+
 #ifdef WITH_VIZ
 #include <graphviz/cgraph.h>
 #include <graphviz/gvc.h>
-#endif
 
 Agraph_t* graph;
+#endif
 
 char* id(const int len) {
   // TODO make this more C++y

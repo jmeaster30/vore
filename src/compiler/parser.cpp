@@ -417,6 +417,7 @@ namespace Compiler
     // ? maybe we check if it is an empty list and throw an error or a warning?
     // ? I feel like having "replace all 'test' with" can just delete all instances of 'test'
     // ? or we can throw an error and say "hey use an empty string if you want to replace the results with nothing"
+    // ? i.e. replace all 'test' with ''
 
     result->amount = amount;
     result->machine = machine;

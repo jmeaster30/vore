@@ -22,6 +22,9 @@ set(VORE_HEADERS
 add_library(voreLib OBJECT ${VORE_SOURCES})
 set_target_properties(voreLib PROPERTIES EXCLUDE_FROM_ALL 1)
 
-add_compile_definitions(WITH_VIZ)
 add_executable(vore main.cpp $<TARGET_OBJECTS:voreLib>)
-target_link_libraries(vore PUBLIC cgraph gvc)
+
+if(WITH_VIZ_OPTION)
+  add_compile_definitions(WITH_VIZ)
+  target_link_libraries(vore PUBLIC cgraph gvc)
+endif(WITH_VIZ_OPTION)

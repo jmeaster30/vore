@@ -8,5 +8,7 @@ set(CMAKE_CXX_STANDARD 20)
 #for gdb symbols
 set(CMAKE_BUILD_TYPE Debug)
 
+OPTION(WITH_VIZ_OPTION "Compiles using the graphviz library and enables the ability to visualize what the source code is going to run" OFF)
+
 add_subdirectory(src)
 add_subdirectory(test)
