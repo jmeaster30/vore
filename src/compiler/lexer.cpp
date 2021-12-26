@@ -69,6 +69,11 @@ namespace Compiler
     }
   }
 
+  void Lexer::consume_until_next_stmt()
+  {
+    consume_until({TokenType::FIND, TokenType::REPLACE, TokenType::USE, TokenType::REPEAT, TokenType::SET});
+  }
+
   Token Lexer::try_consume(TokenType type, std::function<void(Token)> fail_callback)
   {
     auto top = peek();
@@ -107,6 +112,7 @@ namespace Compiler
     else if (lexeme == "at most") type = TokenType::ATMOST;
     else if (lexeme == "between") type = TokenType::BETWEEN;
     else if (lexeme == "and") type = TokenType::AND;
+    else if (lexeme == "or") type = TokenType::OR;
     else if (lexeme == "not") type = TokenType::NOT;
     else if (lexeme == "fewest") type = TokenType::FEWEST;
     else if (lexeme == "in") type = TokenType::IN;

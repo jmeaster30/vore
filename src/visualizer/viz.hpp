@@ -1,8 +1,17 @@
 #pragma once
 
 #ifdef WITH_VIZ
-#include <graphviz/cgraph.h>
+#define VIZ_EXTEND : public Viz::Viz
+#define VIZ_FUNC void visualize(Agraph_t* subgraph);
+#define VIZ_VFUNC virtual void visualize(Agraph_t* subgraph) {};
+#else
+#define VIZ_EXTEND
+#define VIZ_FUNC
+#define VIZ_VFUNC
 #endif
+
+#ifdef WITH_VIZ
+#include <graphviz/cgraph.h>
 
 #include <vector>
 #include <string>
@@ -17,11 +26,11 @@ namespace Viz
   class Viz
   {
   public:
-#ifdef WITH_VIZ
     Agnode_t* node = nullptr;
-#endif
-    virtual void visualize() = 0;
+
+    virtual void visualize(Agraph_t* subgraph) = 0;
   };
 
   void render(std::string filename, std::vector<Compiler::Statement*> statements); 
 }
+#endif

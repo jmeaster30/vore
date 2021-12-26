@@ -9,6 +9,19 @@
 
 #include "visualizer/viz.hpp"
 
+char* id_u(const int len) {
+  // TODO make this more C++y
+  static const char chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  std::string tmp_s;
+  tmp_s.reserve(len);
+
+  for (int i = 0; i < len; ++i) {
+    tmp_s += chars[rand() % (sizeof(chars) - 1)];
+  }
+    
+  return (char*)tmp_s.c_str();
+}
+
 struct options
 {
   bool gui = false;
@@ -31,12 +44,17 @@ int main(int argc, char** argv) {
 
   auto lexer = Compiler::Lexer::FromFile("test_vore/new.v");
   auto stmts = Compiler::parse(&lexer);
+
+  //std::cout << "[" << std::endl;
   for (auto stmt : stmts)
   {
-    stmt->print();
+    std::cout << stmt->label() << std::endl;
+    //stmt->print();
+    //std::cout << "," << std::endl;
   }
-  std::cout << stmts.size() << std::endl;
-/*
+  //std::cout << "]" << std::endl;
+  //std::cout << stmts.size() << std::endl;
+
   options args = parse_args(argc, argv);
   vore_options vo = {args.prompt, args.newfile, args.create, args.overwrite, args.recurse};
 
@@ -46,15 +64,18 @@ int main(int argc, char** argv) {
   }
 
   if(args.gui) {
-    std::cout << "gui not implemented yet" << std::endl;
+    //std::cout << "gui not implemented yet" << std::endl;
     return 0;
   }
 
   if(args.visualize) {
+    srand(time(NULL));
+    std::cout << "Generating Visualization..." << std::endl;
     Viz::render("results.png", stmts);
+    std::cout << "Generated Visualization!" << std::endl;
     return 0;
   }
-*/
+
   /*
   if (args.source != "") {
     Vore::compile(args.source, false);

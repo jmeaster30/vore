@@ -9,18 +9,19 @@
 
 namespace Compiler
 {
-  class Statement : public Viz::Viz
+  class Statement VIZ_EXTEND
   {
   public:
     virtual void print() {};
-    virtual void visualize() {};
+    virtual std::string label() { return ":("; };
+    VIZ_VFUNC
   };
 
-  class Value : public Viz::Viz
+  class Value VIZ_EXTEND
   {
   public:
     virtual void print() {};
-    virtual void visualize() {};
+    VIZ_VFUNC
   };
 
   struct Amount
@@ -39,7 +40,8 @@ namespace Compiler
     FindStatement() {};
 
     void print();
-    void visualize();
+    std::string label();
+    VIZ_FUNC
   };
 
   class ReplaceStatement : public Statement
@@ -52,7 +54,8 @@ namespace Compiler
     ReplaceStatement() {};
 
     void print();
-    void visualize();
+    std::string label();
+    VIZ_FUNC
   };
 
   class ParseException : public std::exception
@@ -71,6 +74,7 @@ namespace Compiler
     ErrorStatement() {};
 
     void print();
+    std::string label();
   };
 
   class IdentifierValue : public Value
@@ -81,7 +85,7 @@ namespace Compiler
     IdentifierValue(std::string id) : identifier(id) {}
 
     void print();
-    void visualize();
+    VIZ_FUNC
   };
 
   class StringValue : public Value
@@ -92,7 +96,7 @@ namespace Compiler
     StringValue(std::string val) : value(val) {}
 
     void print();
-    void visualize();
+    VIZ_FUNC
   };
 
   class NumberValue : public Value
@@ -103,6 +107,6 @@ namespace Compiler
     NumberValue(std::string val) : value(std::stoll(val, nullptr, 10)) {}
 
     void print();
-    void visualize();
+    VIZ_FUNC
   };
 }

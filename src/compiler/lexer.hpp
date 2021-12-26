@@ -49,6 +49,7 @@ namespace Compiler
     Token consume();
     Token consume(int i);
     void consume_until(std::vector<TokenType> tokens);
+    void consume_until_next_stmt();
 
     Token try_consume(TokenType type, std::function<void(Token)> fail_callback);
 

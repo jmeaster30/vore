@@ -40,7 +40,7 @@ namespace Compiler
     }
   };
 
-  class FSMState : public Viz::Viz
+  class FSMState VIZ_EXTEND
   {
   public:
     bool accepted = false;
@@ -48,7 +48,9 @@ namespace Compiler
 
     FSMState() {}
 
-    void visualize();
+    void print();
+
+    VIZ_FUNC
 
     void addTransition(Condition cond, FSMState* state);
     void addEpsilonTransition(FSMState* state);
@@ -59,9 +61,12 @@ namespace Compiler
   public:
     bool end = false;
     std::string identifier;
-    VariableState(std::string id, bool e = false) : identifier(id), end(e), FSMState() {}
+    VariableState(std::string id, bool e = false) :
+      identifier(id), end(e), FSMState() {}
 
-    void visualize();
+    void print();
+
+    VIZ_FUNC
   };
 
   class SubroutineState : public FSMState
@@ -69,16 +74,50 @@ namespace Compiler
   public:
     bool end = false;
     std::string identifier;
-    SubroutineState(std::string id, bool e = false) : identifier(id), end(e), FSMState() {}
+    SubroutineState(std::string id, bool e = false) :
+      identifier(id), end(e), FSMState() {}
   
-    void visualize();
+    void print();
+
+    VIZ_FUNC
   };
 
-  class FSM : public Viz::Viz
+  class SubroutineCallState : public FSMState
+  {
+  public:
+    std::string identifier;
+    SubroutineCallState(std::string id) :
+      identifier(id), FSMState() {}
+
+    void print();
+
+    VIZ_FUNC
+  };
+
+  class LoopState : public FSMState
+  {
+  public:
+    bool fewest = false;
+    long long min = 0;
+    long long max = 0;
+
+    FSMState* loop;
+    FSMState* accept;
+
+    LoopState(long long s, long long e, bool few) :
+      min(s), max(e), fewest(few), FSMState() {}
+
+    void print();
+
+    VIZ_FUNC
+  };
+
+  class FSM VIZ_EXTEND
   {
   public:
     void execute();
-    void visualize();
+    void print();
+    VIZ_FUNC
 
     static FSM* Whitespace(bool negative);
     static FSM* Letter(bool negative);
@@ -87,9 +126,10 @@ namespace Compiler
     static FSM* Concatenate(FSM* first, FSM* second);
     static FSM* Maybe(FSM* machine);
     static FSM* In(std::vector<FSM*> group);
-    static FSM* Loop(FSM* machine); // TODO this will need more arguments to work properly
+    static FSM* Loop(FSM* machine, long long start, long long end, bool fewest = false);
     static FSM* VariableDefinition(FSM* machine, std::string identifier);
     static FSM* SubroutineDefinition(FSM* machine, std::string identifier);
+    static FSM* SubroutineCall(std::string identifier);
   
   private:
     FSMState* start = nullptr;
