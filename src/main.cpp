@@ -1,26 +1,8 @@
 #include <iostream>
-#include <iomanip>
+#include <string>
 #include <vector>
 
 #include "vore.hpp"
-
-#include "compiler/lexer.hpp"
-#include "compiler/parser.hpp"
-
-#include "visualizer/viz.hpp"
-
-char* id_u(const int len) {
-  // TODO make this more C++y
-  static const char chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  std::string tmp_s;
-  tmp_s.reserve(len);
-
-  for (int i = 0; i < len; ++i) {
-    tmp_s += chars[rand() % (sizeof(chars) - 1)];
-  }
-    
-  return (char*)tmp_s.c_str();
-}
 
 struct options
 {
