@@ -24,5 +24,11 @@ jobs:
       run: make
 
     - name: Test
-      run: make check
+      run: make check_xml
+
+    - name: Publish Unit Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      if: always()
+      with:
+        files: test/test-results/results.xml
       

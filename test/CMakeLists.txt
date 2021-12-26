@@ -18,3 +18,4 @@ set_target_properties(test_runner PROPERTIES EXCLUDE_FROM_ALL 1)
 
 add_custom_target(check COMMAND test_runner)
 add_custom_target(check_full COMMAND test_runner -s -d yes)
+add_custom_target(check_xml COMMAND test_runner -r junit -o test-results/results.xml)
