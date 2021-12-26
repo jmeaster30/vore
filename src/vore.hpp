@@ -34,12 +34,22 @@ public:
 class Vore {
 public:
   static Vore compile(std::string source);
-  static Vore compile(std::string source, bool stringSource);
+  static Vore compile_file(std::string source);
+
   std::vector<MatchGroup> execute(std::vector<std::string> files);
   std::vector<MatchGroup> execute(std::vector<std::string> files, vore_options vo);
   std::vector<MatchGroup> execute(std::string input);
   std::vector<MatchGroup> execute(std::string input, vore_options vo);
 
+  void print_json();
+
+#ifdef WITH_VIZ
+  void visualize();
+#endif
+
 private:
-  std::vector<Compiler::Statement> statements;
+  Vore(std::vector<Compiler::Statement*> stmts) :
+    statements(stmts) {}
+
+  std::vector<Compiler::Statement*> statements;
 };

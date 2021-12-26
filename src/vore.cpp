@@ -6,23 +6,38 @@
 
 Vore Vore::compile(std::string source)
 {
-  return Vore::compile(source, true);
+  auto lexer = Compiler::Lexer(source);
+  auto stmts = Compiler::parse(&lexer);
+  return Vore(stmts);
 }
 
-Vore Vore::compile(std::string source, bool stringSource)
+Vore Vore::compile_file(std::string source)
 {
-  if (stringSource) {
-    
-  }
-  else {
-    FILE* sourceFile = fopen(source.c_str(), "r");
-    if (sourceFile == nullptr) {
-      std::cout << "ERROR :: the file '" << source << "' could not be opened." << std::endl;
-      return {};
-    }
-  }
-  return {};
+  auto lexer = Compiler::Lexer::FromFile(source);
+  auto stmts = Compiler::parse(&lexer);
+  return Vore(stmts);
 }
+
+void Vore::print_json()
+{
+  std::cout << "[" << std::endl;
+  for (auto stmt : statements)
+  {
+    stmt->print_json();
+    std::cout << "," << std::endl;
+  }
+  std::cout << "]" << std::endl;
+}
+
+#ifdef WITH_VIZ
+void Vore::visualize()
+{
+  srand(time(NULL));
+  std::cout << "Generating Visualization..." << std::endl;
+  Viz::render("results.png", statements);
+  std::cout << "Generated Visualization!" << std::endl;
+}
+#endif
 
 std::vector<MatchGroup> Vore::execute(std::vector<std::string> files) {
   vore_options vo;

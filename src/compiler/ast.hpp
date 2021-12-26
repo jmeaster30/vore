@@ -12,7 +12,7 @@ namespace Compiler
   class Statement VIZ_EXTEND
   {
   public:
-    virtual void print() {};
+    virtual void print_json() {};
     virtual std::string label() { return ":("; };
     VIZ_VFUNC
   };
@@ -20,7 +20,7 @@ namespace Compiler
   class Value VIZ_EXTEND
   {
   public:
-    virtual void print() {};
+    virtual void print_json() {};
     VIZ_VFUNC
   };
 
@@ -39,7 +39,7 @@ namespace Compiler
 
     FindStatement() {};
 
-    void print();
+    void print_json();
     std::string label();
     VIZ_FUNC
   };
@@ -53,7 +53,7 @@ namespace Compiler
 
     ReplaceStatement() {};
 
-    void print();
+    void print_json();
     std::string label();
     VIZ_FUNC
   };
@@ -73,7 +73,7 @@ namespace Compiler
 
     ErrorStatement() {};
 
-    void print();
+    void print_json();
     std::string label();
   };
 
@@ -84,7 +84,7 @@ namespace Compiler
 
     IdentifierValue(std::string id) : identifier(id) {}
 
-    void print();
+    void print_json();
     VIZ_FUNC
   };
 
@@ -95,7 +95,7 @@ namespace Compiler
 
     StringValue(std::string val) : value(val) {}
 
-    void print();
+    void print_json();
     VIZ_FUNC
   };
 
@@ -106,7 +106,7 @@ namespace Compiler
 
     NumberValue(std::string val) : value(std::stoll(val, nullptr, 10)) {}
 
-    void print();
+    void print_json();
     VIZ_FUNC
   };
 }

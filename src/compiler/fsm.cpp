@@ -40,7 +40,7 @@ namespace Compiler
     return "ERROR";
   }
 
-  void FSMState::print()
+  void FSMState::print_json()
   {
     std::cout << "{" << std::endl;
     std::cout << "\"accept_flag\": \"" << accepted << "\"," << std::endl;
@@ -58,7 +58,7 @@ namespace Compiler
       std::cout << "states: [" << std::endl;
       for (auto state : *states)
       {
-        state->print();
+        state->print_json();
         std::cout << "," << std::endl;
       }
       std::cout << "]" << std::endl;
@@ -68,37 +68,7 @@ namespace Compiler
     std::cout << "}";
   }
 
-  void VariableState::print()
-  {
-    std::cout << "{" << std::endl;
-    std::cout << "\"identifier\": \"" << identifier << "\"," << std::endl;
-    std::cout << "\"end\": \"" << end << "\"," << std::endl;
-    std::cout << "\"accept_flag\": \"" << accepted << "\"," << std::endl;
-    std::cout << "\"transitions\": [" << std::endl;
-    for (auto& [condition, states] : transitions)
-    {
-      std::cout << "{" << std::endl;
-      std::cout << "\"condition\": {" << std::endl;
-      std::cout << "\"type\": " << (condition.type == ConditionType::Literal ? "\"Literal\"" : "\"Special\"") << "," << std::endl;
-      std::cout << "\"spec_cond\": \"" << spec_condition_to_string(condition.specCondition) << "\"," << std::endl;
-      std::cout << "\"from\": \"" << condition.from << "\"," << std::endl;
-      std::cout << "\"to\": \"" << condition.to << "\"," << std::endl;
-      std::cout << "\"negative\": \"" << condition.negative << "\"," << std::endl;
-      std::cout << "}," << std::endl;
-      std::cout << "states: [" << std::endl;
-      for (auto state : *states)
-      {
-        state->print();
-        std::cout << "," << std::endl;
-      }
-      std::cout << "]" << std::endl;
-      std::cout << "}," << std::endl;
-    }
-    std::cout << std::endl << "]," << std::endl;  
-    std::cout << "}";
-  }
-
-  void SubroutineState::print()
+  void VariableState::print_json()
   {
     std::cout << "{" << std::endl;
     std::cout << "\"identifier\": \"" << identifier << "\"," << std::endl;
@@ -118,7 +88,7 @@ namespace Compiler
       std::cout << "states: [" << std::endl;
       for (auto state : *states)
       {
-        state->print();
+        state->print_json();
         std::cout << "," << std::endl;
       }
       std::cout << "]" << std::endl;
@@ -128,7 +98,37 @@ namespace Compiler
     std::cout << "}";
   }
 
-  void SubroutineCallState::print()
+  void SubroutineState::print_json()
+  {
+    std::cout << "{" << std::endl;
+    std::cout << "\"identifier\": \"" << identifier << "\"," << std::endl;
+    std::cout << "\"end\": \"" << end << "\"," << std::endl;
+    std::cout << "\"accept_flag\": \"" << accepted << "\"," << std::endl;
+    std::cout << "\"transitions\": [" << std::endl;
+    for (auto& [condition, states] : transitions)
+    {
+      std::cout << "{" << std::endl;
+      std::cout << "\"condition\": {" << std::endl;
+      std::cout << "\"type\": " << (condition.type == ConditionType::Literal ? "\"Literal\"" : "\"Special\"") << "," << std::endl;
+      std::cout << "\"spec_cond\": \"" << spec_condition_to_string(condition.specCondition) << "\"," << std::endl;
+      std::cout << "\"from\": \"" << condition.from << "\"," << std::endl;
+      std::cout << "\"to\": \"" << condition.to << "\"," << std::endl;
+      std::cout << "\"negative\": \"" << condition.negative << "\"," << std::endl;
+      std::cout << "}," << std::endl;
+      std::cout << "states: [" << std::endl;
+      for (auto state : *states)
+      {
+        state->print_json();
+        std::cout << "," << std::endl;
+      }
+      std::cout << "]" << std::endl;
+      std::cout << "}," << std::endl;
+    }
+    std::cout << std::endl << "]," << std::endl;  
+    std::cout << "}";
+  }
+
+  void SubroutineCallState::print_json()
   {
     std::cout << "{" << std::endl;
     std::cout << "\"identifier\": \"" << identifier << "\"," << std::endl;
@@ -147,7 +147,7 @@ namespace Compiler
       std::cout << "states: [" << std::endl;
       for (auto state : *states)
       {
-        state->print();
+        state->print_json();
         std::cout << "," << std::endl;
       }
       std::cout << "]" << std::endl;
@@ -157,27 +157,27 @@ namespace Compiler
     std::cout << "}";
   }
 
-  void LoopState::print()
+  void LoopState::print_json()
   {
     std::cout << "{" << std::endl;
     std::cout << "\"accept_flag\": \"" << accepted << "\"," << std::endl;
     std::cout << "\"min\": \"" << min << "\"" << std::endl;
     std::cout << "\"max\": \"" << max << "\"" << std::endl; 
     std::cout << "\"loop\": ";
-    loop->print();
+    loop->print_json();
     std::cout << "," << std::endl;
     std::cout << "\"accept\": ";
-    accept->print();
+    accept->print_json();
     std::cout << "," << std::endl; 
     std::cout << "}";
   }
 
-  void FSM::print()
+  void FSM::print_json()
   {
     std::cout << "{" << std::endl;
     std::cout << "\"accept_state\": \"" << start << "\"," << std::endl;
     std::cout << "\"start_state\": ";
-    start->print();
+    start->print_json();
     std::cout << "," << std::endl;
     std::cout << "}";
   }

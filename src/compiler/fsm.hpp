@@ -48,7 +48,7 @@ namespace Compiler
 
     FSMState() {}
 
-    void print();
+    void print_json();
 
     VIZ_FUNC
 
@@ -64,7 +64,7 @@ namespace Compiler
     VariableState(std::string id, bool e = false) :
       identifier(id), end(e), FSMState() {}
 
-    void print();
+    void print_json();
 
     VIZ_FUNC
   };
@@ -77,7 +77,7 @@ namespace Compiler
     SubroutineState(std::string id, bool e = false) :
       identifier(id), end(e), FSMState() {}
   
-    void print();
+    void print_json();
 
     VIZ_FUNC
   };
@@ -89,7 +89,7 @@ namespace Compiler
     SubroutineCallState(std::string id) :
       identifier(id), FSMState() {}
 
-    void print();
+    void print_json();
 
     VIZ_FUNC
   };
@@ -107,7 +107,7 @@ namespace Compiler
     LoopState(long long s, long long e, bool few) :
       min(s), max(e), fewest(few), FSMState() {}
 
-    void print();
+    void print_json();
 
     VIZ_FUNC
   };
@@ -116,7 +116,7 @@ namespace Compiler
   {
   public:
     void execute();
-    void print();
+    void print_json();
     VIZ_FUNC
 
     static FSM* Whitespace(bool negative);

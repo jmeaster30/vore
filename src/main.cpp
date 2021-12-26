@@ -41,20 +41,6 @@ options parse_args(int argc, char** argv);
 void print_help();
 
 int main(int argc, char** argv) {
-
-  auto lexer = Compiler::Lexer::FromFile("test_vore/new.v");
-  auto stmts = Compiler::parse(&lexer);
-
-  //std::cout << "[" << std::endl;
-  for (auto stmt : stmts)
-  {
-    std::cout << stmt->label() << std::endl;
-    //stmt->print();
-    //std::cout << "," << std::endl;
-  }
-  //std::cout << "]" << std::endl;
-  //std::cout << stmts.size() << std::endl;
-
   options args = parse_args(argc, argv);
   vore_options vo = {args.prompt, args.newfile, args.create, args.overwrite, args.recurse};
 
@@ -64,33 +50,29 @@ int main(int argc, char** argv) {
   }
 
   if(args.gui) {
-    //std::cout << "gui not implemented yet" << std::endl;
+    std::cout << "gui not implemented yet" << std::endl;
     return 0;
   }
 
+  if (args.source == "") {
+    std::cerr << "No source provided." << std::endl;
+    return 1;
+  }
+
+  Vore vore = Vore::compile_file(args.source);
+
 #ifdef WITH_VIZ
   if(args.visualize) {
-    srand(time(NULL));
-    std::cout << "Generating Visualization..." << std::endl;
-    Viz::render("results.png", stmts);
-    std::cout << "Generated Visualization!" << std::endl;
+    vore.visualize();
     return 0;
   }
 #endif
 
-  /*
-  if (args.source != "") {
-    Vore::compile(args.source, false);
-  } else {
-    std::cout << "No source provided" << std::endl;
-    return 0;
+  auto results = vore.execute(args.files, vo);
+  for(auto group : results) {
+    group.print();
   }
-
-  //auto results = Vore::execute(args.files, vo);
-  //for(auto group : results) {
-  //  group.print();
-  //}
-  */
+  
   return 0;
 }
 
@@ -117,15 +99,17 @@ options parse_args(int argc, char** argv) {
   else if (firstArg == "help") {
     o.help = true;
   }
-#ifdef WITH_VIZ
   else if (firstArg == "viz") {
+#ifdef WITH_VIZ
     o.visualize = true;
-    for (int i = 1; i < argc; i++)
-    {
-      o.files.push_back(argv[i]);
+    if (argc == 2) {
+      o.source = (argv[1] != "new") ? argv[1] : "";
     }
-  }
+#else
+    std::cerr << "ERROR:: Unknown command 'viz'. Set the cmake option 'WITH_VIZ_OPTION' to true and recompile in order to use this functionality." << std::endl;
+    exit(1);
 #endif
+  }
   else {
     bool options = true;
     for (int i = 0; i < argc; i++)
