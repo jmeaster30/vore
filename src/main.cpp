@@ -68,6 +68,7 @@ int main(int argc, char** argv) {
     return 0;
   }
 
+#ifdef WITH_VIZ
   if(args.visualize) {
     srand(time(NULL));
     std::cout << "Generating Visualization..." << std::endl;
@@ -75,6 +76,7 @@ int main(int argc, char** argv) {
     std::cout << "Generated Visualization!" << std::endl;
     return 0;
   }
+#endif
 
   /*
   if (args.source != "") {
