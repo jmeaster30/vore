@@ -1,13 +1,11 @@
 #include <iostream>
-#include <iomanip>
+#include <string>
 #include <vector>
-
-#include <cxxopts.hpp>
 
 #include "vore.hpp"
 
-class options {
-public:
+struct options
+{
   bool gui = false;
   bool help = false;
   bool prompt = false;
@@ -15,22 +13,21 @@ public:
   bool newfile = false;
   bool create = false;
   bool overwrite = false;
+  bool visualize = false;
 
-  std::string source;
-  std::vector<std::string> files;
-
-  options(){};
+  std::string source = "";
+  std::vector<std::string> files = std::vector<std::string>();
 };
 
 options parse_args(int argc, char** argv);
-void printHelp();
+void print_help();
 
 int main(int argc, char** argv) {
   options args = parse_args(argc, argv);
   vore_options vo = {args.prompt, args.newfile, args.create, args.overwrite, args.recurse};
 
   if(args.help) {
-    printHelp();
+    print_help();
     return 0;
   }
 
@@ -39,16 +36,23 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  if (args.source != "") {
-    Vore::compile(args.source, false);
-  } else {
-    std::cout << "No source provided" << std::endl;
-    return 0;
+  if (args.source == "") {
+    std::cerr << "No source provided." << std::endl;
+    return 1;
   }
 
-  auto results = Vore::execute(args.files, vo);
-  for(auto ctxt : results) {
-    ctxt->print();
+  Vore vore = Vore::compile_file(args.source);
+
+#ifdef WITH_VIZ
+  if(args.visualize) {
+    vore.visualize();
+    return 0;
+  }
+#endif
+
+  auto results = vore.execute(args.files, vo);
+  for(auto group : results) {
+    group.print();
   }
   
   return 0;
@@ -76,6 +80,17 @@ options parse_args(int argc, char** argv) {
   } 
   else if (firstArg == "help") {
     o.help = true;
+  }
+  else if (firstArg == "viz") {
+#ifdef WITH_VIZ
+    o.visualize = true;
+    if (argc == 2) {
+      o.source = (argv[1] != "new") ? argv[1] : "";
+    }
+#else
+    std::cerr << "ERROR:: Unknown command 'viz'. Set the cmake option 'WITH_VIZ_OPTION' to true and recompile in order to use this functionality." << std::endl;
+    exit(1);
+#endif
   }
   else {
     bool options = true;
@@ -110,7 +125,7 @@ options parse_args(int argc, char** argv) {
   return o;
 }
 
-void printHelp()
+void print_help()
 {
   std::cout << "VORE - VerbOse Regular Expressions" << std::endl;
   std::cout << "Find and replace text with regular expressions that have an english-like syntax." << std::endl << std::endl;
@@ -119,6 +134,10 @@ void printHelp()
   std::cout << "  You know this..." << std::endl;
   std::cout << std::endl << "vore gui [source file / 'new'] [input file(s)]" << std::endl;
   std::cout << "  opens the gui vore editor. If you use 'new' instead of a filename for a source file then the editor opens with a blank source file" << std::endl;
+#ifdef WITH_VIZ
+  std::cout << std::endl << "vore viz [source file]" << std::endl;
+  std::cout << "  generates a visualization of the NFA generated from the provided source code." << std::endl;
+#endif
   std::cout << std::endl << "vore [options] [source file] [input file(s)]" << std::endl;
   std::cout << "  runs the command line vore tool with the given options and source and outputs all the matches that are in the input files." << std::endl;
   std::cout << "-r : recursively goes through each file in the supplied directory." << std::endl;

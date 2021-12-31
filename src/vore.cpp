@@ -1,75 +1,83 @@
 #include "vore.hpp"
-#include "base.tab.hpp"
+
+#include "compiler/parser.hpp"
 
 #include <iostream>
 
-extern FILE* yyin;
-typedef struct yy_buffer_state * YY_BUFFER_STATE;
-extern int yyparse();
-extern YY_BUFFER_STATE yy_scan_string(const char * str);
-extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
-
-program* root; //? can we get rid of this???
-
-program* Vore::prog = nullptr;
-
-void Vore::compile(std::string source)
+Vore Vore::compile(std::string source)
 {
-  Vore::compile(source, true);
+  auto lexer = Compiler::Lexer(source);
+  auto stmts = Compiler::parse(&lexer);
+  return Vore(stmts);
 }
 
-void Vore::compile(std::string source, bool stringSource)
+Vore Vore::compile_file(std::string source)
 {
-  yyin = nullptr;
-  root = nullptr;
-  prog = nullptr;
-
-  if (stringSource) {
-    YY_BUFFER_STATE buffer = yy_scan_string(source.c_str());
-    yyparse();
-    yy_delete_buffer(buffer);
-  }
-  else {
-    FILE* sourceFile = fopen(source.c_str(), "r");
-    if (sourceFile == nullptr) {
-      std::cout << "ERROR :: the file '" << source << "' could not be opened." << std::endl;
-      return;
-    }
-    yyin = sourceFile;
-    yyparse();
-  }
-
-  if (root == nullptr) {
-      std::cout << "ERROR :: ParsingError - There was an error while parsing the source." << std::endl;
-      return;
-    }
-  
-
-  prog = root;
+  auto lexer = Compiler::Lexer::FromFile(source);
+  auto stmts = Compiler::parse(&lexer);
+  return Vore(stmts);
 }
 
-std::vector<context*> Vore::execute(std::vector<std::string> files) {
+void Vore::print_json()
+{
+  std::cout << "[" << std::endl;
+  for (auto stmt : statements)
+  {
+    stmt->print_json();
+    std::cout << "," << std::endl;
+  }
+  std::cout << "]" << std::endl;
+}
+
+#ifdef WITH_VIZ
+void Vore::visualize()
+{
+  srand(time(NULL));
+  std::cout << "Generating Visualization..." << std::endl;
+  Viz::render("results.png", statements);
+  std::cout << "Generated Visualization!" << std::endl;
+}
+#endif
+
+std::vector<MatchGroup> Vore::execute(std::vector<std::string> files) {
   vore_options vo;
-  return Vore::execute(files, vo);
+  return execute(files, vo);
 };
 
-std::vector<context*> Vore::execute(std::vector<std::string> files, vore_options vo = {}) {
-  if(prog == nullptr) {
-    return std::vector<context*>();
-  }
-
-  return prog->execute(files, vo);
+std::vector<MatchGroup> Vore::execute(std::vector<std::string> files, vore_options vo = {}) {
+  return {};
 }
 
-std::vector<context*> Vore::execute(std::string input) {
+std::vector<MatchGroup> Vore::execute(std::string input) {
   vore_options vo;
-  return Vore::execute(input, vo);
+  return execute(input, vo);
 };
 
-std::vector<context*> Vore::execute(std::string input, vore_options vo = {}) {
-  if(prog == nullptr) {
-    return std::vector<context*>();
-  }
+std::vector<MatchGroup> Vore::execute(std::string input, vore_options vo = {}) {
+  return {};
+}
 
-  return prog->execute(input, vo);
+void Match::print()
+{
+  std::cout << "value - '" << value << "'" << std::endl;
+  std::cout << "replacement - '" << replacement << "'" << std::endl;
+  std::cout << "file_offset - '" << file_offset << "'" << std::endl;
+  std::cout << "line_number - '" << line_number << "'" << std::endl;
+  std::cout << "match_number - '" << match_number << "'" << std::endl;
+  std::cout << "match_length - '" << match_length << "'" << std::endl;
+  std::cout << "variables: " << std::endl;\
+  for(auto& [name, value] : variables) {
+    std::cout << "\t" << name << " = " << value << std::endl;
+  }
+}
+
+void MatchGroup::print()
+{
+  std::cout << "MATCHES - " << (filename == "" ? "String Input" : filename) << std::endl;
+  u_int64_t numMatches = matches.size();
+  for (u_int64_t i = 0; i < numMatches; i++)
+  {
+    std::cout << "[" << (i + 1) << "/" << numMatches << "] ==============" << std::endl;
+    matches[i].print();
+  }
 }

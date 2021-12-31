@@ -1,5 +1,4 @@
-#ifndef __vore_options__
-#define __vore_options__
+#pragma once
 
 struct vore_options {
   bool prompt;
@@ -8,5 +7,3 @@ struct vore_options {
   bool overwrite;
   bool recurse;
 };
-
-#endif

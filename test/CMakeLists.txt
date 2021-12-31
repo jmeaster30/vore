@@ -1,9 +1,11 @@
 set(TEST_SOURCES
   test_main.cpp
   helper.cpp
+  utilities_test/utilities.test.cpp
   find_stmt/initial.test.cpp
   find_stmt/atom.test.cpp
   find_stmt/in.test.cpp
+  find_stmt/extra.test.cpp
 )
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -16,3 +18,4 @@ set_target_properties(test_runner PROPERTIES EXCLUDE_FROM_ALL 1)
 
 add_custom_target(check COMMAND test_runner)
 add_custom_target(check_full COMMAND test_runner -s -d yes)
+add_custom_target(check_xml COMMAND test_runner -r junit -o test-results/results.xml)

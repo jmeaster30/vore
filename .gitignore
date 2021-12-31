@@ -11,3 +11,9 @@ CTestTestfile.cmake
 _deps
 .vscode
 test_vore/*
+
+test_runner
+vore
+old_flex_bison
+plans
+results.png
