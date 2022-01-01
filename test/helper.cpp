@@ -1,6 +1,6 @@
 #include "helper.hpp"
 
-void SINGLE_MATCH(std::vector<MatchGroup> results, u_int64_t fileOffset, u_int64_t match_length, std::string value)
+void SINGLE_MATCH(std::vector<MatchGroup> results, long long fileOffset, long long match_length, std::string value)
 {
   REQUIRE(results.size() == 1);
   
@@ -13,7 +13,7 @@ void SINGLE_MATCH(std::vector<MatchGroup> results, u_int64_t fileOffset, u_int64
   REQUIRE(singleMatch.value == value);
 }
 
-void IS_MATCH(Match m, u_int64_t offset, u_int64_t len, std::string val) 
+void IS_MATCH(Match m, long long offset, long long len, std::string val) 
 {
   REQUIRE(m.file_offset == offset);
   REQUIRE(m.match_length == len);

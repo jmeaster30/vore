@@ -74,8 +74,8 @@ void Match::print()
 void MatchGroup::print()
 {
   std::cout << "MATCHES - " << (filename == "" ? "String Input" : filename) << std::endl;
-  u_int64_t numMatches = matches.size();
-  for (u_int64_t i = 0; i < numMatches; i++)
+  auto numMatches = matches.size();
+  for (size_t i = 0; i < numMatches; i++)
   {
     std::cout << "[" << (i + 1) << "/" << numMatches << "] ==============" << std::endl;
     matches[i].print();

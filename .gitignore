@@ -17,3 +17,14 @@ vore
 old_flex_bison
 plans
 results.png
+
+#windows ignores!!!
+
+Debug
+Release
+x64
+.vs
+*.dir
+*.vcxproj
+*.vcxproj.filters
+vore.sln
