@@ -45,7 +45,8 @@ std::vector<MatchGroup> Vore::execute(std::vector<std::string> files) {
 };
 
 std::vector<MatchGroup> Vore::execute(std::vector<std::string> files, vore_options vo = {}) {
-  return {};
+  std::vector<MatchGroup> result = {};
+  return result;
 }
 
 std::vector<MatchGroup> Vore::execute(std::string input) {
@@ -54,7 +55,27 @@ std::vector<MatchGroup> Vore::execute(std::string input) {
 };
 
 std::vector<MatchGroup> Vore::execute(std::string input, vore_options vo = {}) {
-  return {};
+  std::vector<MatchGroup> result = {};  
+
+  Compiler::GlobalContext* global = new Compiler::GlobalContext();
+  global->input = Compiler::Input::FromString(input);
+
+  for (auto statement : statements)
+  {
+    auto matches = statement->execute(global);
+
+    if (matches.size() == 0) continue;
+
+    auto group = MatchGroup();
+    for (auto match : matches)
+    {
+      group.matches.push_back(Match(match));
+    }
+
+    result.push_back(group);
+  }
+
+  return result;
 }
 
 void Match::print()

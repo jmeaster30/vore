@@ -1,6 +1,12 @@
 #include "helper.hpp"
 
-TEST_CASE("Find all bois", "[string, assign]") {
+TEST_CASE("Find all bois basic", "[string]") {
+  auto vore = Vore::compile("find all \"boy\"");
+  auto results = vore.execute("big boy :)");
+  SINGLE_MATCH(results, 4, 3, "boy");
+}
+
+TEST_CASE("Find all bois with variables", "[string, assign]") {
   auto vore = Vore::compile("find all \"boy\" = test");
   auto results = vore.execute("big boy :)");
   SINGLE_MATCH(results, 4, 3, "boy");

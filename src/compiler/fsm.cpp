@@ -4,6 +4,77 @@
 
 namespace Compiler
 {
+  std::vector<MatchContext*> FSMState::execute(MatchContext* context)
+  {
+    std::vector<MatchContext*> result = {};
+
+    if (accepted) {
+      return { context };
+    }
+
+    for(auto& [condition, transition_set] : transitions)
+    {
+      MatchContext* new_context = context->copy();
+      if (condition.type == ConditionType::Literal)
+      {
+        auto to_match = new_context->input->get(condition.from.length());
+        if (to_match == condition.from)
+        {
+          new_context->value += to_match;
+          for (auto transition : *transition_set)
+          {
+            auto next_result = transition->execute(new_context);
+            result.insert(result.end(), next_result.begin(), next_result.end());
+          }
+        }
+        else
+        {
+          new_context->input->seek_back(condition.from.length());
+        }
+      }
+      else
+      {
+        // TODO
+      }
+    }
+
+    return result;
+  }
+
+  std::vector<MatchContext*> VariableState::execute(MatchContext* context)
+  {
+    return {};
+  }
+
+  std::vector<MatchContext*> SubroutineState::execute(MatchContext* context)
+  {
+    return {};
+  }
+
+  std::vector<MatchContext*> SubroutineCallState::execute(MatchContext* context)
+  {
+    return {};
+  }
+
+  std::vector<MatchContext*> LoopState::execute(MatchContext* context)
+  {
+    return {};
+  }
+
+  MatchContext* FSM::execute(MatchContext* context)
+  {
+    auto matches = start->execute(context);
+    MatchContext* result = nullptr;
+
+    for(auto match : matches) {
+      if (result == nullptr || result->value.length() < match->value.length()) {
+        result = match;
+      }
+    }
+
+    return result;
+  }
+
   void FSMState::addTransition(Condition cond, FSMState* state)
   {
     auto found = transitions.find(cond);

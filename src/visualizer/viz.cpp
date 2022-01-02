@@ -9,6 +9,11 @@
 #include <graphviz/cgraph.h>
 #include <graphviz/gvc.h>
 
+//because graphviz is a c library and takes char*s but I just need to use string literals (const char*).
+// graphviz doesn't seem to modify the char* it only uses it for looking up stuff so I think this 
+// is going to be safe
+char* operator ""_p(const char* str, size_t _size) { return (char*)str; }
+
 Agsym_t* edge_label_sym;
 Agsym_t* node_label_sym;
 
@@ -65,17 +70,18 @@ std::string edge_label(Compiler::Condition cond)
       case Compiler::SpecialCondition::Variable: return "Var: " + escape_chars(cond.from);
     }
   }
+  return "ERROR:: UNKNOWN CONDITION.";
 }
 
 void Viz::render(std::string filename, std::vector<Compiler::Statement*> statements)
 {
-  Agraph_t* graph = agopen("network", Agdirected, 0);
-  edge_label_sym = agattr(graph, AGEDGE, "label", "");
-  node_label_sym = agattr(graph, AGNODE, "label", "");
-  agattr(graph, AGRAPH, "dpi", "100.0");
-  agattr(graph, AGRAPH, "rankdir", "LR");
-  agattr(graph, AGRAPH, "labeljust", "l");
-  Agsym_t* subgraph_label_sym = agattr(graph, AGRAPH, "label", "");
+  Agraph_t* graph = agopen("network"_p, Agdirected, 0);
+  edge_label_sym = agattr(graph, AGEDGE, "label"_p, "");
+  node_label_sym = agattr(graph, AGNODE, "label"_p, "");
+  agattr(graph, AGRAPH, "dpi"_p, "100.0");
+  agattr(graph, AGRAPH, "rankdir"_p, "LR");
+  agattr(graph, AGRAPH, "labeljust"_p, "l");
+  Agsym_t* subgraph_label_sym = agattr(graph, AGRAPH, "label"_p, "");
   for (auto statement : statements)
   {
     Agraph_t* subgraph = agsubg(graph, (char*)("cluster_" + id(20)).c_str(), 1);

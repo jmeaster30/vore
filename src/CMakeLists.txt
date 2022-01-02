@@ -5,6 +5,7 @@ set(VORE_SOURCES
   compiler/parser.cpp
   compiler/ast.cpp
   compiler/fsm.cpp
+  compiler/context.cpp
   visualizer/viz.cpp
 )
 
@@ -15,6 +16,7 @@ set(VORE_HEADERS
   compiler/parser.hpp
   compiler/ast.hpp
   compiler/fsm.hpp
+  compiler/context.hpp
   visualizer/viz.hpp
 )
 
