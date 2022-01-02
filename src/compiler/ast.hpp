@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "context.hpp"
 #include "fsm.hpp"
 #include "../visualizer/viz.hpp"
 
@@ -13,6 +14,7 @@ namespace Compiler
   {
   public:
     virtual void print_json() {};
+    virtual std::vector<MatchContext*> execute(GlobalContext* ctxt) { return {}; };
     virtual std::string label() { return ":("; };
     VIZ_VFUNC
   };
@@ -40,6 +42,7 @@ namespace Compiler
     FindStatement() {};
 
     void print_json();
+    std::vector<MatchContext*> execute(GlobalContext* ctxt);
     std::string label();
     VIZ_FUNC
   };
@@ -54,6 +57,7 @@ namespace Compiler
     ReplaceStatement() {};
 
     void print_json();
+    std::vector<MatchContext*> execute(GlobalContext* ctxt);
     std::string label();
     VIZ_FUNC
   };

@@ -1,9 +1,62 @@
 #include "ast.hpp"
 
 #include <iostream>
+#include <limits>
 
 namespace Compiler
 {
+  std::vector<MatchContext*> FindMatches(GlobalContext* ctxt, FSM* machine, Amount amount)
+  {
+    auto matches = std::vector<MatchContext*>();
+    auto size = ctxt->input->get_size();
+
+    auto min_matches = amount.skip;
+    auto max_matches = amount.all ? std::numeric_limits<long long>::max() : amount.skip + amount.take;
+    auto total_matches = 0LL;
+    auto num_matches = 0LL;
+    auto line_number = 1LL;
+    auto current_position = ctxt->input->get_position();
+
+    while ((current_position = ctxt->input->get_position()) < size)
+    {
+      auto match = new MatchContext(current_position, ctxt);
+      auto result = machine->execute(match);
+      
+      if (result != nullptr && result->value.length() > 0)
+      {
+        if (total_matches >= min_matches && total_matches <= max_matches)
+        {
+          num_matches += 1;
+          result->line_number = line_number;
+          result->match_number = num_matches;
+          result->match_length = result->value.length();
+          matches.push_back(result); 
+        }
+        total_matches += 1;
+      }
+      else
+      {
+        ctxt->input->set_position(current_position);
+      }
+
+      //seek forward 1
+      if (ctxt->input->get(1) == "\n") line_number += 1;
+    }
+    return matches;
+  }
+
+  std::vector<MatchContext*> FindStatement::execute(GlobalContext* ctxt)
+  {
+    return FindMatches(ctxt, machine, amount);
+  }
+
+  std::vector<MatchContext*> ReplaceStatement::execute(GlobalContext* ctxt)
+  {
+    auto matches = FindMatches(ctxt, machine, amount);
+    //go through these matches and replace the stuff
+    return matches;
+  }
+
   void FindStatement::print_json()
   {
     std::cout << "{" << std::endl;

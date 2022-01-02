@@ -1,8 +1,5 @@
 #include "parser.hpp"
 
-#include <iostream>
-#include <optional>
-#include <algorithm>
 #include <limits>
 
 namespace Compiler
@@ -147,7 +144,6 @@ namespace Compiler
       auto start = lexer->consume(); // consume string
       lexer->consume();              // consume dash
       auto end = lexer->try_consume(TokenType::STRING, [&](Token fail_token){
-        std::cout << "le epic fail" << std::endl;
         lexer->consume_until_next_stmt();
         throw ParseException("Unexpected Token (" + token_type_to_string(fail_token.type) + "). Expected a string after '-' for this range.");
       });
@@ -180,10 +176,6 @@ namespace Compiler
     while(current.type != TokenType::RIGHTS)
     {
       auto group_element = parse_range_or_primary(lexer);
-      if (group_element == nullptr) {
-        std::cout << "NULL GROUP ELEMENT IN 'IN' :(" << std::endl;
-        exit(1); //shouldn't happen here just for testing purposes
-      }
       group.push_back(group_element);
       if (lexer->peek().type == TokenType::RIGHTS) break;
       lexer->try_consume(TokenType::COMMA, [&](Token fail_token){
@@ -423,8 +415,6 @@ namespace Compiler
         if (primary_start(top.type)) {
           result = parse_primary_or_more(lexer);
         } else {
-          // error
-          std::cout << "ERROR :(" << std::endl;
           lexer->consume_until_next_stmt();
           throw ParseException("Unexpected token (" + token_type_to_string(top.type) + "). Expected some element or primary expression.");
         }
@@ -547,10 +537,8 @@ namespace Compiler
           result.push_back(new NumberValue(top.lexeme));
           break;
         default:
-          //throw error here
-          std::cout << ">:(" << std::endl;
-          return {};
-          break;
+          lexer->consume_until_next_stmt();
+          throw ParseException("Unexpected token (" + token_type_to_string(top.type) + "). Expected identifier, string, or number in the replacement list.");
       }
       lexer->consume();
       top = lexer->peek();

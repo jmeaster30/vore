@@ -4,7 +4,10 @@
 #include <vector>
 #include <unordered_map>
 
+#include "context.hpp"
 #include "../visualizer/viz.hpp"
+
+class Context;
 
 namespace Compiler
 {
@@ -49,6 +52,7 @@ namespace Compiler
     FSMState() {}
 
     void print_json();
+    std::vector<MatchContext*> execute(MatchContext* context);
 
     VIZ_FUNC
 
@@ -65,6 +69,7 @@ namespace Compiler
       identifier(id), end(e), FSMState() {}
 
     void print_json();
+    std::vector<MatchContext*> execute(MatchContext* context);
 
     VIZ_FUNC
   };
@@ -78,6 +83,7 @@ namespace Compiler
       identifier(id), end(e), FSMState() {}
   
     void print_json();
+    std::vector<MatchContext*> execute(MatchContext* context);
 
     VIZ_FUNC
   };
@@ -90,6 +96,7 @@ namespace Compiler
       identifier(id), FSMState() {}
 
     void print_json();
+    std::vector<MatchContext*> execute(MatchContext* context);
 
     VIZ_FUNC
   };
@@ -108,6 +115,7 @@ namespace Compiler
       min(s), max(e), fewest(few), FSMState() {}
 
     void print_json();
+    std::vector<MatchContext*> execute(MatchContext* context);
 
     VIZ_FUNC
   };
@@ -115,7 +123,7 @@ namespace Compiler
   class FSM VIZ_EXTEND
   {
   public:
-    void execute();
+    MatchContext* execute(MatchContext* context);
     void print_json();
     VIZ_FUNC
 

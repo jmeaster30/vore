@@ -2,6 +2,7 @@
 
 #include "vore_options.hpp"
 #include "compiler/ast.hpp"
+#include "compiler/context.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -11,23 +12,33 @@ class Match {
 public:
   std::string value = "";
   std::string replacement = "";
-  u_int64_t file_offset = 0;
-  u_int64_t line_number = 0;
-  u_int64_t match_number = 0;
-  u_int64_t match_length = 0;
+  long long file_offset = 0;
+  long long line_number = 0;
+  long long match_number = 0;
+  long long match_length = 0;
   std::unordered_map<std::string, std::string> variables = std::unordered_map<std::string, std::string>();
 
-  Match(u_int64_t startOffset){
-    file_offset = startOffset;
-  };
+  Match(Compiler::MatchContext* context)
+  {
+    value = context->value;
+    replacement = context->replacement;
+    file_offset = context->file_offset;
+    line_number = context->line_number;
+    match_number = context->match_number;
+    match_length = context->match_length;
+    variables = context->variables;
+  }
 
   void print();
 };
 
 class MatchGroup {
 public:
-  std::string filename;
-  std::vector<Match> matches;
+  std::string filename = "";
+  std::vector<Match> matches = {};
+
+  MatchGroup() {}
+
   void print();
 };
 

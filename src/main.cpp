@@ -50,7 +50,8 @@ int main(int argc, char** argv) {
   }
 #endif
 
-  auto results = vore.execute(args.files, vo);
+  // TODO make this work with files
+  auto results = vore.execute("big boy :)", vo);
   for(auto group : results) {
     group.print();
   }
