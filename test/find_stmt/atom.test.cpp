@@ -1,5 +1,7 @@
 #include "helper.hpp"
 
+std::vector<std::string> multiline_txt_file = { "test_files/multiline.txt" };
+
 TEST_CASE("find string", "[string]") {
   auto vore = Vore::compile("find all 'yay'");
   auto results = vore.execute("OMG yay :)");
@@ -32,13 +34,13 @@ TEST_CASE("find any", "[any, atmost]") {
 
 TEST_CASE("find sol line eol", "[string, sol, eol]") {
   auto vore = Vore::compile("find all sol 'line' eol");
-  auto results = vore.execute((std::vector<std::string>){ "test_files/multiline.txt" });
+  auto results = vore.execute(multiline_txt_file);
   SINGLE_MATCH(results, 70, 4, "line");
 }
 
 TEST_CASE("find eol newline", "[eol, string]") {
   auto vore = Vore::compile("find all eol '\n'");
-  auto results = vore.execute((std::vector<std::string>){ "test_files/multiline.txt" });
+  auto results = vore.execute(multiline_txt_file);
 
   REQUIRE(results.size() == 1);
   REQUIRE(results[0].matches.size() == 5);
@@ -52,19 +54,19 @@ TEST_CASE("find eol newline", "[eol, string]") {
 
 TEST_CASE("find sof This", "[sof, string]") {
   auto vore = Vore::compile("find all sof 'This'");
-  auto results = vore.execute((std::vector<std::string>){ "test_files/multiline.txt" });
+  auto results = vore.execute(multiline_txt_file);
   SINGLE_MATCH(results, 0, 4, "This");
 }
 
 TEST_CASE("find eol", "[eol, string]") {
   auto vore = Vore::compile("find all ':)' eol");
-  auto results = vore.execute((std::vector<std::string>){ "test_files/multiline.txt" });
+  auto results = vore.execute(multiline_txt_file);
   SINGLE_MATCH(results, 130, 2, ":)");
 }
 
 TEST_CASE("find eof", "[eof, any]") {
   auto vore = Vore::compile("find all exactly 9 any eof");
-  auto results = vore.execute((std::vector<std::string>){ "test_files/multiline.txt" });
+  auto results = vore.execute(multiline_txt_file);
   SINGLE_MATCH(results, 123, 9, "source :)");
 }
 
@@ -76,7 +78,7 @@ TEST_CASE("find escape chars", "[string]") {
 
 TEST_CASE("find whitespace", "[whitepsace, string]") {
   auto vore = Vore::compile("find all whitespace 'source' whitespace");
-  auto results = vore.execute((std::vector<std::string>){ "test_files/multiline.txt" });
+  auto results = vore.execute(multiline_txt_file);
   SINGLE_MATCH(results, 122, 8, "\tsource ");
 }
 

@@ -79,26 +79,26 @@ std::vector<MatchGroup> Vore::execute(std::string input, vore_options vo = {}) {
 }
 
 void Match::print()
-  {
-    std::cout << "value - '" << value << "'" << std::endl;
-    std::cout << "replacement - '" << replacement << "'" << std::endl;
-    std::cout << "file_offset - '" << file_offset << "'" << std::endl;
-    std::cout << "line_number - '" << line_number << "'" << std::endl;
-    std::cout << "match_number - '" << match_number << "'" << std::endl;
-    std::cout << "match_length - '" << match_length << "'" << std::endl;
-    std::cout << "variables: " << std::endl;\
-    for(auto& [name, value] : variables) {
-      std::cout << "\t" << name << " = " << value << std::endl;
-    }
+{
+  std::cout << "value - '" << value << "'" << std::endl;
+  std::cout << "replacement - '" << replacement << "'" << std::endl;
+  std::cout << "file_offset - '" << file_offset << "'" << std::endl;
+  std::cout << "line_number - '" << line_number << "'" << std::endl;
+  std::cout << "match_number - '" << match_number << "'" << std::endl;
+  std::cout << "match_length - '" << match_length << "'" << std::endl;
+  std::cout << "variables: " << std::endl;\
+  for(auto& [name, value] : variables) {
+    std::cout << "\t" << name << " = " << value << std::endl;
   }
+}
 
-  void MatchGroup::print()
+void MatchGroup::print()
+{
+  std::cout << "MATCHES - " << (filename == "" ? "String Input" : filename) << std::endl;
+  auto numMatches = matches.size();
+  for (size_t i = 0; i < numMatches; i++)
   {
-    std::cout << "MATCHES - " << (filename == "" ? "String Input" : filename) << std::endl;
-    u_int64_t numMatches = matches.size();
-    for (u_int64_t i = 0; i < numMatches; i++)
-    {
-      std::cout << "[" << (i + 1) << "/" << numMatches << "] ==============" << std::endl;
-      matches[i].print();
-    }
+    std::cout << "[" << (i + 1) << "/" << numMatches << "] ==============" << std::endl;
+    matches[i].print();
   }
+}
