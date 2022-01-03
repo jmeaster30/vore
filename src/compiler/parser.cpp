@@ -127,6 +127,10 @@ namespace Compiler
           case TokenType::UPPER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "A", "Z", true}); break;
           case TokenType::LOWER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "a", "z", true}); break;
           case TokenType::STRING: result = FSM::FromBasic({ConditionType::Literal, SpecialCondition::None, top.lexeme, "", true}); break;
+          default:
+            lexer->consume_until_next_stmt();
+            throw ParseException("Unexpected Token (" + token_type_to_string(next.type) + "). Expected 'whitespace', 'digit', 'letter', 'upper', 'lower', or 'string' after a not.");
+            break;
         }
         break;
     }

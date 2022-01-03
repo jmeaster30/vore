@@ -1,9 +1,33 @@
 #include "fsm.hpp"
 
 #include <iostream>
+#include <functional>
 
 namespace Compiler
 {
+  void GetNextTransitions(std::vector<MatchContext*>* results, MatchContext* context, std::vector<FSMState*>* transition_set)
+  {
+    for (auto transition : *transition_set)
+    {
+      auto next_result = transition->execute(context);
+      results->insert(results->end(), next_result.begin(), next_result.end());
+    }
+  }
+
+  void DoMatch(std::function<bool(std::string)> is_match, long long length, std::vector<MatchContext*>* results, MatchContext* context, std::vector<FSMState*>* transition_set)
+  {
+    auto to_match = context->input->get(length);
+    if (is_match(to_match))
+    {
+      context->value += to_match;
+      GetNextTransitions(results, context, transition_set);
+    }
+    else
+    {
+      context->input->seek_back(length);
+    }
+  }
+
   std::vector<MatchContext*> FSMState::execute(MatchContext* context)
   {
     std::vector<MatchContext*> result = {};
@@ -17,24 +41,19 @@ namespace Compiler
       MatchContext* new_context = context->copy();
       if (condition.type == ConditionType::Literal)
       {
-        auto to_match = new_context->input->get(condition.from.length());
-        if (to_match == condition.from)
-        {
-          new_context->value += to_match;
-          for (auto transition : *transition_set)
-          {
-            auto next_result = transition->execute(new_context);
-            result.insert(result.end(), next_result.begin(), next_result.end());
-          }
-        }
-        else
-        {
-          new_context->input->seek_back(condition.from.length());
-        }
+        DoMatch([&](std::string to_match) {
+          return to_match == condition.from && !condition.negative || to_match != condition.from && condition.negative;
+        }, condition.from.length(), &result, new_context, transition_set);
       }
-      else
+      else if (condition.specCondition == SpecialCondition::None)
       {
-        // TODO
+        GetNextTransitions(&result, new_context, transition_set);
+      }
+      else if (condition.specCondition == SpecialCondition::Any)
+      {
+        DoMatch([&](std::string to_match) {
+          return true;
+        }, 1, &result, new_context, transition_set);
       }
     }
 
@@ -43,7 +62,15 @@ namespace Compiler
 
   std::vector<MatchContext*> VariableState::execute(MatchContext* context)
   {
-    return {};
+    std::vector<MatchContext*> results = {};
+
+    if (end) {
+      // pop state (if state is not the same as the identifier on this state then throw an error)
+    } else {
+      
+    }
+
+    return results;
   }
 
   std::vector<MatchContext*> SubroutineState::execute(MatchContext* context)

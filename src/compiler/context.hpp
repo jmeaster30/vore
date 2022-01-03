@@ -71,6 +71,12 @@ namespace Compiler
     bool forward_search; // is this right? do we need this at all?
   };
 
+  struct VariableEntry
+  {
+    std::string variable_name;
+    long long start_index;
+  };
+
   class MatchContext
   {
   public:
@@ -79,6 +85,7 @@ namespace Compiler
 
     std::stack<CallEntry> call_stack = {};
     std::stack<LoopEntry> loop_stack = {};
+    std::stack<VariableEntry> var_stack = {};
 
     std::unordered_map<std::string, std::string> variables = {};
     std::unordered_map<std::string, FSMState*> subroutines = {};
