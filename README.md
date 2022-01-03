@@ -2,6 +2,34 @@
 
 VORE is just a regular expression engine but with more readable syntax and some extra features that I felt would be useful from processing text. With this project, I wanted to learn about language design and implementation with a strong enough constraint that would keep me from expanding the scope to an unmanageable level.
 
+## Getting Started
+
+This project uses CMake to generate the build files. You should be able to use what ever cmake generator works best for you. I have only used the ones for Unix Makefiles and Visual Studio 16 2019.
+
+Here are the steps to get the help message printed to the screen.
+
+### Linux
+
+In a terminal, from the root directory of the project, run the following commands:
+
+>```cmake .```
+>
+>```make```
+>
+>```./vore help```
+
+### Windows
+
+Again, in a terminal, from the root directory of the project, run the following commands:
+
+>```cmake .```
+>
+>```msbuild vore.sln```
+>
+>```Debug/vore.exe help```
+
+## About VORE
+
 This language is mostly a result of difficulties that I have had with regular expressions and I also took into account some things I have heard others have difficulty with. Some of the difficulties I have experienced with regular expressions are how its difficult to read the expressions and how difficult it is to remember the syntax when writing them. So, when coming up with the syntax for VORE I tried to make it feel like you can type out what you want like you are saying the rules and you'll have the proper regular expression. I took some syntax style inspiration from SQL as you will probably see.
 
 Another thing I wanted from this language is to fully encompass original regular expressions to the point where I would be able to write a transpiler from VORE to regex and back. However, there are some features and semantics that I am allowing that would make transpiling any arbitrary VORE code into a valid regular expression difficult if not impossible. I don't know if I will actually write the transpiler but if I think it would be a fun quick project I probably will.

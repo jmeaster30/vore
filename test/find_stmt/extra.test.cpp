@@ -3,7 +3,10 @@
 TEST_CASE("ca codes", "[extra]")
 {
   auto vore = Vore::compile("find all sol (at least 1 (letter or digit) fewest) = code '\t' (at least 1 any fewest) = description eol");
-  auto results = vore.execute((std::vector<std::string>){ "test_files/cacodes.txt" });
+  
+  std::vector<std::string> test_file = { "test_files/cacodes.txt" };
+  
+  auto results = vore.execute(test_file);
   REQUIRE(results.size() == 1);
   REQUIRE(results[0].matches.size() == 3);
 
