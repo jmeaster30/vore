@@ -52,25 +52,26 @@ std::string escape_chars(std::string str)
 
 std::string edge_label(Compiler::Condition cond)
 { 
+  std::string label;
   if (cond.type == Compiler::ConditionType::Literal)
   {
-    return "'" + escape_chars(cond.from) + "'";
+    label = "'" + escape_chars(cond.from) + "'";
   }
   else
   {
     switch (cond.specCondition)
     {
-      case Compiler::SpecialCondition::Any: return "any";
-      case Compiler::SpecialCondition::StartOfFile: return "SOF";
-      case Compiler::SpecialCondition::EndOfFile: return "EOF";
-      case Compiler::SpecialCondition::StartOfLine: return "SOL";
-      case Compiler::SpecialCondition::EndOfLine: return "EOL";
-      case Compiler::SpecialCondition::None: return "";
-      case Compiler::SpecialCondition::Range: return "'" + escape_chars(cond.from) + "' - '" + escape_chars(cond.to) + "'";
-      case Compiler::SpecialCondition::Variable: return "Var: " + escape_chars(cond.from);
+      case Compiler::SpecialCondition::Any: label = "any"; break;
+      case Compiler::SpecialCondition::StartOfFile: label = "SOF"; break;
+      case Compiler::SpecialCondition::EndOfFile: label = "EOF"; break;
+      case Compiler::SpecialCondition::StartOfLine: label = "SOL"; break;
+      case Compiler::SpecialCondition::EndOfLine: label = "EOL"; break;
+      case Compiler::SpecialCondition::None: label = ""; break;
+      case Compiler::SpecialCondition::Range: label = "'" + escape_chars(cond.from) + "' - '" + escape_chars(cond.to) + "'"; break;
+      case Compiler::SpecialCondition::Variable: label = "Var: " + escape_chars(cond.from); break;
     }
   }
-  return "ERROR:: UNKNOWN CONDITION.";
+  return (cond.negative ? "not " : "") + label;
 }
 
 void Viz::render(std::string filename, std::vector<Compiler::Statement*> statements)
@@ -120,6 +121,11 @@ void Compiler::ReplaceStatement::visualize(Agraph_t* subgraph)
   }
 }
 
+void Compiler::ErrorStatement::visualize(Agraph_t* subgraph)
+{
+  //nothing
+}
+
 void Compiler::NumberValue::visualize(Agraph_t* subgraph)
 {
   node = agnode(subgraph, (char*)id(20).c_str(), 1);
@@ -159,7 +165,7 @@ void Compiler::FSM::visualize(Agraph_t* subgraph)
   agxset(eedge, edge_label_sym, "");
 }
 
-void Compiler::FSMState::visualize(Agraph_t* subgraph)
+void Compiler::BaseState::visualize(Agraph_t* subgraph)
 {
   node = agnode(subgraph, (char*)id(20).c_str(), 1);
   for (auto& [condition, states] : transitions)

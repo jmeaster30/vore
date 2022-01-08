@@ -25,6 +25,7 @@ namespace Compiler
     void set_position(long long value);
     long long get_position();
     long long get_size();
+    bool is_end_of_input();
 
     Input* copy();
 

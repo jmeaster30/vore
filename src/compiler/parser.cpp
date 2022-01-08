@@ -43,7 +43,7 @@ namespace Compiler
   {
     switch (type)
     {
-      case TokenType::ANY: case TokenType::SOL:
+      case TokenType::ANY: case TokenType::SOL: case TokenType::SOF:
       case TokenType::EOL: case TokenType::ENDOF:
       case TokenType::WHITESPACE: case TokenType::DIGIT:
       case TokenType::LETTER: case TokenType::UPPER:
@@ -126,7 +126,7 @@ namespace Compiler
           case TokenType::LETTER: result = FSM::Letter(true); break;
           case TokenType::UPPER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "A", "Z", true}); break;
           case TokenType::LOWER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "a", "z", true}); break;
-          case TokenType::STRING: result = FSM::FromBasic({ConditionType::Literal, SpecialCondition::None, top.lexeme, "", true}); break;
+          case TokenType::STRING: result = FSM::FromBasic({ConditionType::Literal, SpecialCondition::None, next.lexeme, "", true}); break;
           default:
             lexer->consume_until_next_stmt();
             throw ParseException("Unexpected Token (" + token_type_to_string(next.type) + "). Expected 'whitespace', 'digit', 'letter', 'upper', 'lower', or 'string' after a not.");
@@ -199,7 +199,7 @@ namespace Compiler
       throw ParseException("Unexpected empty grouping. An 'in' statement requires at least one element in its group.");
     }
 
-    return FSM::In(group);
+    return FSM::In(group, not_in);
   }
 
   FSM* parse_exactly(Lexer* lexer)

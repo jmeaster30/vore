@@ -48,10 +48,10 @@ namespace Compiler
       auto fixed_amount = amount;
       if (data_size < data_index + amount) {
         fixed_amount = data_size - data_index;
-        end_of_input = true;
       }
       result = string_data.substr(data_index, fixed_amount);
       data_index += fixed_amount;
+      end_of_input = data_index >= data_size;
     }
     return result;
   }
@@ -65,9 +65,7 @@ namespace Compiler
     else
     {
       data_index += value;
-      if (data_index >= data_size) {
-        end_of_input = true;
-      }
+      end_of_input = data_index >= data_size;
     }
   }
 
@@ -84,9 +82,7 @@ namespace Compiler
       } else {
         data_index -= value;
       }
-      if (data_index < data_size) {
-        end_of_input = true;
-      }
+      end_of_input = data_index >= data_size;
     }
   }
 
@@ -99,6 +95,7 @@ namespace Compiler
     else
     {
       data_index = value;
+      end_of_input = data_index >= data_size;
     }
   }
 
@@ -119,12 +116,18 @@ namespace Compiler
     return data_size;
   }
 
+  bool Input::is_end_of_input()
+  {
+    return end_of_input;
+  }
+
   MatchContext* MatchContext::copy()
   {
     auto result = new MatchContext(file_offset, global_context);
     result->input = input->copy();
     result->call_stack = call_stack;
     result->loop_stack = loop_stack;
+    result->var_stack = var_stack;
     result->variables = variables;
     result->subroutines = subroutines;
     result->file_offset = file_offset;

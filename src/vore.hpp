@@ -52,6 +52,8 @@ public:
   std::vector<MatchGroup> execute(std::string input);
   std::vector<MatchGroup> execute(std::string input, vore_options vo);
 
+  int num_errors() { return errors; }
+
   void print_json();
 
 #ifdef WITH_VIZ
@@ -59,8 +61,10 @@ public:
 #endif
 
 private:
-  Vore(std::vector<Compiler::Statement*> stmts) :
-    statements(stmts) {}
+  Vore(std::vector<Compiler::Statement*> stmts, int num_error) :
+    statements(stmts), errors(num_error) {}
+
+  int errors = 0;
 
   std::vector<Compiler::Statement*> statements;
 };

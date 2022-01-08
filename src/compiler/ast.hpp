@@ -3,6 +3,7 @@
 #include <exception>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "context.hpp"
 #include "fsm.hpp"
@@ -13,6 +14,7 @@ namespace Compiler
   class Statement VIZ_EXTEND
   {
   public:
+    virtual int is_error() { return 0; };
     virtual void print_json() {};
     virtual std::vector<MatchContext*> execute(GlobalContext* ctxt) { return {}; };
     virtual std::string label() { return ":("; };
@@ -44,6 +46,9 @@ namespace Compiler
     void print_json();
     std::vector<MatchContext*> execute(GlobalContext* ctxt);
     std::string label();
+
+    int is_error() { return 0; }
+
     VIZ_FUNC
   };
 
@@ -59,6 +64,9 @@ namespace Compiler
     void print_json();
     std::vector<MatchContext*> execute(GlobalContext* ctxt);
     std::string label();
+
+    int is_error() { return 0; }
+
     VIZ_FUNC
   };
 
@@ -79,6 +87,13 @@ namespace Compiler
 
     void print_json();
     std::string label();
+
+    int is_error() {
+      std::cerr << message << std::endl;
+      return 1;
+    }
+
+    VIZ_FUNC
   };
 
   class IdentifierValue : public Value

@@ -49,15 +49,26 @@ namespace Compiler
     bool accepted = false;
     std::unordered_map<Condition, std::vector<FSMState*>*, condition_hash_fn> transitions = {};
 
-    FSMState() {}
+    FSMState() {};
+
+    virtual void print_json() = 0;
+    virtual std::vector<MatchContext*> execute(MatchContext* context) = 0;
+
+    VIZ_VFUNC
+
+    void addTransition(Condition cond, FSMState* state);
+    void addEpsilonTransition(FSMState* state);
+  };
+
+  class BaseState : public FSMState
+  {
+  public:
+    BaseState() : FSMState() {}
 
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
 
     VIZ_FUNC
-
-    void addTransition(Condition cond, FSMState* state);
-    void addEpsilonTransition(FSMState* state);
   };
 
   class VariableState : public FSMState
@@ -133,7 +144,7 @@ namespace Compiler
     static FSM* Alternate(FSM* left, FSM* right);
     static FSM* Concatenate(FSM* first, FSM* second);
     static FSM* Maybe(FSM* machine);
-    static FSM* In(std::vector<FSM*> group);
+    static FSM* In(std::vector<FSM*> group, bool not_in);
     static FSM* Loop(FSM* machine, long long start, long long end, bool fewest = false);
     static FSM* VariableDefinition(FSM* machine, std::string identifier);
     static FSM* SubroutineDefinition(FSM* machine, std::string identifier);
@@ -145,8 +156,8 @@ namespace Compiler
 
     // we want to only use the factory functions to construct the FSM
     FSM() {
-      start = new FSMState();
-      accept = new FSMState();
+      start = new BaseState();
+      accept = new BaseState();
       accept->accepted = true;
     }
     // we only want to delete the FSM since we will probably be

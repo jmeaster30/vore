@@ -43,6 +43,13 @@ int main(int argc, char** argv) {
 
   Vore vore = Vore::compile_file(args.source);
 
+  if (vore.num_errors() != 0) {
+    std::cout << "There were " << vore.num_errors() << " error(s) in the source file provided." << std::endl;
+    exit(vore.num_errors());
+  }
+
+  //vore.print_json();
+
 #ifdef WITH_VIZ
   if(args.visualize) {
     vore.visualize();
@@ -50,8 +57,13 @@ int main(int argc, char** argv) {
   }
 #endif
 
-  // TODO make this work with files
-  auto results = vore.execute("big boy :)", vo);
+  // FIXME make this work with files
+  auto results = vore.execute("flibasldiBA12/ %LIFsdfasdf*0()BEILBAF", vo);
+
+  if (results.size() == 0) {
+    std::cout << "There were no matches" << std::endl;
+  }
+
   for(auto group : results) {
     group.print();
   }

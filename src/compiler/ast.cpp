@@ -24,7 +24,7 @@ namespace Compiler
       
       if (result != nullptr && result->value.length() > 0)
       {
-        if (total_matches >= min_matches && total_matches <= max_matches)
+        if (total_matches >= min_matches && total_matches < max_matches)
         {
           num_matches += 1;
           result->line_number = line_number;

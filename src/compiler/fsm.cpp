@@ -5,6 +5,16 @@
 
 namespace Compiler
 {
+  bool LexicoLessEqual(std::string left, std::string right)
+  {
+    if (left.length() != right.length()) return left.length() < right.length();
+    for (int i = 0; i < left.length(); i++) {
+      if (right[i] < left[i]) return false;
+    }
+
+    return true;
+  }
+
   void GetNextTransitions(std::vector<MatchContext*>* results, MatchContext* context, std::vector<FSMState*>* transition_set)
   {
     for (auto transition : *transition_set)
@@ -28,11 +38,44 @@ namespace Compiler
     }
   }
 
-  std::vector<MatchContext*> FSMState::execute(MatchContext* context)
+  void RangeMatch(std::function<bool(std::string)> is_match, long long min_length, long long max_length, std::vector<MatchContext*>* results, MatchContext* context, std::vector<FSMState*>* transition_set)
+  {
+    std::vector<MatchContext*> new_results = {};
+    for (long long length = max_length; length >= min_length; length--)
+    {
+      auto temp_context = context->copy();
+      auto value = temp_context->input->get(length);
+      if (is_match(value))
+      {
+        temp_context->value += value;
+        GetNextTransitions(&new_results, temp_context, transition_set);
+      }
+    }
+
+    results->insert(results->end(), new_results.begin(), new_results.end());
+  }
+
+  void NotStringMatch(std::string to_not_match, std::vector<MatchContext*>* results, MatchContext* context, std::vector<FSMState*>* transition_set)
+  {
+    //FIXME assumes to_not_match has a length of 1
+    auto value = context->input->get(1);
+    if (value != to_not_match)
+    {
+      context->value += value;
+      GetNextTransitions(results, context, transition_set);
+    }
+    else
+    {
+      context->input->seek_back(1);
+    }
+  }
+
+  std::vector<MatchContext*> BaseState::execute(MatchContext* context)
   {
     std::vector<MatchContext*> result = {};
-
+    //std::cout << "state " << this << std::endl;
     if (accepted) {
+      //std::cout << "accept" << std::endl;
       return { context };
     }
 
@@ -41,9 +84,16 @@ namespace Compiler
       MatchContext* new_context = context->copy();
       if (condition.type == ConditionType::Literal)
       {
-        DoMatch([&](std::string to_match) {
-          return to_match == condition.from && !condition.negative || to_match != condition.from && condition.negative;
-        }, condition.from.length(), &result, new_context, transition_set);
+        if (condition.negative)
+        {
+          NotStringMatch(condition.from, &result, new_context, transition_set);
+        }
+        else
+        {
+          DoMatch([&](std::string to_match) {
+            return to_match == condition.from;
+          }, condition.from.length(), &result, new_context, transition_set);
+        }
       }
       else if (condition.specCondition == SpecialCondition::None)
       {
@@ -55,6 +105,75 @@ namespace Compiler
           return true;
         }, 1, &result, new_context, transition_set);
       }
+      else if (condition.specCondition == SpecialCondition::StartOfFile)
+      {
+        if (context->input->get_position() == 0) {
+          GetNextTransitions(&result, new_context, transition_set);
+        }
+      }
+      else if (condition.specCondition == SpecialCondition::StartOfLine)
+      {
+        //get previous character and check if it is a new line
+        // or check if we are at the beginning of the file
+        if (context->input->get_position() == 0) {
+          GetNextTransitions(&result, new_context, transition_set);
+        } else {
+          context->input->seek_back(1);
+          auto newline = context->input->get(1); //this moves the pointer by one
+          if (newline == "\n")
+          {
+            GetNextTransitions(&result, new_context, transition_set);
+          }
+        }
+      }
+      else if (condition.specCondition == SpecialCondition::EndOfFile)
+      {
+        if (new_context->input->is_end_of_input())
+        {
+          GetNextTransitions(&result, new_context, transition_set);
+        }
+      }
+      else if (condition.specCondition == SpecialCondition::EndOfLine)
+      {
+        //non consuming match to new line
+        if (new_context->input->is_end_of_input())
+        {
+          GetNextTransitions(&result, new_context, transition_set);
+        }
+        else
+        {
+          auto to_match = new_context->input->get(1);
+          new_context->input->seek_back(1);
+          if (to_match == "\n")
+          {
+            GetNextTransitions(&result, new_context, transition_set);
+          }
+        }
+      }
+      else if (condition.specCondition == SpecialCondition::Variable)
+      {
+        if (condition.negative)
+        {
+          // FIXME this is not possible to reach currently (Making NotStringMatch use string lengths of more than 1 is required to make this work though)
+          NotStringMatch(new_context->variables[condition.from], &result, new_context, transition_set);
+        }
+        else
+        {
+          DoMatch([&](std::string to_match) {
+            return to_match == new_context->variables[condition.from];
+          }, new_context->variables[condition.from].length(), &result, new_context, transition_set);
+        }
+      }
+      else if (condition.specCondition == SpecialCondition::Range)
+      {
+        RangeMatch([&](std::string to_match) {
+          if (condition.negative) {
+            return !LexicoLessEqual(condition.from, to_match) || !LexicoLessEqual(to_match, condition.to);
+          } else {
+            return LexicoLessEqual(condition.from, to_match) && LexicoLessEqual(to_match, condition.to);
+          }
+        }, condition.from.length(), condition.to.length(), &result, context, transition_set);
+      }
     }
 
     return result;
@@ -64,10 +183,37 @@ namespace Compiler
   {
     std::vector<MatchContext*> results = {};
 
+    auto new_context = context->copy();
     if (end) {
+      if (new_context->var_stack.empty()) return {};
       // pop state (if state is not the same as the identifier on this state then throw an error)
+      auto result = new_context->var_stack.top();
+      if (result.variable_name == identifier)
+      {
+        new_context->variables[identifier] = new_context->value.substr(result.start_index);
+        new_context->var_stack.pop();
+      }
+      else
+      {
+        return {}; //idk if this is the best
+      }
     } else {
-      
+      VariableEntry var_entry = { identifier, (long long int)new_context->value.length() };
+      new_context->var_stack.push(var_entry);
+    }
+
+    if (accepted) {
+      return { new_context };
+    }
+
+    for (auto& [condition, transition_set] : transitions)
+    {
+      // TODO make this check for all kinds of transitions
+      // TODO this is fine for now though cause it should always be an epsilon transition
+      if (condition.type == ConditionType::Special && condition.specCondition == SpecialCondition::None)
+      {
+        GetNextTransitions(&results, new_context, transition_set);
+      }
     }
 
     return results;
@@ -138,7 +284,7 @@ namespace Compiler
     return "ERROR";
   }
 
-  void FSMState::print_json()
+  void BaseState::print_json()
   {
     std::cout << "{" << std::endl;
     std::cout << "\"accept_flag\": \"" << accepted << "\"," << std::endl;
@@ -153,7 +299,7 @@ namespace Compiler
       std::cout << "\"to\": \"" << condition.to << "\"," << std::endl;
       std::cout << "\"negative\": \"" << condition.negative << "\"," << std::endl;
       std::cout << "}," << std::endl;
-      std::cout << "states: [" << std::endl;
+      std::cout << "\"states\": [" << std::endl;
       for (auto state : *states)
       {
         state->print_json();
@@ -183,7 +329,7 @@ namespace Compiler
       std::cout << "\"to\": \"" << condition.to << "\"," << std::endl;
       std::cout << "\"negative\": \"" << condition.negative << "\"," << std::endl;
       std::cout << "}," << std::endl;
-      std::cout << "states: [" << std::endl;
+      std::cout << "\"states\": [" << std::endl;
       for (auto state : *states)
       {
         state->print_json();
@@ -213,7 +359,7 @@ namespace Compiler
       std::cout << "\"to\": \"" << condition.to << "\"," << std::endl;
       std::cout << "\"negative\": \"" << condition.negative << "\"," << std::endl;
       std::cout << "}," << std::endl;
-      std::cout << "states: [" << std::endl;
+      std::cout << "\"states\": [" << std::endl;
       for (auto state : *states)
       {
         state->print_json();
@@ -242,7 +388,7 @@ namespace Compiler
       std::cout << "\"to\": \"" << condition.to << "\"," << std::endl;
       std::cout << "\"negative\": \"" << condition.negative << "\"," << std::endl;
       std::cout << "}," << std::endl;
-      std::cout << "states: [" << std::endl;
+      std::cout << "\"states\": [" << std::endl;
       for (auto state : *states)
       {
         state->print_json();
@@ -346,8 +492,11 @@ namespace Compiler
     return result;
   }
 
-  FSM* FSM::In(std::vector<FSM*> group)
+  FSM* FSM::In(std::vector<FSM*> group, bool not_in)
   {
+    // FIXME not in doesn't work and I can't think of what to do about it rn
+    // FIXME I think we may need another state type for "in" but I don't know how to handle the variable length junk
+
     FSM* result = new FSM();
 
     for(auto g : group)

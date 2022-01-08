@@ -3,7 +3,7 @@
 #ifdef WITH_VIZ
 #define VIZ_EXTEND : public Viz::Viz
 #define VIZ_FUNC void visualize(Agraph_t* subgraph);
-#define VIZ_VFUNC virtual void visualize(Agraph_t* subgraph) {};
+#define VIZ_VFUNC virtual void visualize(Agraph_t* subgraph) = 0;
 #else
 #define VIZ_EXTEND
 #define VIZ_FUNC

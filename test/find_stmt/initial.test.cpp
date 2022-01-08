@@ -70,12 +70,14 @@ TEST_CASE("Find Or/Assign/Subexpression", "[string, or, assign, sub]") {
   REQUIRE(var->second == "success");
 }
 
+// FIXME loops
 TEST_CASE("Find exactly 3", "[string, exactly]") {
   auto vore = Vore::compile("find all exactly 3 'wow'");
   auto results = vore.execute("aaaaa wowwowwowwow");
   SINGLE_MATCH(results, 6, 9, "wowwowwow");
 }
 
+// FIXME loops
 TEST_CASE("Find between 2 and 4", "[string, between]") {
   //match 2
   auto vore = Vore::compile("find all between 2 and 4 'wow'");
@@ -104,6 +106,7 @@ TEST_CASE("Find between 2 and 4", "[string, between]") {
   REQUIRE(fiveMatch.value != "wowwowwowwowwow");
 }
 
+// FIXME loops
 TEST_CASE("Find between 2 and 4 FEWEST", "[string, between, fewest]") {
   auto vore = Vore::compile("find all between 2 and 4 'wow' fewest");
   auto results = vore.execute("aaaaa wowwowwowaaa");
@@ -114,12 +117,14 @@ TEST_CASE("Find between 2 and 4 FEWEST", "[string, between, fewest]") {
   SINGLE_MATCH(secondResults, 6, 10, "wowwowwowa");
 }
 
+// FIXME loops
 TEST_CASE("find at least 3", "[string, atleast]") {
   auto vore = Vore::compile("find all at least 3 ':)'");
   auto firstResults = vore.execute("omg :):):):)))):)");
   SINGLE_MATCH(firstResults, 4, 8, ":):):):)");
 }
 
+// FIXME loops
 TEST_CASE("find at least 4 fewest", "[string, atleast, fewest]") {
   auto vore = Vore::compile("find all at least 4 'xD' fewest");
   auto firstResults = vore.execute("lol that's so xDxDxDxDxD lmao");
@@ -130,6 +135,7 @@ TEST_CASE("find at least 4 fewest", "[string, atleast, fewest]") {
   SINGLE_MATCH(secondResults, 14, 15, "xDxDxDxDxD lmao");
 }
 
+// FIXME loops
 TEST_CASE("at least zero no match", "[string, atleast]") {
   auto vore = Vore::compile("find all at least 0 'waaa'");
   auto firstResults = vore.execute("there will be not matches");
@@ -137,6 +143,7 @@ TEST_CASE("at least zero no match", "[string, atleast]") {
   REQUIRE(firstResults[0].matches.size() == 0);
 }
 
+// FIXME loops
 TEST_CASE("find at most 5", "[string, atleast]") {
   auto vore = Vore::compile("find all at most 5 'lo'");
   auto results = vore.execute("aaa lolololololol");
@@ -148,12 +155,14 @@ TEST_CASE("find at most 5", "[string, atleast]") {
   IS_MATCH(group.matches[1], 14, 2, "lo");
 }
 
+// FIXME loops
 TEST_CASE("find at most 3 fewest", "[string, atleast, fewest]") {
   auto vore = Vore::compile("find all at most 3 'lmao' fewest ' xD'");
   auto firstResults = vore.execute("lmaolmaolmaolmao xD");
   SINGLE_MATCH(firstResults, 4, 15, "lmaolmaolmao xD");
 }
 
+// FIXME subroutines
 TEST_CASE("find with subroutine or", "[string, subroutine, or]") {
   auto vore = Vore::compile("find all ('a' or 'b') = $sub $sub");
   auto results = vore.execute("please ba ab bb aa");
@@ -167,12 +176,14 @@ TEST_CASE("find with subroutine or", "[string, subroutine, or]") {
   IS_MATCH(group.matches[3], 16, 2, "aa");
 }
 
+// FIXME subroutines loops
 TEST_CASE("find with recursive subroutine", "[string, subroutine, atleast]") {
   auto vore = Vore::compile("find all ('a' at least 0 $sub 'b') = $sub");
   auto results = vore.execute("omg aaabbb");
   SINGLE_MATCH(results, 4, 6, "aaabbb");
 }
 
+// FIXME subroutines loops
 TEST_CASE("find with recursive subroutine then something else", "[string, subroutine, atleast]") {
   auto vore = Vore::compile("find all ('a' at least 0 $sub 'b') = $sub 'b'");
   auto results = vore.execute("omg aaabbb");

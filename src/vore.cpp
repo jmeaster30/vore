@@ -8,14 +8,26 @@ Vore Vore::compile(std::string source)
 {
   auto lexer = Compiler::Lexer(source);
   auto stmts = Compiler::parse(&lexer);
-  return Vore(stmts);
+
+  int num_errors = 0;
+  for (auto stmt : stmts) {
+    num_errors += stmt->is_error();
+  }
+
+  return Vore(stmts, num_errors);
 }
 
 Vore Vore::compile_file(std::string source)
 {
   auto lexer = Compiler::Lexer::FromFile(source);
   auto stmts = Compiler::parse(&lexer);
-  return Vore(stmts);
+
+  int num_errors = 0;
+  for (auto stmt : stmts) {
+    num_errors += stmt->is_error();
+  }
+
+  return Vore(stmts, num_errors);
 }
 
 void Vore::print_json()
