@@ -103,10 +103,10 @@ namespace Compiler
       case TokenType::SOF: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::StartOfFile}); break;
       case TokenType::ENDOF: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::EndOfFile}); break;
       case TokenType::WHITESPACE: result = FSM::Whitespace(false); break;
-      case TokenType::DIGIT: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "0", "9"}); break;
+      case TokenType::DIGIT: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", false, {{"0", "9"}}}); break;
       case TokenType::LETTER: result = FSM::Letter(false); break;
-      case TokenType::UPPER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "A", "Z"}); break;
-      case TokenType::LOWER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "a", "z"}); break;
+      case TokenType::UPPER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", false, {{"A", "Z"}}}); break;
+      case TokenType::LOWER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", false, {{"a", "z"}}}); break;
       case TokenType::IDENTIFIER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Variable, top.lexeme}); break;
       case TokenType::STRING: result = FSM::FromBasic({ConditionType::Literal, SpecialCondition::None, top.lexeme}); break;
       case TokenType::LEFTP: {
@@ -122,11 +122,11 @@ namespace Compiler
         switch (next.type)
         {
           case TokenType::WHITESPACE: result = FSM::Whitespace(true); break;
-          case TokenType::DIGIT: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "0", "9", true}); break;
+          case TokenType::DIGIT: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", true, {{"0", "9"}}}); break;
           case TokenType::LETTER: result = FSM::Letter(true); break;
-          case TokenType::UPPER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "A", "Z", true}); break;
-          case TokenType::LOWER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "a", "z", true}); break;
-          case TokenType::STRING: result = FSM::FromBasic({ConditionType::Literal, SpecialCondition::None, next.lexeme, "", true}); break;
+          case TokenType::UPPER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", true, {{"A", "Z"}}}); break;
+          case TokenType::LOWER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", true, {{"a", "z"}}}); break;
+          case TokenType::STRING: result = FSM::FromBasic({ConditionType::Literal, SpecialCondition::None, next.lexeme, true}); break;
           default:
             lexer->consume_until_next_stmt();
             throw ParseException("Unexpected Token (" + token_type_to_string(next.type) + "). Expected 'whitespace', 'digit', 'letter', 'upper', 'lower', or 'string' after a not.");
@@ -152,7 +152,7 @@ namespace Compiler
         throw ParseException("Unexpected Token (" + token_type_to_string(fail_token.type) + "). Expected a string after '-' for this range.");
       });
 
-      result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, start.lexeme, end.lexeme});
+      result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", false, {{start.lexeme, end.lexeme}}});
     } else {
       result = parse_primary(lexer);
     }

@@ -52,7 +52,7 @@ TEST_CASE("find at least digit", "[digit, atleast]") {
 TEST_CASE("find first any", "[any, atmost]") {
   auto vore = Vore::compile("find top 1 any");
   auto results = vore.execute("this is match :O ;asdjf;asdf");
-  SINGLE_MATCH(results, 1, 1, "t"); 
+  SINGLE_MATCH(results, 0, 1, "t"); 
 }
 
 TEST_CASE("find first any 'atch'", "[any, atmost]") {
@@ -174,8 +174,19 @@ TEST_CASE("find upper followed by lower", "[upper, lower, atleast, atmost]") {
   IS_MATCH(results[0].matches[1], 18, 4, "jfna");
 }
 
-// FIXME loops
 TEST_CASE("find not upper", "[upper, not, atmost]") {
+  auto vore = Vore::compile("find all not upper");
+  auto results = vore.execute("JBFOVIU23aBEOIBCS");
+  REQUIRE(results.size() == 1);
+  REQUIRE(results[0].matches.size() == 3);
+
+  IS_MATCH(results[0].matches[0], 7, 1, "2");
+  IS_MATCH(results[0].matches[1], 8, 1, "3");
+  IS_MATCH(results[0].matches[2], 9, 1, "a");
+}
+
+// FIXME loops
+TEST_CASE("find at most 3 not upper", "[upper, not, atmost]") {
   auto vore = Vore::compile("find all at most 3 not upper");
   auto results = vore.execute("JBFOVIU23aBEOIBCS");
   SINGLE_MATCH(results, 7, 3, "23a");

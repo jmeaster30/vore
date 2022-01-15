@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <functional>
+#include <limits>
 
 namespace Compiler
 {
@@ -12,6 +13,14 @@ namespace Compiler
       if (right[i] < left[i]) return false;
     }
 
+    return true;
+  }
+
+  bool RangeNotContains(std::string value, std::vector<std::pair<std::string, std::string>> range)
+  {
+    for (auto& [from, to] : range) {
+      if (LexicoLessEqual(from, value) && LexicoLessEqual(value, to)) return false;
+    }
     return true;
   }
 
@@ -86,13 +95,13 @@ namespace Compiler
       {
         if (condition.negative)
         {
-          NotStringMatch(condition.from, &result, new_context, transition_set);
+          NotStringMatch(condition.value, &result, new_context, transition_set);
         }
         else
         {
           DoMatch([&](std::string to_match) {
-            return to_match == condition.from;
-          }, condition.from.length(), &result, new_context, transition_set);
+            return to_match == condition.value;
+          }, condition.value.length(), &result, new_context, transition_set);
         }
       }
       else if (condition.specCondition == SpecialCondition::None)
@@ -155,24 +164,45 @@ namespace Compiler
         if (condition.negative)
         {
           // FIXME this is not possible to reach currently (Making NotStringMatch use string lengths of more than 1 is required to make this work though)
-          NotStringMatch(new_context->variables[condition.from], &result, new_context, transition_set);
+          NotStringMatch(new_context->variables[condition.value], &result, new_context, transition_set);
         }
         else
         {
           DoMatch([&](std::string to_match) {
-            return to_match == new_context->variables[condition.from];
-          }, new_context->variables[condition.from].length(), &result, new_context, transition_set);
+            return to_match == new_context->variables[condition.value];
+          }, new_context->variables[condition.value].length(), &result, new_context, transition_set);
         }
       }
       else if (condition.specCondition == SpecialCondition::Range)
       {
-        RangeMatch([&](std::string to_match) {
-          if (condition.negative) {
-            return !LexicoLessEqual(condition.from, to_match) || !LexicoLessEqual(to_match, condition.to);
-          } else {
-            return LexicoLessEqual(condition.from, to_match) && LexicoLessEqual(to_match, condition.to);
+        if (condition.negative)
+        {
+          size_t min = std::numeric_limits<size_t>::max();
+          size_t max = 0;
+          for (auto& [from, to] : condition.ranges) {
+            min = from.length() < min ? from.length() : min;
+            max = to.length() > max ? to.length() : max;
           }
-        }, condition.from.length(), condition.to.length(), &result, context, transition_set);
+
+          for (long long length = max; length >= min; length--)
+          {
+            auto temp_context = context->copy();
+            auto value = temp_context->input->get(length);
+            if (RangeNotContains(value, condition.ranges))
+            {
+              temp_context->value += value;
+              GetNextTransitions(&result, temp_context, transition_set);
+            }
+          }          
+        }
+        else
+        {
+          for (auto& [from, to] : condition.ranges) {
+            RangeMatch([&](std::string to_match) {
+              return LexicoLessEqual(from, to_match) && LexicoLessEqual(to_match, to);
+            }, from.length(), to.length(), &result, context, transition_set);
+          }
+        }
       }
     }
 
@@ -231,6 +261,14 @@ namespace Compiler
 
   std::vector<MatchContext*> LoopState::execute(MatchContext* context)
   {
+    return {};
+  }
+
+  std::vector<MatchContext*> InState::execute(MatchContext* context)
+  {
+    // all transitions from this state can be iterated through
+    // if it is a negative it is an "and" relationship
+    // if it is not a negative it is an "or" relationship
     return {};
   }
 
@@ -295,8 +333,7 @@ namespace Compiler
       std::cout << "\"condition\": {" << std::endl;
       std::cout << "\"type\": " << (condition.type == ConditionType::Literal ? "\"Literal\"" : "\"Special\"") << "," << std::endl;
       std::cout << "\"spec_cond\": \"" << spec_condition_to_string(condition.specCondition) << "\"," << std::endl;
-      std::cout << "\"from\": \"" << condition.from << "\"," << std::endl;
-      std::cout << "\"to\": \"" << condition.to << "\"," << std::endl;
+      std::cout << "\"value\": \"" << condition.value << "\"," << std::endl;
       std::cout << "\"negative\": \"" << condition.negative << "\"," << std::endl;
       std::cout << "}," << std::endl;
       std::cout << "\"states\": [" << std::endl;
@@ -325,8 +362,7 @@ namespace Compiler
       std::cout << "\"condition\": {" << std::endl;
       std::cout << "\"type\": " << (condition.type == ConditionType::Literal ? "\"Literal\"" : "\"Special\"") << "," << std::endl;
       std::cout << "\"spec_cond\": \"" << spec_condition_to_string(condition.specCondition) << "\"," << std::endl;
-      std::cout << "\"from\": \"" << condition.from << "\"," << std::endl;
-      std::cout << "\"to\": \"" << condition.to << "\"," << std::endl;
+      std::cout << "\"value\": \"" << condition.value << "\"," << std::endl;
       std::cout << "\"negative\": \"" << condition.negative << "\"," << std::endl;
       std::cout << "}," << std::endl;
       std::cout << "\"states\": [" << std::endl;
@@ -355,8 +391,7 @@ namespace Compiler
       std::cout << "\"condition\": {" << std::endl;
       std::cout << "\"type\": " << (condition.type == ConditionType::Literal ? "\"Literal\"" : "\"Special\"") << "," << std::endl;
       std::cout << "\"spec_cond\": \"" << spec_condition_to_string(condition.specCondition) << "\"," << std::endl;
-      std::cout << "\"from\": \"" << condition.from << "\"," << std::endl;
-      std::cout << "\"to\": \"" << condition.to << "\"," << std::endl;
+      std::cout << "\"value\": \"" << condition.value << "\"," << std::endl;
       std::cout << "\"negative\": \"" << condition.negative << "\"," << std::endl;
       std::cout << "}," << std::endl;
       std::cout << "\"states\": [" << std::endl;
@@ -384,8 +419,7 @@ namespace Compiler
       std::cout << "\"condition\": {" << std::endl;
       std::cout << "\"type\": " << (condition.type == ConditionType::Literal ? "\"Literal\"" : "\"Special\"") << "," << std::endl;
       std::cout << "\"spec_cond\": \"" << spec_condition_to_string(condition.specCondition) << "\"," << std::endl;
-      std::cout << "\"from\": \"" << condition.from << "\"," << std::endl;
-      std::cout << "\"to\": \"" << condition.to << "\"," << std::endl;
+      std::cout << "\"value\": \"" << condition.value << "\"," << std::endl;
       std::cout << "\"negative\": \"" << condition.negative << "\"," << std::endl;
       std::cout << "}," << std::endl;
       std::cout << "\"states\": [" << std::endl;
@@ -416,6 +450,41 @@ namespace Compiler
     std::cout << "}";
   }
 
+  void InState::print_json()
+  {
+    std::cout << "{" << std::endl;
+    std::cout << "\"accept_flag\": \"" << accepted << "\"," << std::endl;
+    std::cout << "\"not\": \"" << negative << "\"" << std::endl;
+    std::cout << "\"next_when_not\": ";
+    if (next_when_not != nullptr) {
+      next_when_not->print_json();
+    } else {
+      std::cout << "\"\"" << std::endl;
+    }
+    std::cout << "," << std::endl;
+    std::cout << "\"transitions\": [" << std::endl;
+    for (auto& [condition, states] : transitions)
+    {
+      std::cout << "{" << std::endl;
+      std::cout << "\"condition\": {" << std::endl;
+      std::cout << "\"type\": " << (condition.type == ConditionType::Literal ? "\"Literal\"" : "\"Special\"") << "," << std::endl;
+      std::cout << "\"spec_cond\": \"" << spec_condition_to_string(condition.specCondition) << "\"," << std::endl;
+      std::cout << "\"value\": \"" << condition.value << "\"," << std::endl;
+      std::cout << "\"negative\": \"" << condition.negative << "\"," << std::endl;
+      std::cout << "}," << std::endl;
+      std::cout << "\"states\": [" << std::endl;
+      for (auto state : *states)
+      {
+        state->print_json();
+        std::cout << "," << std::endl;
+      }
+      std::cout << "]" << std::endl;
+      std::cout << "}," << std::endl;
+    }
+    std::cout << std::endl << "]," << std::endl; 
+    std::cout << "}";
+  }
+
   void FSM::print_json()
   {
     std::cout << "{" << std::endl;
@@ -436,20 +505,19 @@ namespace Compiler
   FSM* FSM::Whitespace(bool negative)
   {
     FSM* result = new FSM();
-    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, " ",  "", negative}, result->accept);
-    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\n", "", negative}, result->accept);
-    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\t", "", negative}, result->accept);
-    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\v", "", negative}, result->accept);
-    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\r", "", negative}, result->accept);
-    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\f", "", negative}, result->accept);
+    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, " ",  negative}, result->accept);
+    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\n", negative}, result->accept);
+    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\t", negative}, result->accept);
+    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\v", negative}, result->accept);
+    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\r", negative}, result->accept);
+    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\f", negative}, result->accept);
     return result;
   }
 
   FSM* FSM::Letter(bool negative)
   {
     FSM* result = new FSM();
-    result->start->addTransition({ConditionType::Special, SpecialCondition::Range, "a", "z", negative}, result->accept);
-    result->start->addTransition({ConditionType::Special, SpecialCondition::Range, "A", "Z", negative}, result->accept);
+    result->start->addTransition({ConditionType::Special, SpecialCondition::Range, "", negative, {{"a", "z"}, {"A", "Z"}}}, result->accept);
     return result;
   }
 

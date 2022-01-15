@@ -55,7 +55,7 @@ std::string edge_label(Compiler::Condition cond)
   std::string label;
   if (cond.type == Compiler::ConditionType::Literal)
   {
-    label = "'" + escape_chars(cond.from) + "'";
+    label = "'" + escape_chars(cond.value) + "'";
   }
   else
   {
@@ -67,8 +67,13 @@ std::string edge_label(Compiler::Condition cond)
       case Compiler::SpecialCondition::StartOfLine: label = "SOL"; break;
       case Compiler::SpecialCondition::EndOfLine: label = "EOL"; break;
       case Compiler::SpecialCondition::None: label = ""; break;
-      case Compiler::SpecialCondition::Range: label = "'" + escape_chars(cond.from) + "' - '" + escape_chars(cond.to) + "'"; break;
-      case Compiler::SpecialCondition::Variable: label = "Var: " + escape_chars(cond.from); break;
+      case Compiler::SpecialCondition::Range: {
+        for (int i = 0; i < cond.ranges.size(); i++) {
+          auto &[from, to] = cond.ranges[i];
+          label = (i > 0 ? " '" : "'") + escape_chars(from) + "' - '" + escape_chars(to) + "'";
+        }
+      }
+      case Compiler::SpecialCondition::Variable: label = "Var: " + escape_chars(cond.value); break;
     }
   }
   return (cond.negative ? "not " : "") + label;

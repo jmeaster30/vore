@@ -24,22 +24,30 @@ namespace Compiler
   {
     ConditionType type;
     SpecialCondition specCondition;
-    std::string from = "";
-    std::string to = "";
+    std::string value = "";
     bool negative = false;
+    std::vector<std::pair<std::string, std::string>> ranges;
 
     bool operator==(const Condition &o) const {
       return type == o.type && specCondition == o.specCondition &&
-             from == o.from && to == o.to && negative == o.negative;
+             value == o.value && negative == o.negative && ranges == o.ranges;
     }
   };
 
   struct condition_hash_fn {
     unsigned long operator() (const Condition &cond) const
     {
-      unsigned long h1 = std::hash<std::string>()(cond.from);
-      unsigned long h2 = std::hash<std::string>()(cond.to);
-      return h1 ^ h2 ^ ((char)cond.type << 8) ^ (char)cond.specCondition ^ ((int)cond.negative << 9);
+      unsigned long h1 = std::hash<std::string>()(cond.value);
+      unsigned long h2 = 0;
+
+      for (int i = 0; i < cond.ranges.size(); i++) {
+        auto& [a, b] = cond.ranges[i];
+        unsigned long h3 = std::hash<std::string>()(a);
+        unsigned long h4 = std::hash<std::string>()(b);
+        h2 ^= (h3 >> (i * 16)) ^ (h4 >> (i * 16 + 1));
+      }
+
+      return h1 ^ ((char)cond.type << 8) ^ (char)cond.specCondition ^ ((int)cond.negative << 9);
     }
   };
 
@@ -124,6 +132,22 @@ namespace Compiler
 
     LoopState(long long s, long long e, bool few) :
       min(s), max(e), fewest(few), FSMState() {}
+
+    void print_json();
+    std::vector<MatchContext*> execute(MatchContext* context);
+
+    VIZ_FUNC
+  };
+
+  class InState : public FSMState
+  {
+  public:
+    bool negative = false;
+
+    FSMState* next_when_not;
+
+    InState(FSMState* nwn, bool neg)
+      : next_when_not(nwn), negative(neg) {}
 
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
