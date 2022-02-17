@@ -122,6 +122,18 @@ TEST_CASE("find whitespace", "[whitepsace, string]") {
   SINGLE_MATCH(results, 18, 8, " source ");
 }
 
+TEST_CASE("find not whitespace", "[whitespace, not]") {
+  auto vore = Vore::compile("find all not whitespace");
+  auto results = vore.execute(" \t\v\r\nyeah\r\v \n\t");
+  REQUIRE(results.size() == 1);
+  REQUIRE(results[0].matches.size() == 4);
+
+  IS_MATCH(results[0].matches[0], 5, 1, "y");
+  IS_MATCH(results[0].matches[1], 6, 1, "e");
+  IS_MATCH(results[0].matches[2], 7, 1, "a");
+  IS_MATCH(results[0].matches[3], 8, 1, "h");
+}
+
 // FIXME file
 TEST_CASE("find whitespace in file", "[whitepsace, string]") {
   auto vore = Vore::compile("find all whitespace 'source' whitespace");
@@ -130,7 +142,7 @@ TEST_CASE("find whitespace in file", "[whitepsace, string]") {
 }
 
 // FIXME loops
-TEST_CASE("find not whitespace", "[not, whitespace, atleast]") {
+TEST_CASE("find at least 0 not whitespace", "[not, whitespace, atleast]") {
   auto vore = Vore::compile("find all at least 0 not whitespace");
   auto results = vore.execute(" \t\v\r\nyeah\r\v \n\t");
   SINGLE_MATCH(results, 5, 4, "yeah");
