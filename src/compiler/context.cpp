@@ -125,7 +125,6 @@ namespace Compiler
   {
     auto result = new MatchContext(file_offset, global_context);
     result->input = input->copy();
-    result->call_stack = call_stack;
     result->loop_stack = loop_stack;
     result->var_stack = var_stack;
     result->variables = variables;

@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
 #endif
 
   // FIXME make this work with files
-  auto results = vore.execute("flibasldiBA12/ %LIFsdfasdf*0()BEILBAF", vo);
+  auto results = vore.execute("test aaabbb", vo);
 
   if (results.size() == 0) {
     std::cout << "There were no matches" << std::endl;

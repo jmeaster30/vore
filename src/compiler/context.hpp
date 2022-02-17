@@ -6,10 +6,11 @@
 #include <unordered_map>
 #include <stack>
 
-class FSMState; //forward declare
-
 namespace Compiler
 {
+  class FSMState; //forward declare
+  class SubroutineState;
+
   //encapsulates the two kinds of inputs and provides a uniform interface.
   class Input
   {
@@ -60,11 +61,6 @@ namespace Compiler
     Input* input;
   };
 
-  struct CallEntry
-  {
-    std::string call_identifier = "";
-  };
-
   struct LoopEntry
   {
     //loop id
@@ -84,12 +80,11 @@ namespace Compiler
     GlobalContext* global_context;
     Input* input;
 
-    std::stack<CallEntry> call_stack = {};
     std::stack<LoopEntry> loop_stack = {};
     std::stack<VariableEntry> var_stack = {};
 
     std::unordered_map<std::string, std::string> variables = {};
-    std::unordered_map<std::string, FSMState*> subroutines = {};
+    std::unordered_map<std::string, SubroutineState*> subroutines = {};
 
     long long file_offset = 0;
     long long line_number = 0;

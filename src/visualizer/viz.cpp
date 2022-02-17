@@ -26,7 +26,6 @@ std::string id(const int len) {
     tmp_s += chars[rand() % (sizeof(chars) - 1)];
   }
   
-  //std::cout << tmp_s << std::endl;
   return tmp_s;
 }
 
@@ -82,16 +81,16 @@ std::string edge_label(Compiler::Condition cond)
 void Viz::render(std::string filename, std::vector<Compiler::Statement*> statements)
 {
   Agraph_t* graph = agopen("network"_p, Agdirected, 0);
-  edge_label_sym = agattr(graph, AGEDGE, "label"_p, "");
-  node_label_sym = agattr(graph, AGNODE, "label"_p, "");
-  agattr(graph, AGRAPH, "dpi"_p, "100.0");
-  agattr(graph, AGRAPH, "rankdir"_p, "LR");
-  agattr(graph, AGRAPH, "labeljust"_p, "l");
-  Agsym_t* subgraph_label_sym = agattr(graph, AGRAPH, "label"_p, "");
+  edge_label_sym = agattr(graph, AGEDGE, "label"_p, ""_p);
+  node_label_sym = agattr(graph, AGNODE, "label"_p, ""_p);
+  agattr(graph, AGRAPH, "dpi"_p, "100.0"_p);
+  agattr(graph, AGRAPH, "rankdir"_p, "LR"_p);
+  agattr(graph, AGRAPH, "labeljust"_p, "l"_p);
+  Agsym_t* subgraph_label_sym = agattr(graph, AGRAPH, "label"_p, ""_p);
   for (auto statement : statements)
   {
     Agraph_t* subgraph = agsubg(graph, (char*)("cluster_" + id(20)).c_str(), 1);
-    agxset(subgraph, subgraph_label_sym, statement->label().c_str());
+    agxset(subgraph, subgraph_label_sym, (char*)statement->label().c_str());
     statement->visualize(subgraph);
   }
   GVC_t* gvc = gvContext();
@@ -134,40 +133,40 @@ void Compiler::ErrorStatement::visualize(Agraph_t* subgraph)
 void Compiler::NumberValue::visualize(Agraph_t* subgraph)
 {
   node = agnode(subgraph, (char*)id(20).c_str(), 1);
-  agxset(node, node_label_sym, std::to_string(value).c_str());
+  agxset(node, node_label_sym, (char*)std::to_string(value).c_str());
 }
 
 void Compiler::StringValue::visualize(Agraph_t* subgraph)
 {
   node = agnode(subgraph, (char*)id(20).c_str(), 1);
-  agxset(node, node_label_sym, ("\"" + value + "\"").c_str());
+  agxset(node, node_label_sym, (char*)("\"" + value + "\"").c_str());
 }
 
 void Compiler::IdentifierValue::visualize(Agraph_t* subgraph)
 {
   node = agnode(subgraph, (char*)id(20).c_str(), 1);
-  agxset(node, node_label_sym, identifier.c_str());
+  agxset(node, node_label_sym, (char*)identifier.c_str());
 }
 
 void Compiler::FSM::visualize(Agraph_t* subgraph)
 {
   auto snode = agnode(subgraph, (char*)id(20).c_str(), 1);
-  agxset(snode, node_label_sym, "start");
+  agxset(snode, node_label_sym, "start"_p);
   if (start->node == nullptr) {
     start->visualize(subgraph);
   }
 
   auto sedge = agedge(subgraph, snode, start->node, (char*)id(20).c_str(), 1);
-  agxset(sedge, edge_label_sym, "");
+  agxset(sedge, edge_label_sym, ""_p);
 
   auto enode = agnode(subgraph, (char*)id(20).c_str(), 1);
-  agxset(enode, node_label_sym, "end");
+  agxset(enode, node_label_sym, "end"_p);
   if (accept->node == nullptr) {
     accept->visualize(subgraph);
   }
 
   auto eedge = agedge(subgraph, accept->node, enode, (char*)id(20).c_str(), 1);
-  agxset(eedge, edge_label_sym, "");
+  agxset(eedge, edge_label_sym, ""_p);
 }
 
 void Compiler::BaseState::visualize(Agraph_t* subgraph)
@@ -180,15 +179,15 @@ void Compiler::BaseState::visualize(Agraph_t* subgraph)
         toState->visualize(subgraph);
       }
       auto edge = agedge(subgraph, node, toState->node, (char*)id(20).c_str(), 1);
-      agxset(edge, edge_label_sym, edge_label(condition).c_str());
+      agxset(edge, edge_label_sym, (char*)edge_label(condition).c_str());
     }
   }
 }
 
 void Compiler::VariableState::visualize(Agraph_t* subgraph)
 {
-  node = agnode(subgraph, (char*)id(20).c_str(), 1);
-  agxset(node, node_label_sym, ("Var (" + identifier + ", " + std::to_string(end) + ")").c_str());
+  node = agnode(subgraph, (char*)(id(20).c_str()), 1);
+  agxset(node, node_label_sym, (char*)("Var (" + identifier + ", " + std::to_string(end) + ")").c_str());
   
   for (auto& [condition, states] : transitions)
   {
@@ -197,7 +196,7 @@ void Compiler::VariableState::visualize(Agraph_t* subgraph)
         toState->visualize(subgraph);
       }
       auto edge = agedge(subgraph, node, toState->node, (char*)id(20).c_str(), 1);
-      agxset(edge, edge_label_sym, edge_label(condition).c_str());
+      agxset(edge, edge_label_sym, (char*)edge_label(condition).c_str());
     }
   }
 }
@@ -205,7 +204,7 @@ void Compiler::VariableState::visualize(Agraph_t* subgraph)
 void Compiler::SubroutineState::visualize(Agraph_t* subgraph)
 {
   node = agnode(subgraph, (char*)id(20).c_str(), 1);
-  agxset(node, node_label_sym, ("Sub (" + identifier + ", " + std::to_string(end) + ")").c_str());
+  agxset(node, node_label_sym, (char*)("Sub (" + identifier + ", " + std::to_string(end) + ")").c_str());
   
   for (auto& [condition, states] : transitions)
   {
@@ -214,7 +213,7 @@ void Compiler::SubroutineState::visualize(Agraph_t* subgraph)
         toState->visualize(subgraph);
       }
       auto edge = agedge(subgraph, node, toState->node, (char*)id(20).c_str(), 1);
-      agxset(edge, edge_label_sym, edge_label(condition).c_str());
+      agxset(edge, edge_label_sym, (char*)edge_label(condition).c_str());
     }
   }
 }
@@ -222,7 +221,7 @@ void Compiler::SubroutineState::visualize(Agraph_t* subgraph)
 void Compiler::SubroutineCallState::visualize(Agraph_t* subgraph)
 {
   node = agnode(subgraph, (char*)id(20).c_str(), 1);
-  agxset(node, node_label_sym, ("Call (" + identifier + ")").c_str());
+  agxset(node, node_label_sym, (char*)("Call (" + identifier + ")").c_str());
   
   for (auto& [condition, states] : transitions)
   {
@@ -231,7 +230,7 @@ void Compiler::SubroutineCallState::visualize(Agraph_t* subgraph)
         toState->visualize(subgraph);
       }
       auto edge = agedge(subgraph, node, toState->node, (char*)id(20).c_str(), 1);
-      agxset(edge, edge_label_sym, edge_label(condition).c_str());
+      agxset(edge, edge_label_sym, (char*)edge_label(condition).c_str());
     }
   }
 }
@@ -239,7 +238,7 @@ void Compiler::SubroutineCallState::visualize(Agraph_t* subgraph)
 void Compiler::LoopState::visualize(Agraph_t* subgraph)
 {
   node = agnode(subgraph, (char*)id(20).c_str(), 1);
-  agxset(node, node_label_sym, ("Loop(" + std::to_string(min) + ", " + std::to_string(max) + ")").c_str());
+  agxset(node, node_label_sym, (char*)("Loop(" + std::to_string(min) + ", " + std::to_string(max) + ")").c_str());
 
   if (loop->node == nullptr) {
     loop->visualize(subgraph);
@@ -250,6 +249,11 @@ void Compiler::LoopState::visualize(Agraph_t* subgraph)
     accept->visualize(subgraph);
   }
   agedge(subgraph, node, accept->node, (char*)id(20).c_str(), 1);
+}
+
+void Compiler::InState::visualize(Agraph_t* subgraph)
+{
+    // FIXME
 }
 
 #endif

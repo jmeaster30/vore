@@ -57,10 +57,17 @@ namespace Compiler
     bool accepted = false;
     std::unordered_map<Condition, std::vector<FSMState*>*, condition_hash_fn> transitions = {};
 
+    FSMState* copied = nullptr; // used in the copy function so we don't get into loops
+
     FSMState() {};
 
     virtual void print_json() = 0;
     virtual std::vector<MatchContext*> execute(MatchContext* context) = 0;
+    virtual FSMState* copy_subroutine(std::string id) = 0;
+
+    void clear_copy() {
+      copied = nullptr;
+    }
 
     VIZ_VFUNC
 
@@ -75,6 +82,7 @@ namespace Compiler
 
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
+    FSMState* copy_subroutine(std::string id);
 
     VIZ_FUNC
   };
@@ -84,11 +92,15 @@ namespace Compiler
   public:
     bool end = false;
     std::string identifier;
+
+    VariableState() {}
+
     VariableState(std::string id, bool e = false) :
       identifier(id), end(e), FSMState() {}
 
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
+    FSMState* copy_subroutine(std::string id);
 
     VIZ_FUNC
   };
@@ -97,12 +109,18 @@ namespace Compiler
   {
   public:
     bool end = false;
+    bool from_context = false;
     std::string identifier;
+    SubroutineState* matching;
+
+    SubroutineState() {}
+
     SubroutineState(std::string id, bool e = false) :
       identifier(id), end(e), FSMState() {}
   
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
+    FSMState* copy_subroutine(std::string id);
 
     VIZ_FUNC
   };
@@ -111,11 +129,15 @@ namespace Compiler
   {
   public:
     std::string identifier;
+
+    SubroutineCallState() {}
+
     SubroutineCallState(std::string id) :
       identifier(id), FSMState() {}
 
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
+    FSMState* copy_subroutine(std::string id);
 
     VIZ_FUNC
   };
@@ -130,11 +152,14 @@ namespace Compiler
     FSMState* loop;
     FSMState* accept;
 
+    LoopState() {}
+
     LoopState(long long s, long long e, bool few) :
       min(s), max(e), fewest(few), FSMState() {}
 
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
+    FSMState* copy_subroutine(std::string id);
 
     VIZ_FUNC
   };
@@ -146,11 +171,14 @@ namespace Compiler
 
     FSMState* next_when_not;
 
+    InState() {}
+
     InState(FSMState* nwn, bool neg)
       : next_when_not(nwn), negative(neg) {}
 
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
+    FSMState* copy_subroutine(std::string id);
 
     VIZ_FUNC
   };

@@ -162,7 +162,6 @@ TEST_CASE("find at most 3 fewest", "[string, atleast, fewest]") {
   SINGLE_MATCH(firstResults, 4, 15, "lmaolmaolmao xD");
 }
 
-// FIXME subroutines
 TEST_CASE("find with subroutine or", "[string, subroutine, or]") {
   auto vore = Vore::compile("find all ('a' or 'b') = $sub $sub");
   auto results = vore.execute("please ba ab bb aa");
@@ -176,16 +175,14 @@ TEST_CASE("find with subroutine or", "[string, subroutine, or]") {
   IS_MATCH(group.matches[3], 16, 2, "aa");
 }
 
-// FIXME subroutines loops
-TEST_CASE("find with recursive subroutine", "[string, subroutine, atleast]") {
-  auto vore = Vore::compile("find all ('a' at least 0 $sub 'b') = $sub");
+TEST_CASE("find with recursive subroutine", "[string, subroutine, maybe]") {
+  auto vore = Vore::compile("find all ('a' maybe $sub 'b') = $sub");
   auto results = vore.execute("omg aaabbb");
   SINGLE_MATCH(results, 4, 6, "aaabbb");
 }
 
-// FIXME subroutines loops
-TEST_CASE("find with recursive subroutine then something else", "[string, subroutine, atleast]") {
-  auto vore = Vore::compile("find all ('a' at least 0 $sub 'b') = $sub 'b'");
+TEST_CASE("find with recursive subroutine then something else", "[string, subroutine, maybe]") {
+  auto vore = Vore::compile("find all ('a' maybe $sub 'b') = $sub 'b'");
   auto results = vore.execute("omg aaabbb");
   SINGLE_MATCH(results, 5, 5, "aabbb");
 }

@@ -6,6 +6,8 @@
 
 namespace Compiler
 {
+  bool printed = false;
+
   bool LexicoLessEqual(std::string left, std::string right)
   {
     if (left.length() != right.length()) return left.length() < right.length();
@@ -239,10 +241,14 @@ namespace Compiler
     for (auto& [condition, transition_set] : transitions)
     {
       // TODO make this check for all kinds of transitions
-      // TODO this is fine for now though cause it should always be an epsilon transition
+      // this is fine for now though cause it should always be an epsilon transition
       if (condition.type == ConditionType::Special && condition.specCondition == SpecialCondition::None)
       {
         GetNextTransitions(&results, new_context, transition_set);
+      }
+      else
+      {
+        std::cout << "WHOOPS :(  variable transition not empty" << std::endl;
       }
     }
 
@@ -251,12 +257,49 @@ namespace Compiler
 
   std::vector<MatchContext*> SubroutineState::execute(MatchContext* context)
   {
-    return {};
+    std::vector<MatchContext*> results = {};
+
+    auto new_context = context->copy();
+    if (!end) {
+      SubroutineState* subroutine = static_cast<SubroutineState*>(copy_subroutine(identifier));
+      subroutine->clear_copy();
+      subroutine->from_context = true;
+      new_context->subroutines[identifier] = subroutine;
+    }
+
+    // should we check for end here too??
+    if (accepted) {
+      return { new_context };
+    }
+
+    for (auto& [condition, transition_set] : transitions)
+    {
+      // TODO make this check for all kinds of transitions
+      // this is fine for now though cause it should always be an epsilon transition
+      if (condition.type == ConditionType::Special && condition.specCondition == SpecialCondition::None)
+      {
+        GetNextTransitions(&results, new_context, transition_set);
+      }
+      else
+      {
+        std::cout << "WHOOPS :(  subroutine transition not empty" << std::endl;
+      }
+    }
+
+    return results;
   }
 
   std::vector<MatchContext*> SubroutineCallState::execute(MatchContext* context)
   {
-    return {};
+    SubroutineState* subroutine = static_cast<SubroutineState*>(context->subroutines[identifier]->copy_subroutine(identifier));
+
+    subroutine->matching->transitions = transitions;
+
+    auto results = subroutine->execute(context);
+
+    delete subroutine;
+
+    return results;
   }
 
   std::vector<MatchContext*> LoopState::execute(MatchContext* context)
@@ -325,6 +368,7 @@ namespace Compiler
   void BaseState::print_json()
   {
     std::cout << "{" << std::endl;
+    std::cout << "\"basename\": \"base\"," << std::endl;
     std::cout << "\"accept_flag\": \"" << accepted << "\"," << std::endl;
     std::cout << "\"transitions\": [" << std::endl;
     for (auto& [condition, states] : transitions)
@@ -352,6 +396,7 @@ namespace Compiler
   void VariableState::print_json()
   {
     std::cout << "{" << std::endl;
+    std::cout << "\"basename\": \"variable\"," << std::endl;
     std::cout << "\"identifier\": \"" << identifier << "\"," << std::endl;
     std::cout << "\"end\": \"" << end << "\"," << std::endl;
     std::cout << "\"accept_flag\": \"" << accepted << "\"," << std::endl;
@@ -381,6 +426,7 @@ namespace Compiler
   void SubroutineState::print_json()
   {
     std::cout << "{" << std::endl;
+    std::cout << "\"basename\": \"subroutine\"," << std::endl;
     std::cout << "\"identifier\": \"" << identifier << "\"," << std::endl;
     std::cout << "\"end\": \"" << end << "\"," << std::endl;
     std::cout << "\"accept_flag\": \"" << accepted << "\"," << std::endl;
@@ -410,6 +456,7 @@ namespace Compiler
   void SubroutineCallState::print_json()
   {
     std::cout << "{" << std::endl;
+    std::cout << "\"basename\": \"call\"," << std::endl;
     std::cout << "\"identifier\": \"" << identifier << "\"," << std::endl;
     std::cout << "\"accept_flag\": \"" << accepted << "\"," << std::endl;
     std::cout << "\"transitions\": [" << std::endl;
@@ -438,6 +485,7 @@ namespace Compiler
   void LoopState::print_json()
   {
     std::cout << "{" << std::endl;
+    std::cout << "\"basename\": \"loop\"," << std::endl;
     std::cout << "\"accept_flag\": \"" << accepted << "\"," << std::endl;
     std::cout << "\"min\": \"" << min << "\"" << std::endl;
     std::cout << "\"max\": \"" << max << "\"" << std::endl; 
@@ -453,6 +501,7 @@ namespace Compiler
   void InState::print_json()
   {
     std::cout << "{" << std::endl;
+    std::cout << "\"basename\": \"in\"," << std::endl;
     std::cout << "\"accept_flag\": \"" << accepted << "\"," << std::endl;
     std::cout << "\"not\": \"" << negative << "\"" << std::endl;
     std::cout << "\"next_when_not\": ";
@@ -470,7 +519,7 @@ namespace Compiler
       std::cout << "\"type\": " << (condition.type == ConditionType::Literal ? "\"Literal\"" : "\"Special\"") << "," << std::endl;
       std::cout << "\"spec_cond\": \"" << spec_condition_to_string(condition.specCondition) << "\"," << std::endl;
       std::cout << "\"value\": \"" << condition.value << "\"," << std::endl;
-      std::cout << "\"negative\": \"" << condition.negative << "\"," << std::endl;
+      std::cout << "\"negative\": \"" << condition.negative << "\"" << std::endl;
       std::cout << "}," << std::endl;
       std::cout << "\"states\": [" << std::endl;
       for (auto state : *states)
@@ -481,7 +530,7 @@ namespace Compiler
       std::cout << "]" << std::endl;
       std::cout << "}," << std::endl;
     }
-    std::cout << std::endl << "]," << std::endl; 
+    std::cout << std::endl << "]" << std::endl;
     std::cout << "}";
   }
 
@@ -491,7 +540,6 @@ namespace Compiler
     std::cout << "\"accept_state\": \"" << start << "\"," << std::endl;
     std::cout << "\"start_state\": ";
     start->print_json();
-    std::cout << "," << std::endl;
     std::cout << "}";
   }
 
@@ -617,8 +665,13 @@ namespace Compiler
     delete result->start;
     delete result->accept;
 
-    result->start = new SubroutineState(identifier);
-    result->accept = new SubroutineState(identifier, true);
+    SubroutineState* start =  new SubroutineState(identifier);
+    SubroutineState* end = new SubroutineState(identifier, true);
+    start->matching = end;
+    end->matching = start;
+
+    result->start = start;
+    result->accept = end;
 
     result->accept->accepted = true;
     machine->accept->accepted = false;
@@ -638,4 +691,146 @@ namespace Compiler
 
     return result;
   }
+
+  FSMState* BaseState::copy_subroutine(std::string id)
+  {
+    if (copied) return copied;
+
+    BaseState* state = new BaseState();
+
+    copied = state;
+
+    for (auto&[cond, moves] : transitions) {
+      auto moves_copy = new std::vector<FSMState*>();
+
+      for (auto move : *moves) {
+        moves_copy->push_back(move->copy_subroutine(id));
+      }
+
+      state->transitions[cond] = moves_copy;
+    }
+
+    return state;
+  }
+
+  FSMState* VariableState::copy_subroutine(std::string id)
+  {
+    if (copied) return copied;
+
+    VariableState* state = new VariableState();
+
+    state->end = end;
+    state->identifier = identifier;
+
+    copied = state;
+
+    for (auto&[cond, moves] : transitions) {
+      auto moves_copy = new std::vector<FSMState*>();
+
+      for (auto move : *moves) {
+        moves_copy->push_back(move->copy_subroutine(id));
+      }
+
+      state->transitions[cond] = moves_copy;
+    }
+
+    return state;
+  }
+
+  FSMState* SubroutineState::copy_subroutine(std::string id)
+  {
+    if (copied) return copied;
+
+    SubroutineState* state = new SubroutineState();
+
+    state->end = end;
+    state->identifier = identifier;
+
+    copied = state;
+
+    state->matching = static_cast<SubroutineState*>(matching->copy_subroutine(id));
+
+    if (end && identifier == id) {
+      return state;
+    }
+
+    for (auto&[cond, moves] : transitions) {
+      auto moves_copy = new std::vector<FSMState*>();
+
+      for (auto move : *moves) {
+        moves_copy->push_back(move->copy_subroutine(id));
+      }
+
+      state->transitions[cond] = moves_copy;
+    }
+
+    return state;
+  }
+
+  FSMState* SubroutineCallState::copy_subroutine(std::string id)
+  {
+    if (copied) return copied;
+
+    SubroutineCallState* state = new SubroutineCallState();
+
+    state->identifier = identifier;
+
+    copied = state;
+
+    for (auto&[cond, moves] : transitions) {
+      auto moves_copy = new std::vector<FSMState*>();
+
+      for (auto move : *moves) {
+        moves_copy->push_back(move->copy_subroutine(id));
+      }
+
+      state->transitions[cond] = moves_copy;
+    }
+
+    return state;
+  }
+
+  FSMState* LoopState::copy_subroutine(std::string id)
+  {
+    if (copied) return copied;
+
+    LoopState* state = new LoopState();
+
+    state->fewest = fewest;
+    state->min = min;
+    state->max = max;
+
+    copied = state;
+
+    state->loop = loop->copy_subroutine(id);
+    state->accept = accept->copy_subroutine(id);
+
+    return state;
+  }
+
+  FSMState* InState::copy_subroutine(std::string id)
+  {
+    if (copied) return copied;
+
+    InState* state = new InState();
+
+    state->negative = negative;
+
+    copied = state;
+
+    state->next_when_not = next_when_not->copy_subroutine(id);
+
+    for (auto&[cond, moves] : transitions) {
+      auto moves_copy = new std::vector<FSMState*>();
+
+      for (auto move : *moves) {
+        moves_copy->push_back(move->copy_subroutine(id));
+      }
+
+      state->transitions[cond] = moves_copy;
+    }
+
+    return state;
+  }
+
 }

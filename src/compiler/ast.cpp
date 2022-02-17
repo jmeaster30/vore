@@ -33,6 +33,7 @@ namespace Compiler
           matches.push_back(result); 
         }
         total_matches += 1;
+        ctxt->input->seek_forward(result->value.length() - 1);
       }
       else
       {

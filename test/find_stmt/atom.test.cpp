@@ -21,7 +21,6 @@ TEST_CASE("find not string", "[string]") {
   IS_MATCH(results[0].matches[2], 7, 3, " :)");
 }
 
-// FIXME
 TEST_CASE("find digit", "[digit]") {
   auto vore = Vore::compile("find all digit");
   auto results = vore.execute("please 1234567890 wow");
