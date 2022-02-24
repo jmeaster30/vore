@@ -1,6 +1,8 @@
 #include "context.hpp"
 
 #include <iostream>
+#include <iterator>
+#include <fstream>
 
 namespace Compiler
 {
@@ -11,8 +13,12 @@ namespace Compiler
 
   Input* Input::FromFile(std::string filename)
   {
-    std::cerr << "ERROR:: File IO Unimplemented :(" << std::endl;
-    exit(1); 
+    // this method can probably be optimized.
+    // Maybe when we copy the Input we don't need to copy the file data.
+    std::ifstream inputFile(filename, std::ios::in | std::ios::binary);
+    std::vector<char> fileContents((std::istreambuf_iterator<char>(inputFile)),
+                                    std::istreambuf_iterator<char>());
+    return new Input(fileContents);
   }
 
   Input* Input::copy()
@@ -21,8 +27,7 @@ namespace Compiler
 
     if (is_file)
     {
-      std::cerr << "ERROR:: File IO Unimplemented :(" << std::endl;
-      exit(1); 
+      new_input->file_data = file_data;
     }
     else
     {
@@ -39,76 +44,51 @@ namespace Compiler
   std::string Input::get(long long amount)
   {
     std::string result;
+    auto fixed_amount = amount;
+    if (data_size < data_index + amount) {
+      fixed_amount = data_size - data_index;
+    }
+
     if (is_file)
     {
-
+      auto position_iter = file_data.begin() + data_index;
+      result = std::string(position_iter, position_iter + fixed_amount);
     }
     else
     {
-      auto fixed_amount = amount;
-      if (data_size < data_index + amount) {
-        fixed_amount = data_size - data_index;
-      }
       result = string_data.substr(data_index, fixed_amount);
-      data_index += fixed_amount;
-      end_of_input = data_index >= data_size;
     }
+
+    data_index += fixed_amount;
+    end_of_input = data_index >= data_size;
     return result;
   }
 
   void Input::seek_forward(long long value)
   {
-    if (is_file)
-    {
-
-    }
-    else
-    {
-      data_index += value;
-      end_of_input = data_index >= data_size;
-    }
+    data_index += value;
+    end_of_input = data_index >= data_size;
   }
 
   void Input::seek_back(long long value)
   {
-    if (is_file)
-    {
-
+    if (data_index < value) {
+      data_index = 0;
+    } else {
+      data_index -= value;
     }
-    else
-    {
-      if (data_index < value) {
-        data_index = 0;
-      } else {
-        data_index -= value;
-      }
-      end_of_input = data_index >= data_size;
-    }
+    end_of_input = data_index >= data_size;
   }
 
   void Input::set_position(long long value)
   {
-    if (is_file)
-    {
-
-    }
-    else
-    {
-      data_index = value;
-      end_of_input = data_index >= data_size;
-    }
+    data_index = value;
+    end_of_input = data_index >= data_size;
   }
 
   long long Input::get_position()
   {
-    if (is_file)
-    {
-      return 0;
-    }
-    else
-    {
-      return data_index;
-    }
+    return data_index;
   }
  
   long long Input::get_size()

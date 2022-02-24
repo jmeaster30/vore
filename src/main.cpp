@@ -48,8 +48,6 @@ int main(int argc, char** argv) {
     exit(vore.num_errors());
   }
 
-  //vore.print_json();
-
 #ifdef WITH_VIZ
   if(args.visualize) {
     vore.visualize();
@@ -57,8 +55,12 @@ int main(int argc, char** argv) {
   }
 #endif
 
-  // FIXME make this work with files
-  auto results = vore.execute("test aaabbb", vo);
+  if (args.files.size() < 1) {
+    std::cout << "There were no input files supplied." << std::endl;
+    return 0;
+  }
+
+  auto results = vore.execute(args.files, vo);
 
   if (results.size() == 0) {
     std::cout << "There were no matches" << std::endl;

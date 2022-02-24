@@ -36,17 +36,13 @@ namespace Compiler
     long long data_size = 0;
     long long data_index = 0;
     std::string string_data;
-    std::ifstream file_data;
+    std::vector<char> file_data;
 
     Input(std::string input_string)
       : is_file(false), string_data(input_string), data_size(input_string.length()) {};
     
-    Input(std::ifstream& input_file)
-      : is_file(true)
-    {
-      //get file size here
-      // move? file_data
-    }
+    Input(std::vector<char> data)
+      : is_file(true), file_data(data), data_size(data.size()) {}
 
     Input() {}; // not meant to be used
     ~Input() {};

@@ -39,6 +39,8 @@ public:
 
   MatchGroup() {}
 
+  MatchGroup(std::string name) : filename(name) {}
+
   void print();
 };
 
