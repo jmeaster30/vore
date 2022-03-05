@@ -37,6 +37,7 @@ namespace Compiler
 
   void DoMatch(std::function<bool(std::string)> is_match, long long length, std::vector<MatchContext*>* results, MatchContext* context, std::vector<FSMState*>* transition_set)
   {
+    if (context->input->is_end_of_input()) return;
     auto to_match = context->input->get(length);
     if (is_match(to_match))
     {
@@ -55,6 +56,7 @@ namespace Compiler
     for (long long length = max_length; length >= min_length; length--)
     {
       auto temp_context = context->copy();
+      if (temp_context->input->is_end_of_input()) return;
       auto value = temp_context->input->get(length);
       if (is_match(value))
       {
@@ -68,6 +70,7 @@ namespace Compiler
 
   void NotStringMatch(std::string to_not_match, std::vector<MatchContext*>* results, MatchContext* context, std::vector<FSMState*>* transition_set)
   {
+    if (context->input->is_end_of_input()) return;
     //FIXME assumes to_not_match has a length of 1
     auto value = context->input->get(1);
     if (value != to_not_match)
@@ -81,15 +84,23 @@ namespace Compiler
     }
   }
 
-  std::vector<MatchContext*> BaseState::execute(MatchContext* context)
+  void DoEpsilonTransition(std::vector<MatchContext*>* results, MatchContext* context, std::unordered_map<Condition, std::vector<FSMState*>*, condition_hash_fn> transitions)
   {
-    std::vector<MatchContext*> result = {};
-    //std::cout << "state " << this << std::endl;
-    if (accepted) {
-      //std::cout << "accept" << std::endl;
-      return { context };
+    for (auto& [condition, transition_set] : transitions)
+    {
+      if (condition.type == ConditionType::Special && condition.specCondition == SpecialCondition::None)
+      {
+        GetNextTransitions(results, context, transition_set);
+      }
+      else
+      {
+        std::cout << "WHOOPS :(  transition not empty" << std::endl;
+      }
     }
+  }
 
+  void DoAllTransitions(std::vector<MatchContext*>* result, MatchContext* context, std::unordered_map<Condition, std::vector<FSMState*>*, condition_hash_fn> transitions)
+  {
     for(auto& [condition, transition_set] : transitions)
     {
       MatchContext* new_context = context->copy();
@@ -97,29 +108,29 @@ namespace Compiler
       {
         if (condition.negative)
         {
-          NotStringMatch(condition.value, &result, new_context, transition_set);
+          NotStringMatch(condition.value, result, new_context, transition_set);
         }
         else
         {
           DoMatch([&](std::string to_match) {
             return to_match == condition.value;
-          }, condition.value.length(), &result, new_context, transition_set);
+          }, condition.value.length(), result, new_context, transition_set);
         }
       }
       else if (condition.specCondition == SpecialCondition::None)
       {
-        GetNextTransitions(&result, new_context, transition_set);
+        GetNextTransitions(result, new_context, transition_set);
       }
       else if (condition.specCondition == SpecialCondition::Any)
       {
         DoMatch([&](std::string to_match) {
           return true;
-        }, 1, &result, new_context, transition_set);
+        }, 1, result, new_context, transition_set);
       }
       else if (condition.specCondition == SpecialCondition::StartOfFile)
       {
         if (context->input->get_position() == 0) {
-          GetNextTransitions(&result, new_context, transition_set);
+          GetNextTransitions(result, new_context, transition_set);
         }
       }
       else if (condition.specCondition == SpecialCondition::StartOfLine)
@@ -127,13 +138,13 @@ namespace Compiler
         //get previous character and check if it is a new line
         // or check if we are at the beginning of the file
         if (context->input->get_position() == 0) {
-          GetNextTransitions(&result, new_context, transition_set);
+          GetNextTransitions(result, new_context, transition_set);
         } else {
           context->input->seek_back(1);
           auto newline = context->input->get(1); //this moves the pointer by one
           if (newline == "\n")
           {
-            GetNextTransitions(&result, new_context, transition_set);
+            GetNextTransitions(result, new_context, transition_set);
           }
         }
       }
@@ -141,7 +152,7 @@ namespace Compiler
       {
         if (new_context->input->is_end_of_input())
         {
-          GetNextTransitions(&result, new_context, transition_set);
+          GetNextTransitions(result, new_context, transition_set);
         }
       }
       else if (condition.specCondition == SpecialCondition::EndOfLine)
@@ -149,7 +160,7 @@ namespace Compiler
         //non consuming match to new line
         if (new_context->input->is_end_of_input())
         {
-          GetNextTransitions(&result, new_context, transition_set);
+          GetNextTransitions(result, new_context, transition_set);
         }
         else
         {
@@ -157,7 +168,7 @@ namespace Compiler
           new_context->input->seek_back(1);
           if (to_match == "\n")
           {
-            GetNextTransitions(&result, new_context, transition_set);
+            GetNextTransitions(result, new_context, transition_set);
           }
         }
       }
@@ -166,13 +177,13 @@ namespace Compiler
         if (condition.negative)
         {
           // FIXME this is not possible to reach currently (Making NotStringMatch use string lengths of more than 1 is required to make this work though)
-          NotStringMatch(new_context->variables[condition.value], &result, new_context, transition_set);
+          NotStringMatch(new_context->variables[condition.value], result, new_context, transition_set);
         }
         else
         {
           DoMatch([&](std::string to_match) {
             return to_match == new_context->variables[condition.value];
-          }, new_context->variables[condition.value].length(), &result, new_context, transition_set);
+          }, new_context->variables[condition.value].length(), result, new_context, transition_set);
         }
       }
       else if (condition.specCondition == SpecialCondition::Range)
@@ -193,20 +204,30 @@ namespace Compiler
             if (RangeNotContains(value, condition.ranges))
             {
               temp_context->value += value;
-              GetNextTransitions(&result, temp_context, transition_set);
+              GetNextTransitions(result, temp_context, transition_set);
             }
-          }          
+          }
         }
         else
         {
           for (auto& [from, to] : condition.ranges) {
             RangeMatch([&](std::string to_match) {
               return LexicoLessEqual(from, to_match) && LexicoLessEqual(to_match, to);
-            }, from.length(), to.length(), &result, context, transition_set);
+            }, from.length(), to.length(), result, context, transition_set);
           }
         }
       }
     }
+  }
+
+  std::vector<MatchContext*> BaseState::execute(MatchContext* context)
+  {
+    std::vector<MatchContext*> result = {};
+    if (accepted) {
+      return { context };
+    }
+
+    DoAllTransitions(&result, context, transitions);
 
     return result;
   }
@@ -238,19 +259,7 @@ namespace Compiler
       return { new_context };
     }
 
-    for (auto& [condition, transition_set] : transitions)
-    {
-      // TODO make this check for all kinds of transitions
-      // this is fine for now though cause it should always be an epsilon transition
-      if (condition.type == ConditionType::Special && condition.specCondition == SpecialCondition::None)
-      {
-        GetNextTransitions(&results, new_context, transition_set);
-      }
-      else
-      {
-        std::cout << "WHOOPS :(  variable transition not empty" << std::endl;
-      }
-    }
+    DoEpsilonTransition(&results, new_context, transitions);
 
     return results;
   }
@@ -272,19 +281,7 @@ namespace Compiler
       return { new_context };
     }
 
-    for (auto& [condition, transition_set] : transitions)
-    {
-      // TODO make this check for all kinds of transitions
-      // this is fine for now though cause it should always be an epsilon transition
-      if (condition.type == ConditionType::Special && condition.specCondition == SpecialCondition::None)
-      {
-        GetNextTransitions(&results, new_context, transition_set);
-      }
-      else
-      {
-        std::cout << "WHOOPS :(  subroutine transition not empty" << std::endl;
-      }
-    }
+    DoEpsilonTransition(&results, new_context, transitions);
 
     return results;
   }
@@ -304,7 +301,73 @@ namespace Compiler
 
   std::vector<MatchContext*> LoopState::execute(MatchContext* context)
   {
-    return {};
+    std::vector<MatchContext*> results = {};
+
+    auto new_context = context->copy();
+
+    if (start)
+    {
+      DoEpsilonTransition(&results, new_context, transitions);
+      if (results.size() == 0) {
+        forward_looping = false;
+        matching->forward_looping = false;
+      }
+    }
+    else
+    {
+      if (forward_looping)
+      {
+        DoAllTransitions(&results, new_context, transitions);
+        new_context->loop_stack.push(LoopEntry{(long long)this, iteration, new_context});
+
+        if ((fewest && iteration >= min && iteration < max && results.size() == 0) ||
+          (!fewest && iteration == max - 1)
+        ) {
+          forward_looping = false;
+          matching->forward_looping = false;
+        }
+        else
+        {
+          iteration += 1;
+          matching->iteration += 1;
+        }
+      }
+      else
+      {
+        if (iteration >= min) {
+
+          if (new_context->loop_stack.size() == 0) {
+            return {};
+          }
+
+          auto top_stack = new_context->loop_stack.top();
+          if (top_stack.id != (long long)this || top_stack.iteration != iteration) {
+            return {};
+          }
+
+          DoAllTransitions(&results, top_stack.context, transitions);
+          iteration -= 1;
+          matching->iteration -= 1;
+          new_context->loop_stack.pop();
+        }
+        else
+        {
+          return {};
+        }
+      }
+
+      if (accepted) {
+        results.push_back(new_context);
+      }
+
+      if (iteration >= 0) {
+        auto next_loop_context = new_context->copy();
+        auto loop_results = matching->execute(next_loop_context);
+        results.insert(results.end(), loop_results.begin(), loop_results.end());
+      }
+    }
+
+    return results;
   }
 
   std::vector<MatchContext*> InState::execute(MatchContext* context)
@@ -326,6 +389,8 @@ namespace Compiler
       }
     }
 
+    start->clear_loop_state();
+
     return result;
   }
 
@@ -334,13 +399,11 @@ namespace Compiler
     auto found = transitions.find(cond);
     std::vector<FSMState*>* states;
     if (found == transitions.end()) {
-      //std::cout << "new set" << std::endl;
       states = new std::vector<FSMState*>();
       transitions[cond] = states;
     } else {
       states = found->second;
     }
-    //std::cout << "transition added" << std::endl;
     states->push_back(state);
   }
 
@@ -486,15 +549,31 @@ namespace Compiler
   {
     std::cout << "{" << std::endl;
     std::cout << "\"basename\": \"loop\"," << std::endl;
+    std::cout << "\"start\": " << start << "," << std::endl;
     std::cout << "\"accept_flag\": \"" << accepted << "\"," << std::endl;
     std::cout << "\"min\": \"" << min << "\"" << std::endl;
     std::cout << "\"max\": \"" << max << "\"" << std::endl; 
-    std::cout << "\"loop\": ";
-    loop->print_json();
-    std::cout << "," << std::endl;
-    std::cout << "\"accept\": ";
-    accept->print_json();
-    std::cout << "," << std::endl; 
+    std::cout << "\"matching\": " << matching << "," << std::endl;
+    std::cout << "\"transitions\": [" << std::endl;
+    for (auto& [condition, states] : transitions)
+    {
+      std::cout << "{" << std::endl;
+      std::cout << "\"condition\": {" << std::endl;
+      std::cout << "\"type\": " << (condition.type == ConditionType::Literal ? "\"Literal\"" : "\"Special\"") << "," << std::endl;
+      std::cout << "\"spec_cond\": \"" << spec_condition_to_string(condition.specCondition) << "\"," << std::endl;
+      std::cout << "\"value\": \"" << condition.value << "\"," << std::endl;
+      std::cout << "\"negative\": \"" << condition.negative << "\"," << std::endl;
+      std::cout << "}," << std::endl;
+      std::cout << "\"states\": [" << std::endl;
+      for (auto state : *states)
+      {
+        state->print_json();
+        std::cout << "," << std::endl;
+      }
+      std::cout << "]" << std::endl;
+      std::cout << "}," << std::endl;
+    }
+    std::cout << std::endl << "]," << std::endl;
     std::cout << "}";
   }
 
@@ -625,19 +704,24 @@ namespace Compiler
     return result;
   }
 
-  FSM* FSM::Loop(FSM* machine, long long start, long long end, bool fewest)
+  FSM* FSM::Loop(FSM* machine, long long from, long long to, bool fewest)
   {
     FSM* result = new FSM();
     delete result->start;
+    delete result->accept;
 
-    auto looper = new LoopState(start, end, fewest);
+    auto loop_start = new LoopState(from, to, fewest);
+    auto loop_end = new LoopState(from, to, fewest, false);
+    loop_start->matching = loop_end;
+    loop_end->matching = loop_start;
 
-    looper->loop = machine->start;
+    loop_start->addEpsilonTransition(machine->start);
+    machine->accept->addEpsilonTransition(loop_end);
     machine->accept->accepted = false;
-    machine->accept->addEpsilonTransition(looper);
 
-    looper->accept = result->accept;
-    result->start = looper;
+    result->start = loop_start;
+    result->accept = loop_end;
+    result->accept->accepted = true;
 
     return result;
   }
@@ -796,14 +880,22 @@ namespace Compiler
 
     LoopState* state = new LoopState();
 
+    state->start = start;
     state->fewest = fewest;
     state->min = min;
     state->max = max;
 
     copied = state;
 
-    state->loop = loop->copy_subroutine(id);
-    state->accept = accept->copy_subroutine(id);
+    for (auto&[cond, moves] : transitions) {
+      auto moves_copy = new std::vector<FSMState*>();
+
+      for (auto move : *moves) {
+        moves_copy->push_back(move->copy_subroutine(id));
+      }
+
+      state->transitions[cond] = moves_copy;
+    }
 
     return state;
   }
@@ -831,6 +923,80 @@ namespace Compiler
     }
 
     return state;
+  }
+
+  void BaseState::clear_loop_state()
+  {
+    if (visited) return;
+    visited = true;
+    for (auto&[cond, moves] : transitions) {
+      for (auto move : *moves) {
+        move->clear_loop_state();
+      }
+    }
+    visited = false;
+  }
+
+  void VariableState::clear_loop_state()
+  {
+    if (visited) return;
+    visited = true;
+    for (auto&[cond, moves] : transitions) {
+      for (auto move : *moves) {
+        move->clear_loop_state();
+      }
+    }
+    visited = false;
+  }
+
+  void SubroutineState::clear_loop_state()
+  {
+    if (visited) return;
+    visited = true;
+    for (auto&[cond, moves] : transitions) {
+      for (auto move : *moves) {
+        move->clear_loop_state();
+      }
+    }
+    visited = false;
+  }
+
+  void SubroutineCallState::clear_loop_state()
+  {
+    if (visited) return;
+    visited = true;
+    for (auto&[cond, moves] : transitions) {
+      for (auto move : *moves) {
+        move->clear_loop_state();
+      }
+    }
+    visited = false;
+  }
+
+  void LoopState::clear_loop_state()
+  {
+    if (visited) return;
+    iteration = 0;
+    forward_looping = true;
+    visited = true;
+    for (auto&[cond, moves] : transitions) {
+      for (auto move : *moves) {
+        move->clear_loop_state();
+      }
+    }
+    visited = false;
+  }
+
+  void InState::clear_loop_state()
+  {
+    if (visited) return;
+    visited = true;
+    for (auto&[cond, moves] : transitions) {
+      for (auto move : *moves) {
+        move->clear_loop_state();
+      }
+    }
+    visited = false;
   }
 
 }

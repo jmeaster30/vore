@@ -67,14 +67,12 @@ TEST_CASE("find at most any", "[any, atmost]") {
   SINGLE_MATCH(results, 8, 8, "match :O"); 
 }
 
-// FIXME file
 TEST_CASE("find sol line eol", "[string, sol, eol]") {
   auto vore = Vore::compile("find all sol 'line' eol");
   auto results = vore.execute(multiline_txt_file);
   SINGLE_MATCH(results, 70, 4, "line");
 }
 
-// FIXME file
 TEST_CASE("find eol newline", "[eol, string]") {
   auto vore = Vore::compile("find all eol '\n'");
   auto results = vore.execute(multiline_txt_file);
@@ -89,21 +87,18 @@ TEST_CASE("find eol newline", "[eol, string]") {
   IS_MATCH(results[0].matches[4], 119, 1, "\n");
 }
 
-// FIXME file
 TEST_CASE("find sof This", "[sof, string]") {
   auto vore = Vore::compile("find all sof 'This'");
   auto results = vore.execute(multiline_txt_file);
   SINGLE_MATCH(results, 0, 4, "This");
 }
 
-// FIXME file
 TEST_CASE("find eol", "[eol, string]") {
   auto vore = Vore::compile("find all ':)' eol");
   auto results = vore.execute(multiline_txt_file);
   SINGLE_MATCH(results, 130, 2, ":)");
 }
 
-// FIXME file
 TEST_CASE("find eof", "[eof, any]") {
   auto vore = Vore::compile("find all exactly 9 any eof");
   auto results = vore.execute(multiline_txt_file);
@@ -134,7 +129,6 @@ TEST_CASE("find not whitespace", "[whitespace, not]") {
   IS_MATCH(results[0].matches[3], 8, 1, "h");
 }
 
-// FIXME file
 TEST_CASE("find whitespace in file", "[whitepsace, string]") {
   auto vore = Vore::compile("find all whitespace 'source' whitespace");
   auto results = vore.execute(multiline_txt_file);

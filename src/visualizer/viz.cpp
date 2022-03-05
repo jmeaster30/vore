@@ -71,6 +71,7 @@ std::string edge_label(Compiler::Condition cond)
           auto &[from, to] = cond.ranges[i];
           label = (i > 0 ? " '" : "'") + escape_chars(from) + "' - '" + escape_chars(to) + "'";
         }
+        break;
       }
       case Compiler::SpecialCondition::Variable: label = "Var: " + escape_chars(cond.value); break;
     }
@@ -238,17 +239,22 @@ void Compiler::SubroutineCallState::visualize(Agraph_t* subgraph)
 void Compiler::LoopState::visualize(Agraph_t* subgraph)
 {
   node = agnode(subgraph, (char*)id(20).c_str(), 1);
-  agxset(node, node_label_sym, (char*)("Loop(" + std::to_string(min) + ", " + std::to_string(max) + ")").c_str());
+  agxset(node, node_label_sym, (char*)("Loop(" + std::to_string(min) + ", " + std::to_string(max) + ") " + (start ? "start" : "end")).c_str());
 
-  if (loop->node == nullptr) {
-    loop->visualize(subgraph);
+  if (!start) {
+    agedge(subgraph, node, matching->node, (char*)id(20).c_str(), 1);
   }
-  agedge(subgraph, node, loop->node, (char*)id(20).c_str(), 1);
 
-  if (accept->node == nullptr) {
-    accept->visualize(subgraph);
+  for (auto& [condition, states] : transitions)
+  {
+    for (auto toState : *states) {
+      if (toState->node == nullptr) {
+        toState->visualize(subgraph);
+      }
+      auto edge = agedge(subgraph, node, toState->node, (char*)id(20).c_str(), 1);
+      agxset(edge, edge_label_sym, (char*)edge_label(condition).c_str());
+    }
   }
-  agedge(subgraph, node, accept->node, (char*)id(20).c_str(), 1);
 }
 
 void Compiler::InState::visualize(Agraph_t* subgraph)

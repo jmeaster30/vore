@@ -57,11 +57,13 @@ namespace Compiler
     Input* input;
   };
 
+  class MatchContext;
+
   struct LoopEntry
   {
-    //loop id
+    long long id; // this is a pointer value but we are jsut going to use it as an id
     long long iteration;
-    bool forward_search; // is this right? do we need this at all?
+    MatchContext* context;
   };
 
   struct VariableEntry

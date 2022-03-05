@@ -58,12 +58,14 @@ namespace Compiler
     std::unordered_map<Condition, std::vector<FSMState*>*, condition_hash_fn> transitions = {};
 
     FSMState* copied = nullptr; // used in the copy function so we don't get into loops
+    bool visited = false; // used in clear_loop_state this should be merged into the copied variable above
 
     FSMState() {};
 
     virtual void print_json() = 0;
     virtual std::vector<MatchContext*> execute(MatchContext* context) = 0;
     virtual FSMState* copy_subroutine(std::string id) = 0;
+    virtual void clear_loop_state() = 0; // I kinda hate this
 
     void clear_copy() {
       copied = nullptr;
@@ -83,6 +85,7 @@ namespace Compiler
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
     FSMState* copy_subroutine(std::string id);
+    void clear_loop_state();
 
     VIZ_FUNC
   };
@@ -101,6 +104,7 @@ namespace Compiler
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
     FSMState* copy_subroutine(std::string id);
+    void clear_loop_state();
 
     VIZ_FUNC
   };
@@ -121,6 +125,7 @@ namespace Compiler
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
     FSMState* copy_subroutine(std::string id);
+    void clear_loop_state();
 
     VIZ_FUNC
   };
@@ -138,6 +143,7 @@ namespace Compiler
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
     FSMState* copy_subroutine(std::string id);
+    void clear_loop_state();
 
     VIZ_FUNC
   };
@@ -145,14 +151,20 @@ namespace Compiler
   class LoopState : public FSMState
   {
   public:
+    bool start = true;
     bool fewest = false;
     long long min = 0;
     long long max = 0;
 
-    FSMState* loop;
-    FSMState* accept;
+    LoopState* matching;
+
+    long long iteration = 0;
+    bool forward_looping = true;
 
     LoopState() {}
+
+    LoopState(long long s, long long e, bool few, bool isStart) :
+      min(s), max(e), fewest(few), start(isStart), FSMState() {}
 
     LoopState(long long s, long long e, bool few) :
       min(s), max(e), fewest(few), FSMState() {}
@@ -160,6 +172,7 @@ namespace Compiler
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
     FSMState* copy_subroutine(std::string id);
+    void clear_loop_state();
 
     VIZ_FUNC
   };
@@ -179,6 +192,7 @@ namespace Compiler
     void print_json();
     std::vector<MatchContext*> execute(MatchContext* context);
     FSMState* copy_subroutine(std::string id);
+    void clear_loop_state();
 
     VIZ_FUNC
   };
