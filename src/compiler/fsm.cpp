@@ -632,12 +632,14 @@ namespace Compiler
   FSM* FSM::Whitespace(bool negative)
   {
     FSM* result = new FSM();
-    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, " ",  negative}, result->accept);
-    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\n", negative}, result->accept);
-    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\t", negative}, result->accept);
-    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\v", negative}, result->accept);
-    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\r", negative}, result->accept);
-    result->start->addTransition({ConditionType::Literal, SpecialCondition::None, "\f", negative}, result->accept);
+    result->start->addTransition({ConditionType::Special, SpecialCondition::Range, "",  negative, {
+      {" ", " "},
+      {"\t", "\t"},
+      {"\n", "\n"},
+      {"\r", "\r"},
+      {"\f", "\f"},
+      {"\v", "\v"}
+    }}, result->accept);
     return result;
   }
 
