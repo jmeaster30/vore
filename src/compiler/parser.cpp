@@ -56,27 +56,30 @@ namespace Compiler
     }
   }
 
-  FSM* parse_element(Lexer* lexer);
+  Element* parse_element(Lexer* lexer);
 
-  FSM* parse_subexpression(Lexer* lexer)
+  Primary* parse_subexpression(Lexer* lexer)
   {
     lexer->consume(); //consume left paren
 
-    FSM* result = nullptr;
+    auto subexpr = new SubExpression({});
+
+    std::vector<Element*> statements = {};
     auto top = lexer->peek();
     while (elements_start(top.type))
     {
-      FSM* next = parse_element(lexer);
-      if (result != nullptr) {
-        result = FSM::Concatenate(result, next);
-      } else {
-        result = next;
+      Element* prev = statements.back();
+      Element* next = parse_element(lexer);
+      if (prev != nullptr) {
+        prev->next_element = next;
       }
+      next->parent_element = subexpr;
+      statements.push_back(next);
       top = lexer->peek();
     }
 
     auto last = lexer->peek();
-    if (result == nullptr) {
+    if (statements.size() == 0) {
       lexer->consume_until_next_stmt();
       throw ParseException("Unexpected token (" + token_type_to_string(last.type) + "). Expected a non-empty subexpression.");
     }
@@ -88,45 +91,56 @@ namespace Compiler
 
     //consume right paren in parse_primary
 
-    return result;
+    return subexpr;
   }
 
-  FSM* parse_primary(Lexer* lexer)
+  Primary* parse_primary(Lexer* lexer)
   {
-    FSM* result = nullptr;
+    Primary* result = nullptr;
     auto top = lexer->peek();
     switch (top.type)
     {
-      case TokenType::ANY: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Any}); break;
-      case TokenType::SOL: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::StartOfLine}); break;
-      case TokenType::EOL: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::EndOfLine}); break;
-      case TokenType::SOF: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::StartOfFile}); break;
-      case TokenType::ENDOF: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::EndOfFile}); break;
-      case TokenType::WHITESPACE: result = FSM::Whitespace(false); break;
-      case TokenType::DIGIT: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", false, {{"0", "9"}}}); break;
-      case TokenType::LETTER: result = FSM::Letter(false); break;
-      case TokenType::UPPER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", false, {{"A", "Z"}}}); break;
-      case TokenType::LOWER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", false, {{"a", "z"}}}); break;
-      case TokenType::IDENTIFIER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Variable, top.lexeme}); break;
-      case TokenType::STRING: result = FSM::FromBasic({ConditionType::Literal, SpecialCondition::None, top.lexeme}); break;
+      case TokenType::SOL:
+      case TokenType::EOL:
+      case TokenType::SOF:
+      case TokenType::ENDOF:
+        result = new Anchor(top.type);
+        break;
+      case TokenType::ANY:
+      case TokenType::WHITESPACE:
+      case TokenType::DIGIT:
+      case TokenType::LETTER:
+      case TokenType::UPPER:
+      case TokenType::LOWER:
+        result = new CharacterClass(top.type, false);
+        break;
+      case TokenType::IDENTIFIER:
+        result = new VariableCall(top.lexeme);
+        break;
+      case TokenType::STRING:
+        result = new StringPrim(top.lexeme, false);
+        break;
       case TokenType::LEFTP: {
         result = parse_subexpression(lexer);
         break;
       }
       case TokenType::SUBROUTINE:
-        result = FSM::SubroutineCall(top.lexeme);
+        result = new SubroutineCall(top.lexeme);
         break;
       case TokenType::NOT:
         lexer->consume();
         auto next = lexer->peek();
         switch (next.type)
         {
-          case TokenType::WHITESPACE: result = FSM::Whitespace(true); break;
-          case TokenType::DIGIT: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", true, {{"0", "9"}}}); break;
-          case TokenType::LETTER: result = FSM::Letter(true); break;
-          case TokenType::UPPER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", true, {{"A", "Z"}}}); break;
-          case TokenType::LOWER: result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", true, {{"a", "z"}}}); break;
-          case TokenType::STRING: result = FSM::FromBasic({ConditionType::Literal, SpecialCondition::None, next.lexeme, true}); break;
+          case TokenType::WHITESPACE:
+          case TokenType::DIGIT:
+          case TokenType::LETTER:
+          case TokenType::UPPER:
+          case TokenType::LOWER:
+            result = new CharacterClass(next.type, true);
+            break;
+          case TokenType::STRING:
+            result = new StringPrim(next.lexeme, true);
           default:
             lexer->consume_until_next_stmt();
             throw ParseException("Unexpected Token (" + token_type_to_string(next.type) + "). Expected 'whitespace', 'digit', 'letter', 'upper', 'lower', or 'string' after a not.");
@@ -138,9 +152,9 @@ namespace Compiler
     return result;
   }
 
-  FSM* parse_range_or_primary(Lexer* lexer)
+  Primary* parse_range_or_primary(Lexer* lexer)
   {
-    FSM* result = nullptr;
+    Primary* result = nullptr;
     auto top = lexer->peek();
     auto next = lexer->peek(2);
     if (top.type == TokenType::STRING && next.type == TokenType::DASH) {
@@ -152,7 +166,7 @@ namespace Compiler
         throw ParseException("Unexpected Token (" + token_type_to_string(fail_token.type) + "). Expected a string after '-' for this range.");
       });
 
-      result = FSM::FromBasic({ConditionType::Special, SpecialCondition::Range, "", false, {{start.lexeme, end.lexeme}}});
+      result = new Range(start.lexeme, end.lexeme);
     } else {
       result = parse_primary(lexer);
     }
@@ -160,7 +174,7 @@ namespace Compiler
     return result;
   }
 
-  FSM* parse_in(Lexer* lexer)
+  In* parse_in(Lexer* lexer)
   {
     bool not_in = false;
     auto top = lexer->consume();
@@ -174,7 +188,7 @@ namespace Compiler
       throw ParseException("Unexpected Token (" + token_type_to_string(fail_token.type) + "). Expected a '[' after the 'in' keyword.");
     });
 
-    std::vector<FSM*> group = {};
+    std::vector<Primary*> group = {};
 
     auto current = lexer->peek();
     while(current.type != TokenType::RIGHTS)
@@ -199,10 +213,10 @@ namespace Compiler
       throw ParseException("Unexpected empty grouping. An 'in' statement requires at least one element in its group.");
     }
 
-    return FSM::In(group, not_in);
+    return new In(group);
   }
 
-  FSM* parse_exactly(Lexer* lexer)
+  Exactly* parse_exactly(Lexer* lexer)
   {
     lexer->consume(); // consume exactly
 
@@ -224,10 +238,10 @@ namespace Compiler
 
     auto primary = parse_primary(lexer);
 
-    return FSM::Loop(primary, value, value);
+    return new Exactly(primary, value, value);
   }
 
-  FSM* parse_at_least(Lexer* lexer)
+  AtLeast* parse_at_least(Lexer* lexer)
   {
     lexer->consume(); // consume at least
     
@@ -251,10 +265,10 @@ namespace Compiler
       fewest = true;
     }
 
-    return FSM::Loop(primary, value, std::numeric_limits<long long>::max(), fewest);
+    return new AtLeast(primary, value, fewest);
   }
 
-  FSM* parse_at_most(Lexer* lexer)
+  AtMost* parse_at_most(Lexer* lexer)
   {
     lexer->consume(); // consume at most
     
@@ -283,10 +297,10 @@ namespace Compiler
       fewest = true;
     }
 
-    return FSM::Loop(primary, 0, value, fewest);
+    return new AtMost(primary, value, fewest);
   }
 
-  FSM* parse_between(Lexer* lexer)
+  Between* parse_between(Lexer* lexer)
   {
     lexer->consume(); // consume between
 
@@ -329,13 +343,13 @@ namespace Compiler
       fewest = true;
     }
 
-    return FSM::Loop(primary, start_value, end_value, fewest);
+    return new Between(primary, start_value, end_value, fewest);
   }
 
-  FSM* parse_primary_or_more(Lexer* lexer)
+  Element* parse_primary_or_more(Lexer* lexer)
   {
     auto primary = parse_primary(lexer);
-    auto result = primary;
+    Element* result = primary;
     auto next = lexer->peek();
     switch (next.type)
     {
@@ -344,10 +358,10 @@ namespace Compiler
         auto id = lexer->peek();
         if (id.type == TokenType::IDENTIFIER) {
           lexer->consume();
-          result = FSM::VariableDefinition(primary, id.lexeme);
+          result = new VariableDef(primary, id.lexeme);
         } else if (id.type == TokenType::SUBROUTINE) {
           lexer->consume();
-          result = FSM::SubroutineDefinition(primary, id.lexeme);
+          result = new SubroutineDef(primary, id.lexeme);
         } else {
           lexer->consume_until_next_stmt();
           throw ParseException("Unexpected token (" + token_type_to_string(id.type) + "). Expected the expression to be assigned to an variable or a subroutine.");
@@ -359,7 +373,7 @@ namespace Compiler
         auto right = lexer->peek();
         if (primary_start(right.type)) {
           auto primary_right = parse_primary(lexer);
-          result = FSM::Alternate(primary, primary_right);
+          result = new Alternation(primary, primary_right);
         } else {
           lexer->consume_until_next_stmt();
           throw ParseException("Unexpected token (" + token_type_to_string(right.type) + "). Expected a primary expression as the right alternate in the 'or' expression.");
@@ -373,9 +387,9 @@ namespace Compiler
     return result;
   }
 
-  FSM* parse_element(Lexer* lexer)
+  Element* parse_element(Lexer* lexer)
   {
-    FSM* result = nullptr;
+    Element* result = nullptr;
     auto top = lexer->peek();
     switch (top.type)
     {
@@ -387,7 +401,7 @@ namespace Compiler
         //maybe primary
         lexer->consume();
         auto subres = parse_primary(lexer);
-        result = FSM::Maybe(subres);
+        result = new Maybe(subres);
         break;
       }
       case TokenType::ATLEAST:
@@ -428,23 +442,21 @@ namespace Compiler
     return result;
   }
 
-  FSM* parse_elements(Lexer* lexer)
+  std::vector<Element*> parse_elements(Lexer* lexer)
   {
-    FSM* result = nullptr;
+    std::vector<Element*> result = {};
     auto top = lexer->peek();
     while (elements_start(top.type))
     {
-      FSM* next = parse_element(lexer);
-      if (result != nullptr) {
-        result = FSM::Concatenate(result, next);
-      } else {
-        result = next;
-      }
+      Element* prev = result.back();
+      Element* next = parse_element(lexer);
+      if (prev != nullptr) prev->next_element = next;
+      next->parent_element = nullptr;
       top = lexer->peek();
     }
 
     auto last = lexer->peek();
-    if (result == nullptr) {
+    if (result.size() == 0) {
       lexer->consume_until_next_stmt();
       throw ParseException("Unexpected token (" + token_type_to_string(last.type) + "). Expected some expression to evaluate.");
     }
@@ -551,7 +563,7 @@ namespace Compiler
     return result;
   }
 
-  Statement* parse_find(Lexer* lexer)
+  Command* parse_find(Lexer* lexer)
   {
     lexer->consume(); // consume find
 
@@ -559,52 +571,52 @@ namespace Compiler
     try {
       amount = parse_amount(lexer);
     } catch (ParseException e) {
-      auto error = new ErrorStatement();
+      auto error = new ErrorCommand();
       error->message = e.message;
       return error;
     }
 
-    FSM* machine = nullptr;
+    std::vector<Element*> elements = {};
     try {
-      machine = parse_elements(lexer);
+      elements = parse_elements(lexer);
     } catch(ParseException e) {
-      auto error = new ErrorStatement();
+      auto error = new ErrorCommand();
       error->message = e.message;
       return error;
     }
     
-    auto result = new FindStatement();
+    auto result = new FindCommand();
     result->amount = amount;
-    result->machine = machine;
+    result->elements = elements;
     return result;
   }
 
-  Statement* parse_replace(Lexer* lexer)
+  Command* parse_replace(Lexer* lexer)
   {
     lexer->consume(); // consume replace
-    auto result = new ReplaceStatement();
+    auto result = new ReplaceCommand();
 
     Amount amount = {};
     try {
       amount = parse_amount(lexer);
     } catch (ParseException e) {
-      auto error = new ErrorStatement();
+      auto error = new ErrorCommand();
       error->message = e.message;
       return error;
     }
 
-    FSM* machine = nullptr;
+    std::vector<Element*> elements = {};
     try {
-      machine = parse_elements(lexer);
+      elements = parse_elements(lexer);
     } catch(ParseException e) {
-      auto error = new ErrorStatement();
+      auto error = new ErrorCommand();
       error->message = e.message;
       return error;
     }
 
-    ErrorStatement* error = nullptr;
+    ErrorCommand* error = nullptr;
     lexer->try_consume(TokenType::WITH, [&](Token fail_token){
-      error = new ErrorStatement();
+      error = new ErrorCommand();
       error->message = "Unexpected token (" + token_type_to_string(fail_token.type) + "). Expected the keyword 'with' at this point in the replace statement.";
     });
 
@@ -617,25 +629,25 @@ namespace Compiler
     // ? i.e. replace all 'test' with ''
 
     result->amount = amount;
-    result->machine = machine;
+    result->elements = elements;
     return result;
   }
 
-  ErrorStatement* parse_unimplemented_statement(Lexer* lexer)
+  ErrorCommand* parse_unimplemented_statement(Lexer* lexer)
   {
     auto stmt = lexer->consume();
     //std::cerr << "ERROR:: Unimplemented Statement (" << (int)stmt.type << ")" << std::endl;
 
     lexer->consume_until({TokenType::FIND, TokenType::REPLACE, TokenType::USE, TokenType::REPEAT, TokenType::SET});
 
-    auto error = new ErrorStatement();
+    auto error = new ErrorCommand();
     error->message = "Unimplemented Statement (" + token_type_to_string(stmt.type) + ")";
     return error;
   }
 
-  Statement* statement(Lexer* lexer)
+  Command* command(Lexer* lexer)
   {
-    Statement* result = nullptr;
+    Command* result = nullptr;
 
     auto top_token = lexer->peek();
     switch (top_token.type)
@@ -655,7 +667,7 @@ namespace Compiler
         return nullptr;
       default:
         //error expected find, replace, use, repeat, set found etc.
-        auto error = new ErrorStatement();
+        auto error = new ErrorCommand();
         error->message = "Unexpected Token (" + token_type_to_string(top_token.type) + "). Expected 'find', 'replace', 'use', 'repeat', or 'set'.";
         result = error;
         lexer->consume_until({TokenType::FIND, TokenType::REPLACE, TokenType::USE, TokenType::REPEAT, TokenType::SET});
@@ -665,15 +677,15 @@ namespace Compiler
     return result;
   }
 
-  std::vector<Statement*> parse(Lexer* lexer)
+  std::vector<Command*> parse(Lexer* lexer)
   {
-    auto stmts = std::vector<Statement*>();
+    auto stmts = std::vector<Command*>();
 
-    Statement* stmt = nullptr;
+    Command* stmt = nullptr;
     while(true)
     {
       auto top = lexer->peek();
-      stmt = statement(lexer);
+      stmt = command(lexer);
       if (stmt != nullptr) {
         stmts.push_back(stmt);
       } else {

@@ -7,5 +7,5 @@
 
 namespace Compiler
 {
-  std::vector<Statement*> parse(Lexer* lexer);
+  std::vector<Command*> parse(Lexer* lexer);
 }

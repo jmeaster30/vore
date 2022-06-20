@@ -103,11 +103,15 @@ options parse_args(int argc, char** argv) {
       o.source = (argv[1] != "new") ? argv[1] : "";
     }
 #else
-    std::cerr << "ERROR:: Unknown command 'viz'. Set the cmake option 'WITH_VIZ_OPTION' to true and recompile in order to use this functionality." << std::endl;
+    std::cerr << "ERROR:: Unknown command 'viz'." << std::endl;
+    std::cerr << "  To get the viz functionality run the following:" << std::endl;
+    std::cerr << "  'cmake -Dviz=true .'" << std::endl;
+    std::cerr << "  'make'" << std::endl;
     exit(1);
 #endif
   }
   else {
+    // these options are not used
     bool options = true;
     for (int i = 0; i < argc; i++)
     {
@@ -153,10 +157,6 @@ void print_help()
   std::cout << std::endl << "vore viz [source file]" << std::endl;
   std::cout << "  generates a visualization of the NFA generated from the provided source code." << std::endl;
 #endif
-  std::cout << std::endl << "vore [options] [source file] [input file(s)]" << std::endl;
+  std::cout << std::endl << "vore [source file] [input file(s)]" << std::endl;
   std::cout << "  runs the command line vore tool with the given options and source and outputs all the matches that are in the input files." << std::endl;
-  std::cout << "-r : recursively goes through each file in the supplied directory." << std::endl;
-  std::cout << "-p : prompts the user if they would actually like to replace the text or create a file." << std::endl;
-  std::cout << "-n : if a file/directory that is supplied to the use statement does not exist then the file/directory gets created." << std::endl;
-  std::cout << "-o : when replacing matches, vore will overwrite the original file." << std::endl;
 }

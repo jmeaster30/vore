@@ -4,7 +4,8 @@ set(VORE_SOURCES
   compiler/lexer.cpp
   compiler/parser.cpp
   compiler/ast.cpp
-  compiler/fsm.cpp
+  compiler/pushdown.cpp
+  compiler/ast_pushdown.cpp
   compiler/context.cpp
   visualizer/viz.cpp
 )
@@ -15,7 +16,7 @@ set(VORE_HEADERS
   compiler/lexer.hpp
   compiler/parser.hpp
   compiler/ast.hpp
-  compiler/fsm.hpp
+  compiler/pushdown.hpp
   compiler/context.hpp
   visualizer/viz.hpp
 )
@@ -26,7 +27,7 @@ set_target_properties(voreLib PROPERTIES EXCLUDE_FROM_ALL 1)
 
 add_executable(vore main.cpp $<TARGET_OBJECTS:voreLib>)
 
-if(WITH_VIZ_OPTION)
+if(viz)
   add_compile_definitions(WITH_VIZ)
   target_link_libraries(vore PUBLIC cgraph gvc)
-endif(WITH_VIZ_OPTION)
+endif(viz)

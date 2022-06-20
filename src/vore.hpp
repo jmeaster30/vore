@@ -63,10 +63,10 @@ public:
 #endif
 
 private:
-  Vore(std::vector<Compiler::Statement*> stmts, int num_error) :
+  Vore(std::vector<Compiler::Command*> stmts, int num_error) :
     statements(stmts), errors(num_error) {}
 
   int errors = 0;
 
-  std::vector<Compiler::Statement*> statements;
+  std::vector<Compiler::Command*> statements;
 };

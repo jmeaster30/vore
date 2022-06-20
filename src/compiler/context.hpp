@@ -6,10 +6,18 @@
 #include <unordered_map>
 #include <stack>
 
+#define SOL_FLAG 1
+#define EOL_FLAG 2
+#define SOF_FLAG 4
+#define EOF_FLAG 8
+
+#define GET_SOL_FLAG(x) (x & SOL_FLAG)
+#define GET_EOL_FLAG(x) ((x & EOL_FLAG) >> 1)
+#define GET_SOF_FLAG(x) ((x & SOF_FLAG) >> 2)
+#define GET_EOF_FLAG(x) ((x & EOF_FLAG) >> 3)
+
 namespace Compiler
 {
-  class FSMState; //forward declare
-  class SubroutineState;
 
   //encapsulates the two kinds of inputs and provides a uniform interface.
   class Input
@@ -18,23 +26,16 @@ namespace Compiler
     static Input* FromString(std::string input);
     static Input* FromFile(std::string filename);
 
-    std::string get(long long amount);
+    std::tuple<char, char, char, int> get(long long position);
+    std::string get(long long start, long long end);
 
-    void seek_forward(long long value);
-    void seek_back(long long value);
-
-    void set_position(long long value);
-    long long get_position();
-    long long get_size();
-    bool is_end_of_input();
+    long long get_size() const { return data_size; }
 
     Input* copy();
 
   private:
-    bool end_of_input = false;
     bool is_file = false;
     long long data_size = 0;
-    long long data_index = 0;
     std::string string_data;
     std::vector<char> file_data;
 
@@ -52,24 +53,8 @@ namespace Compiler
   {
   public:
     std::unordered_map<std::string, std::string> variables = {};
-    std::unordered_map<std::string, FSMState*> subroutines = {};
 
     Input* input;
-  };
-
-  class MatchContext;
-
-  struct LoopEntry
-  {
-    long long id; // this is a pointer value but we are jsut going to use it as an id
-    long long iteration;
-    MatchContext* context;
-  };
-
-  struct VariableEntry
-  {
-    std::string variable_name;
-    long long start_index;
   };
 
   class MatchContext
@@ -78,11 +63,7 @@ namespace Compiler
     GlobalContext* global_context;
     Input* input;
 
-    std::stack<LoopEntry> loop_stack = {};
-    std::stack<VariableEntry> var_stack = {};
-
     std::unordered_map<std::string, std::string> variables = {};
-    std::unordered_map<std::string, SubroutineState*> subroutines = {};
 
     long long file_offset = 0;
     long long line_number = 0;

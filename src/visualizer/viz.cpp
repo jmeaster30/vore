@@ -1,7 +1,6 @@
 #include "viz.hpp"
 
 #include "../compiler/ast.hpp"
-#include "../compiler/fsm.hpp"
 
 #include <iostream>
 

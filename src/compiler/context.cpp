@@ -35,80 +35,68 @@ namespace Compiler
     }
 
     new_input->data_size = data_size;
-    new_input->data_index = data_index;
     new_input->is_file = is_file;
-    new_input->end_of_input = end_of_input;
     return new_input;
   }
 
-  std::string Input::get(long long amount)
+  std::tuple<char, char, char, int> Input::get(long long position)
   {
-    std::string result;
-    auto fixed_amount = amount;
-    if (data_size < data_index + amount) {
-      fixed_amount = data_size - data_index;
-    }
+    char previous = '\0';
+    char current = '\0';
+    char next = '\0';
+    int flags = 0;
 
-    if (is_file)
-    {
-      auto position_iter = file_data.begin() + data_index;
-      result = std::string(position_iter, position_iter + fixed_amount);
-    }
-    else
-    {
-      result = string_data.substr(data_index, fixed_amount);
-    }
+    if (position == 0) flags |= SOF_FLAG | SOL_FLAG;
+    if (position == data_size) flags |= EOL_FLAG | EOF_FLAG;
 
-    data_index += fixed_amount;
-    end_of_input = data_index >= data_size;
-    return result;
-  }
-
-  void Input::seek_forward(long long value)
-  {
-    data_index += value;
-    end_of_input = data_index >= data_size;
-  }
-
-  void Input::seek_back(long long value)
-  {
-    if (data_index < value) {
-      data_index = 0;
+    if (is_file) {
+      if (position > 0) {
+        previous = file_data[position - 1];
+        if (file_data[position - 1] == '\n') flags |= SOL_FLAG;
+      }
+      if (position >= 0 && position < data_size) current = file_data[position + 1];
+      if (position < data_size - 1) {
+        next = file_data[position + 1];
+        if (file_data[position + 1] == '\n') flags |= EOL_FLAG;
+      }
     } else {
-      data_index -= value;
+      if (position > 0) {
+        previous = string_data[position - 1];
+        if (string_data[position - 1] == '\n') flags |= SOL_FLAG;
+      }
+      if (position >= 0 && position < data_size) current = string_data[position + 1];
+      if (position < data_size - 1) {
+        next = string_data[position + 1];
+        if (string_data[position + 1] == '\n') flags |= EOL_FLAG;
+      }
     }
-    end_of_input = data_index >= data_size;
+
+    return {previous, current, next, flags};
   }
 
-  void Input::set_position(long long value)
-  {
-    data_index = value;
-    end_of_input = data_index >= data_size;
-  }
-
-  long long Input::get_position()
-  {
-    return data_index;
-  }
- 
-  long long Input::get_size()
-  {
-    return data_size;
-  }
-
-  bool Input::is_end_of_input()
-  {
-    return end_of_input;
+  std::string Input::get(long long start_offset, long long end_offset) {
+    
+    auto fixed_start = start_offset;
+    if (start_offset < 0) fixed_start = 0;
+    if (start_offset >= data_size) fixed_start = data_size - 1;
+    
+    auto fixed_end = end_offset;
+    if (end_offset < 0) fixed_end = 0;
+    if (end_offset >= data_size) fixed_end = data_size - 1;
+    
+    if (is_file) {
+      std::string s(file_data.begin() + start_offset, file_data.begin() + end_offset);
+      return s;
+    } else {
+      return string_data.substr(start_offset, end_offset);
+    }
   }
 
   MatchContext* MatchContext::copy()
   {
     auto result = new MatchContext(file_offset, global_context);
     result->input = input->copy();
-    result->loop_stack = loop_stack;
-    result->var_stack = var_stack;
     result->variables = variables;
-    result->subroutines = subroutines;
     result->file_offset = file_offset;
     result->line_number = line_number;
     result->match_number = match_number;

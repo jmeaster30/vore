@@ -5,7 +5,7 @@
 
 namespace Compiler
 {
-  std::vector<MatchContext*> FindMatches(GlobalContext* ctxt, FSM* machine, Amount amount)
+  std::vector<MatchContext*> FindMatches(GlobalContext* ctxt, Pushdown* machine, Amount amount)
   {
     auto matches = std::vector<MatchContext*>();
     auto size = ctxt->input->get_size();
@@ -15,12 +15,11 @@ namespace Compiler
     auto total_matches = 0LL;
     auto num_matches = 0LL;
     auto line_number = 1LL;
-    auto current_position = ctxt->input->get_position();
+    auto current_position = 0;
 
-    while ((current_position = ctxt->input->get_position()) < size)
+    while (current_position < size)
     {
-      auto match = new MatchContext(current_position, ctxt);
-      auto result = machine->execute(match);
+      MatchContext* result = machine->execute(current_position, ctxt);
       
       if (result != nullptr && result->value.length() > 0)
       {
@@ -33,56 +32,55 @@ namespace Compiler
           matches.push_back(result); 
         }
         total_matches += 1;
-        ctxt->input->seek_forward(result->value.length() - 1);
-      }
-      else
-      {
-        ctxt->input->set_position(current_position);
+        current_position += result->value.length() - 1;
       }
 
       //seek forward 1
-      if (ctxt->input->get(1) == "\n") line_number += 1;
+      if (ctxt->input->get(current_position, current_position + 1) == "\n") {
+        line_number += 1;
+      }
+      current_position += 1;
     }
     return matches;
   }
 
-  std::vector<MatchContext*> FindStatement::execute(GlobalContext* ctxt)
+  std::vector<MatchContext*> FindCommand::execute(GlobalContext* ctxt)
   {
-    return FindMatches(ctxt, machine, amount);
+    return FindMatches(ctxt, nullptr, amount);
   }
 
-  std::vector<MatchContext*> ReplaceStatement::execute(GlobalContext* ctxt)
+  std::vector<MatchContext*> ReplaceCommand::execute(GlobalContext* ctxt)
   {
-    auto matches = FindMatches(ctxt, machine, amount);
+    auto matches = FindMatches(ctxt, nullptr, amount);
     //go through these matches and replace the stuff
     return matches;
   }
 
-  void FindStatement::print_json()
+  void FindCommand::print_json()
   {
     std::cout << "{" << std::endl;
     std::cout << "\"name\": \"FIND\"," << std::endl;
     std::cout << "\"skip\": \"" << amount.skip << "\"," << std::endl;
     std::cout << "\"take\": \"" << (amount.all ? "ALL" : std::to_string(amount.take)) << "\"," << std::endl;
     std::cout << "\"machine\": ";
-    machine->print_json();
+    //machine->print_json();
     std::cout << "," << std::endl;
     std::cout << "}";
   }
 
-  std::string FindStatement::label()
+  std::string FindCommand::label()
   {
     return "FIND - SKIP: " + std::to_string(amount.skip) + " TAKE: " + (amount.all ? "ALL" : std::to_string(amount.take));
   }
 
-  void ReplaceStatement::print_json()
+  void ReplaceCommand::print_json()
   {
     std::cout << "{" << std::endl;
     std::cout << "\"name\": \"REPLACE\"," << std::endl;
     std::cout << "\"skip\": \"" << amount.skip << "\"," << std::endl;
     std::cout << "\"take\": \"" << (amount.all ? "ALL" : std::to_string(amount.take)) << "\"," << std::endl;
     std::cout << "\"machine\": ";
-    machine->print_json();
+    //machine->print_json();
     std::cout << "," << std::endl;
     std::cout << "\"replacement\": [" << std::endl;
     for (auto replace : replacement)
@@ -94,12 +92,12 @@ namespace Compiler
     std::cout << "}";
   }
 
-  std::string ReplaceStatement::label()
+  std::string ReplaceCommand::label()
   {
     return "REPLACE - SKIP: " + std::to_string(amount.skip) + " TAKE: " + (amount.all ? "ALL" : std::to_string(amount.take));
   }
 
-  void ErrorStatement::print_json()
+  void ErrorCommand::print_json()
   {
     std::cout << "{" << std::endl;
     std::cout << "\"name\": \"ERROR\"," << std::endl;
@@ -107,7 +105,7 @@ namespace Compiler
     std::cout << "}";
   }
 
-  std::string ErrorStatement::label()
+  std::string ErrorCommand::label()
   {
     return "ERROR - " + message;
   }
