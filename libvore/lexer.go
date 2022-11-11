@@ -16,6 +16,7 @@ const (
 	ERROR TokenType = iota
 	EOF
 	WS
+	COMMENT
 
 	// literals
 	IDENTIFIER
@@ -23,6 +24,8 @@ const (
 	STRING
 
 	// misc
+	EQUAL
+	COLONEQ
 	COMMA
 	OPENPAREN
 	CLOSEPAREN
@@ -58,6 +61,8 @@ const (
 	BETWEEN
 	AND
 	EXACTLY
+	MAYBE
+	FEWEST
 	IN
 	OR
 )
@@ -70,12 +75,18 @@ func (t TokenType) pp() string {
 		return "EOF"
 	case WS:
 		return "WS"
+	case COMMENT:
+		return "COMMENT"
 	case IDENTIFIER:
 		return "IDENTIFIER"
 	case NUMBER:
 		return "NUMBER"
 	case STRING:
 		return "STRING"
+	case EQUAL:
+		return "EQUAL"
+	case COLONEQ:
+		return "COLONEQ"
 	case COMMA:
 		return "COMMA"
 	case OPENPAREN:
@@ -124,6 +135,10 @@ func (t TokenType) pp() string {
 		return "BETWEEN"
 	case EXACTLY:
 		return "EXACTLY"
+	case MAYBE:
+		return "MAYBE"
+	case FEWEST:
+		return "FEWEST"
 	case IN:
 		return "IN"
 	case OR:
@@ -151,18 +166,20 @@ type PositionInfo struct {
 type Lexer struct {
 	r           *bufio.Reader
 	currentChar rune
-	position    Stack[PositionInfo]
+	position    *Stack[PositionInfo]
 }
 
 func initLexer(r io.Reader) *Lexer {
-	lexer := &Lexer{r: bufio.NewReader(r), currentChar: rune(0), position: NewStack[PositionInfo]()}
-	lexer.position.Push(PositionInfo{
+	stack := NewStack[PositionInfo]()
+	stack.Push(PositionInfo{
 		offset:   0,
 		line:     1,
-		column:   0,
+		column:   1,
 		lastRead: rune(0),
 	})
-	return lexer
+
+	lexer := Lexer{r: bufio.NewReader(r), currentChar: rune(0), position: stack}
+	return &lexer
 }
 
 func (s *Lexer) getTokens() []*Token {
@@ -186,10 +203,15 @@ func (s *Lexer) getNextToken() *Token {
 		SSTRING_DOUBLE
 		SSTRING_SINGLE
 		SNUMBER
+		SEQUAL
+		SCOLON
+		SCOLONEQ
 		SIDENTIFIER
 		SCOMMA
 		SOPENPAREN
 		SCLOSEPAREN
+		SCOMMENT
+		SDASH
 		SERROR
 		SEND
 	)
@@ -197,7 +219,6 @@ func (s *Lexer) getNextToken() *Token {
 	current_state := SSTART
 	token := &Token{}
 	startPosInfo := s.get_position()
-
 	var buf bytes.Buffer
 
 	for {
@@ -209,6 +230,11 @@ func (s *Lexer) getNextToken() *Token {
 		} else if ch == 0 {
 			s.unread_last()
 			break
+		} else if current_state == SCOMMENT {
+			buf.WriteRune(ch)
+			if ch == '\n' {
+				break
+			}
 		} else if ch == '(' && current_state == SSTART {
 			buf.WriteRune(ch)
 			current_state = SOPENPAREN
@@ -221,6 +247,24 @@ func (s *Lexer) getNextToken() *Token {
 			buf.WriteRune(ch)
 			current_state = SCOMMA
 			break
+		} else if ch == '=' && current_state == SSTART {
+			buf.WriteRune(ch)
+			current_state = SEQUAL
+			break
+		} else if ch == '=' && current_state == SCOLON {
+			buf.WriteRune(ch)
+			current_state = SCOLONEQ
+			break
+		} else if ch == ':' && current_state == SSTART {
+			buf.WriteRune(ch)
+			current_state = SCOLON
+		} else if ch == '-' && (current_state == SSTART || current_state == SDASH) {
+			buf.WriteRune(ch)
+			if current_state == SSTART {
+				current_state = SDASH
+			} else if current_state == SDASH {
+				current_state = SCOMMENT
+			}
 		} else if unicode.IsSpace(ch) {
 			if current_state == SSTART || current_state == SWHITESPACE {
 				current_state = SWHITESPACE
@@ -246,8 +290,16 @@ func (s *Lexer) getNextToken() *Token {
 			if ch == '"' {
 				break
 			}
+		} else if ch == '\'' && current_state == SSTART {
+			current_state = SSTRING_SINGLE
+			buf.WriteRune(ch)
+		} else if current_state == SSTRING_SINGLE {
+			buf.WriteRune(ch)
+			if ch == '\'' {
+				break
+			}
 		} else {
-			if current_state != SSTART || unicode.IsDigit(ch) || unicode.IsLetter(ch) || unicode.IsSpace(ch) || ch == '(' || ch == ')' || ch == ',' {
+			if current_state != SSTART || unicode.IsDigit(ch) || unicode.IsLetter(ch) || unicode.IsSpace(ch) || ch == '(' || ch == ')' || ch == ',' || ch == ':' || ch == '=' || ch == '"' || ch == '\'' || ch == '-' {
 				s.unread_last()
 			} else {
 				buf.WriteRune(ch)
@@ -260,6 +312,8 @@ func (s *Lexer) getNextToken() *Token {
 	switch current_state {
 	case SERROR:
 		token.tokenType = ERROR
+	case SSTRING_SINGLE:
+		fallthrough
 	case SSTRING_DOUBLE:
 		token.tokenType = STRING
 	case SNUMBER:
@@ -316,6 +370,10 @@ func (s *Lexer) getNextToken() *Token {
 			token.tokenType = AND
 		case "exactly":
 			token.tokenType = EXACTLY
+		case "maybe":
+			token.tokenType = MAYBE
+		case "fewest":
+			token.tokenType = FEWEST
 		case "in":
 			token.tokenType = IN
 		case "or":
@@ -329,6 +387,16 @@ func (s *Lexer) getNextToken() *Token {
 		token.tokenType = CLOSEPAREN
 	case SCOMMA:
 		token.tokenType = COMMA
+	case SEQUAL:
+		token.tokenType = EQUAL
+	case SCOLON:
+		token.tokenType = ERROR
+	case SCOMMENT:
+		token.tokenType = COMMENT
+	case SDASH:
+		token.tokenType = ERROR
+	case SCOLONEQ:
+		token.tokenType = COLONEQ
 	case SEND:
 		token.tokenType = EOF
 	default:
@@ -353,8 +421,9 @@ func (s *Lexer) read() rune {
 	posInfo.lastRead = s.currentChar
 	posInfo.offset = s.get_position().offset + 1
 	posInfo.column = s.get_position().column + 1
+	posInfo.line = s.get_position().line
 	if s.currentChar == '\n' {
-		posInfo.line = s.get_position().line + 1
+		posInfo.line += 1
 		posInfo.column = 1
 	}
 	s.position.Push(posInfo)

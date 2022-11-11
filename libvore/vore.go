@@ -33,6 +33,6 @@ func compile(reader io.Reader) Vore {
 
 func (v Vore) PrintTokens() {
 	for _, token := range v.tokens {
-		fmt.Printf("[%s] '%s'\n", token.tokenType.pp(), token.lexeme)
+		fmt.Printf("[%s] '%s' \tline: %d, \tstart column: %d, \tend column: %d\n", token.tokenType.pp(), token.lexeme, token.line.Start, token.column.Start, token.column.End)
 	}
 }

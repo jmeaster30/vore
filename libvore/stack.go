@@ -4,8 +4,8 @@ type Stack[T any] struct {
 	store []T
 }
 
-func NewStack[T any]() Stack[T] {
-	return Stack[T]{}
+func NewStack[T any]() *Stack[T] {
+	return &Stack[T]{}
 }
 
 // peek
@@ -13,7 +13,7 @@ func (s *Stack[T]) Peek() *T {
 	if s.IsEmpty() {
 		return nil
 	}
-	return &s.store[0]
+	return &s.store[len(s.store)-1]
 }
 
 // push

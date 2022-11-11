@@ -1,32 +1,10 @@
-# VORE - **V**erb**O**se Regula**R** Expr**E**ssions
+# VORE - **V**erb**O**se **R**egular **E**xpressions
 
 VORE is just a regular expression engine but with more readable syntax and some extra features that I felt would be useful from processing text. With this project, I wanted to learn about language design and implementation with a strong enough constraint that would keep me from expanding the scope to an unmanageable level.
 
 ## Getting Started
 
-This project uses CMake to generate the build files. You should be able to use what ever cmake generator works best for you. I have only used the ones for Unix Makefiles and Visual Studio 16 2019.
-
-Here are the steps to get the help message printed to the screen.
-
-### Linux
-
-In a terminal, from the root directory of the project, run the following commands:
-
->```cmake .```
->
->```make```
->
->```./vore help```
-
-### Windows
-
-Again, in a terminal, from the root directory of the project, run the following commands:
-
->```cmake .```
->
->```msbuild vore.sln```
->
->```Debug/vore.exe help```
+This project uses Go so you will need the Go compiler installed and you can just run `go run .` from the root of the repository.
 
 ## About VORE
 
@@ -69,10 +47,10 @@ When coming up with the syntax for this language I basically translated every sy
 Regex Syntax | VORE Syntax
 -------------|-------------
 **Anchors** | 
-```^``` (beginning)| ```sof``` (start of file)
-```$``` (end)      | ```eof``` (end of file)
-N/A          | ```sol``` (start of line)*
-N/A          | ```eol``` (end of line)**
+```^``` (beginning)| ```file start``` (start of file)
+```$``` (end)      | ```file end``` (end of file)
+N/A          | ```line start``` (start of line)*
+N/A          | ```line end``` (end of line)**
 **Character Classes**
 ```[\s\S]``` (any) | ```any```
 ```.``` (dot) | N/A
@@ -81,9 +59,9 @@ N/A          | ```eol``` (end of line)**
 ```\w``` (word) | instead of this I added ```letter``` which is equivalent to ```[a-zA-Z]``` in regex
 ```\p{}``` (unicode) | N/A ***
 ```\D``` (not a digit) | ```not digit``` (not operator works for every character class)
-```[ABC]``` (character set) | ```in ['A', 'B', "C"]``` (in set)
-```[^ABC]``` (negated set) | ```not in ['A', "B", 'C']``` (not in set)
-```[A-Z]``` (range) | ```['A'-'Z']``` (range)
+```[ABC]``` (character set) | ```in 'A', 'B', "C"``` (in set)
+```[^ABC]``` (negated set) | ```not in 'A', "B", 'C'``` (not in set)
+```[A-Z]``` (range) | ```'A' to 'Z'``` (range)
 **Escaped Characters** ****
 ```\n``` (escaped character) | ```"\n"```
 ```\@``` (escaped at sign) | ```'@'```
@@ -95,11 +73,11 @@ N/A          | ```eol``` (end of line)**
 ```(ABC)``` (capturing group) (subexpression behavior) | ```("ABC")``` (subexpression)
 ```(?:ABC)``` (non-capturing group) | ```("ABC")``` (subexpression)
 **Subroutines** |
-```(?P<name>[abc])``` (subroutine) | ```[abc] = $name```
-```(?P>name)``` (call subroutine) | ```$name```
+```(?P<name>[abc])``` (subroutine) | ```('a', 'b', 'c') := name```
+```(?P>name)``` (call subroutine) | ```name```
 **Recursion**
-```a(?R)?b``` (Recurses on the entire regex) | ```("a" maybe $mySub 'b') = $mySub``` (Recursion only within the subroutine)
-```(a(?1)?b)``` (Recurses only on that capture group) | ```("a" maybe $mySub 'b') = $mySub``` (same as before)
+```a(?R)?b``` (Recurses on the entire regex) | ```("a" maybe mySub 'b') := mySub``` (Recursion only within the subroutine)
+```(a(?1)?b)``` (Recurses only on that capture group) | ```("a" maybe mySub 'b') := mySub``` (same as before)
 **Quantifiers & Alternation**
 ```a+``` (plus) | ```at least 1 'a'``` (at least)
 ```a*``` (start) | ```at least 0 "a"``` (at least)
