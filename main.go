@@ -38,13 +38,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	var vore libvore.Vore
 	if len(source) != 0 {
 		// Use source file
-		test := libvore.CompileFile(source)
-		test.PrintTokens()
+		vore = libvore.CompileFile(source)
+		//test.PrintTokens()
 	} else {
 		// Use command
-		test := libvore.Compile(command)
-		test.PrintTokens()
+		vore = libvore.Compile(command)
+		//test.PrintTokens()
 	}
+
+	vore.PrintTokens()
+	vore.PrintAST()
 }
