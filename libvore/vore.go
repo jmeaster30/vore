@@ -9,7 +9,7 @@ import (
 
 type Vore struct {
 	tokens   []*Token
-	commands []*AstCommand
+	commands []AstCommand
 }
 
 func Compile(command string) Vore {
@@ -43,5 +43,7 @@ func (v *Vore) PrintTokens() {
 }
 
 func (v *Vore) PrintAST() {
-	fmt.Printf("number of commands: %d\n", len(v.commands))
+	for _, command := range v.commands {
+		command.print()
+	}
 }

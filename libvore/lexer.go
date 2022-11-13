@@ -33,6 +33,7 @@ const (
 	// commands
 	FIND
 	REPLACE
+	WITH
 	SET
 	TO
 
@@ -97,6 +98,12 @@ func (t TokenType) pp() string {
 		return "FIND"
 	case REPLACE:
 		return "REPLACE"
+	case WITH:
+		return "WITH"
+	case SET:
+		return "SET"
+	case TO:
+		return "TO"
 	case ALL:
 		return "ALL"
 	case SKIP:
@@ -202,6 +209,8 @@ func (s *Lexer) getNextToken() *Token {
 		SWHITESPACE
 		SSTRING_DOUBLE
 		SSTRING_SINGLE
+		SSTRING_D_ESCAPE
+		SSTRING_S_ESCAPE
 		SNUMBER
 		SEQUAL
 		SCOLON
@@ -231,10 +240,11 @@ func (s *Lexer) getNextToken() *Token {
 			s.unread_last()
 			break
 		} else if current_state == SCOMMENT {
-			buf.WriteRune(ch)
 			if ch == '\n' {
+				s.unread_last()
 				break
 			}
+			buf.WriteRune(ch)
 		} else if ch == '(' && current_state == SSTART {
 			buf.WriteRune(ch)
 			current_state = SOPENPAREN
@@ -284,20 +294,28 @@ func (s *Lexer) getNextToken() *Token {
 			buf.WriteRune(ch)
 		} else if ch == '"' && current_state == SSTART {
 			current_state = SSTRING_DOUBLE
-			buf.WriteRune(ch)
+		} else if ch == '\\' && current_state == SSTRING_DOUBLE {
+			current_state = SSTRING_D_ESCAPE
+		} else if current_state == SSTRING_D_ESCAPE {
+			buf.WriteRune(getEscapedRune(ch))
+			current_state = SSTRING_DOUBLE
 		} else if current_state == SSTRING_DOUBLE {
-			buf.WriteRune(ch)
 			if ch == '"' {
 				break
 			}
+			buf.WriteRune(ch)
 		} else if ch == '\'' && current_state == SSTART {
 			current_state = SSTRING_SINGLE
-			buf.WriteRune(ch)
+		} else if ch == '\\' && current_state == SSTRING_SINGLE {
+			current_state = SSTRING_S_ESCAPE
+		} else if current_state == SSTRING_S_ESCAPE {
+			buf.WriteRune(getEscapedRune(ch))
+			current_state = SSTRING_SINGLE
 		} else if current_state == SSTRING_SINGLE {
-			buf.WriteRune(ch)
 			if ch == '\'' {
 				break
 			}
+			buf.WriteRune(ch)
 		} else {
 			if current_state != SSTART || unicode.IsDigit(ch) || unicode.IsLetter(ch) || unicode.IsSpace(ch) || ch == '(' || ch == ')' || ch == ',' || ch == ':' || ch == '=' || ch == '"' || ch == '\'' || ch == '-' {
 				s.unread_last()
@@ -326,6 +344,8 @@ func (s *Lexer) getNextToken() *Token {
 			token.tokenType = FIND
 		case "replace":
 			token.tokenType = REPLACE
+		case "with":
+			token.tokenType = WITH
 		case "set":
 			token.tokenType = SET
 		case "to":
@@ -410,6 +430,17 @@ func (s *Lexer) getNextToken() *Token {
 	token.line = NewRange(startPosInfo.line, endPosInfo.line)
 	token.lexeme = buf.String()
 	return token
+}
+
+func getEscapedRune(ch rune) rune {
+	if ch == 'n' {
+		return rune(10)
+	} else if ch == 't' {
+		return rune(9)
+	} else if ch == 'r' {
+		return rune(13)
+	}
+	return rune(ch)
 }
 
 func (s *Lexer) read() rune {

@@ -33,18 +33,18 @@ func NoError() ParseError {
 	return ParseError{isError: false}
 }
 
-func parse(tokens []*Token) ([]*AstCommand, ParseError) {
-	commands := []*AstCommand{}
+func parse(tokens []*Token) ([]AstCommand, ParseError) {
+	commands := []AstCommand{}
 
 	token_index := 0
 	for token_index < len(tokens)-1 {
 		ws_index := consumeIgnoreableTokens(tokens, token_index)
 		command, new_index, e := parse_command(tokens, ws_index)
 		if e.isError {
-			return []*AstCommand{}, e
+			return []AstCommand{}, e
 		}
 		token_index = new_index
-		commands = append(commands, &command)
+		commands = append(commands, command)
 	}
 
 	return commands, NoError()
@@ -93,11 +93,81 @@ func parse_find(tokens []*Token, token_index int) (*AstFind, int, ParseError) {
 }
 
 func parse_replace(tokens []*Token, token_index int) (*AstReplace, int, ParseError) {
-	return nil, token_index, NoError()
+	all, skipValue, takeValue, new_index, amountError := parse_amount(tokens, token_index+1)
+	if amountError.isError {
+		return nil, new_index, amountError
+	}
+
+	replaceCommand := AstReplace{
+		all:  all,
+		skip: skipValue,
+		take: takeValue,
+		body: []AstExpression{},
+	}
+
+	var current_token = tokens[new_index]
+	var current_index = new_index
+	for current_token.tokenType != WITH && current_token.tokenType != FIND && current_token.tokenType != REPLACE && current_token.tokenType != SET && current_token.tokenType != EOF {
+		ws_index := consumeIgnoreableTokens(tokens, current_index)
+		expr, new_index, parseError := parse_expression(tokens, ws_index)
+		if parseError.isError {
+			return nil, new_index, parseError
+		}
+
+		replaceCommand.body = append(replaceCommand.body, expr)
+		current_index = consumeIgnoreableTokens(tokens, new_index)
+		current_token = tokens[current_index]
+	}
+
+	if current_token.tokenType != WITH {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'with'.")
+	}
+
+	current_index = consumeIgnoreableTokens(tokens, current_index+1)
+	for current_token.tokenType != FIND && current_token.tokenType != REPLACE && current_token.tokenType != SET && current_token.tokenType != EOF {
+		ws_index := consumeIgnoreableTokens(tokens, current_index)
+		expr, new_index, parseError := parse_atom(tokens, ws_index)
+		if parseError.isError {
+			return nil, new_index, parseError
+		}
+
+		replaceCommand.result = append(replaceCommand.result, expr)
+		current_index = consumeIgnoreableTokens(tokens, new_index)
+		current_token = tokens[current_index]
+	}
+
+	return &replaceCommand, current_index, NoError()
 }
 
 func parse_set(tokens []*Token, token_index int) (*AstSet, int, ParseError) {
-	return nil, token_index, NoError()
+	var current_index = consumeIgnoreableTokens(tokens, token_index+1)
+	var current_token = tokens[current_index]
+
+	if current_token.tokenType != IDENTIFIER {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected identifier")
+	}
+
+	name := current_token.lexeme
+
+	current_index = consumeIgnoreableTokens(tokens, current_index+1)
+	current_token = tokens[current_index]
+
+	if current_token.tokenType != TO {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'to'")
+	}
+
+	current_index = consumeIgnoreableTokens(tokens, current_index+1)
+	expr, new_index, err := parse_expression(tokens, current_index)
+	if err.isError {
+		return nil, new_index, err
+	}
+	current_index = new_index
+
+	setCommand := AstSet{
+		id:   name,
+		expr: expr,
+	}
+	return &setCommand, current_index, NoError()
 }
 
 func parse_amount(tokens []*Token, token_index int) (bool, int, int, int, ParseError) {
@@ -170,7 +240,19 @@ func parse_primary(tokens []*Token, token_index int) (*AstPrimary, int, ParseErr
 	current_token := tokens[token_index]
 	prim := AstPrimary{}
 	if current_token.tokenType == STRING {
+		str_literal, new_index, err := parse_string(tokens, token_index)
+		if err.isError {
+			return nil, new_index, err
+		}
+		prim.literal = str_literal
+		return &prim, new_index, NoError()
 	} else if current_token.tokenType == IDENTIFIER {
+		variable, new_index, err := parse_variable(tokens, token_index)
+		if err.isError {
+			return nil, new_index, err
+		}
+		prim.literal = variable
+		return &prim, new_index, NoError()
 	} else if current_token.tokenType == OPENPAREN {
 		sub_expr, new_index, err := parse_sub_expression(tokens, token_index)
 		if err.isError {
@@ -192,6 +274,40 @@ func parse_primary(tokens []*Token, token_index int) (*AstPrimary, int, ParseErr
 		return &prim, new_index, NoError()
 	}
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected '(', '<string>', '<identifier>', or a character class.")
+}
+
+func parse_atom(tokens []*Token, token_index int) (AstAtom, int, ParseError) {
+	current_token := tokens[token_index]
+	if current_token.tokenType == STRING {
+		return parse_string(tokens, token_index)
+	} else if current_token.tokenType == IDENTIFIER {
+		return parse_variable(tokens, token_index)
+	}
+	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected '<string>' or '<identifier>'.")
+}
+
+func parse_string(tokens []*Token, token_index int) (*AstString, int, ParseError) {
+	current_token := tokens[token_index]
+	str_literal := AstString{}
+
+	if current_token.tokenType == STRING {
+		str_literal.value = current_token.lexeme
+		return &str_literal, token_index + 1, NoError()
+	}
+
+	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected a string")
+}
+
+func parse_variable(tokens []*Token, token_index int) (*AstVariable, int, ParseError) {
+	current_token := tokens[token_index]
+	var_literal := AstVariable{}
+
+	if current_token.tokenType == IDENTIFIER {
+		var_literal.name = current_token.lexeme
+		return &var_literal, token_index + 1, NoError()
+	}
+
+	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected a variable")
 }
 
 func parse_sub_expression(tokens []*Token, token_index int) (*AstSubExpr, int, ParseError) {
