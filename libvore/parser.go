@@ -1,6 +1,7 @@
 package libvore
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -152,8 +153,8 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, ParseError) {
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
 	current_token = tokens[current_index]
 
-	if current_token.tokenType != TO {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'to'")
+	if current_token.tokenType != EQUAL && current_token.tokenType != COLONEQ {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected '='")
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
@@ -221,10 +222,15 @@ func parse_amount(tokens []*Token, token_index int) (bool, int, int, int, ParseE
 func parse_expression(tokens []*Token, token_index int) (AstExpression, int, ParseError) {
 	current_token := tokens[token_index]
 	if current_token.tokenType == AT {
+		panic("aa") //return parse_at(tokens, token_index)
 	} else if current_token.tokenType == BETWEEN {
+		panic("aa") //return parse_between(tokens, token_index)
 	} else if current_token.tokenType == EXACTLY {
+		panic("aa") //return parse_exactly(tokens, token_index)
 	} else if current_token.tokenType == MAYBE {
+		return parse_maybe(tokens, token_index)
 	} else if current_token.tokenType == IN {
+		return parse_in(tokens, token_index)
 	} else if current_token.tokenType == STRING || current_token.tokenType == IDENTIFIER ||
 		current_token.tokenType == OPENPAREN || current_token.tokenType == ANY ||
 		current_token.tokenType == WHITESPACE || current_token.tokenType == DIGIT ||
@@ -233,47 +239,92 @@ func parse_expression(tokens []*Token, token_index int) (AstExpression, int, Par
 		current_token.tokenType == FILE {
 		return parse_primary(tokens, token_index)
 	}
+	fmt.Println("BAD")
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected 'at', 'between', 'exactly', 'maybe', 'in', '<string>', '<identifier>', or a character class ")
 }
 
-func parse_primary(tokens []*Token, token_index int) (*AstPrimary, int, ParseError) {
+func parse_maybe(tokens []*Token, token_index int) (*AstOptional, int, ParseError) {
+	new_index := consumeIgnoreableTokens(tokens, token_index+1)
+	literal, next_index, err := parse_literal(tokens, new_index)
+	if err.isError {
+		return nil, next_index, err
+	}
+
+	maybe := AstOptional{literal}
+
+	return &maybe, next_index, NoError()
+}
+
+func parse_in(tokens []*Token, token_index int) (*AstList, int, ParseError) {
+	new_index := consumeIgnoreableTokens(tokens, token_index+1)
+	contents := []AstListable{}
+
+	listable, next_index, err := parse_listable(tokens, new_index)
+	if err.isError {
+		return nil, next_index, err
+	}
+	contents = append(contents, listable)
+
+	current_index := consumeIgnoreableTokens(tokens, next_index)
+	current_token := tokens[current_index]
+	for current_token.tokenType == COMMA {
+		current_index = consumeIgnoreableTokens(tokens, current_index+1)
+		listable, next_index, err := parse_listable(tokens, current_index)
+		if err.isError {
+			return nil, next_index, err
+		}
+		contents = append(contents, listable)
+		current_index = next_index
+		current_token = tokens[current_index]
+	}
+
+	inList := AstList{contents: contents}
+	return &inList, current_index, NoError()
+}
+
+func isListableClass(t TokenType) bool {
+	return t == ANY || t == WHITESPACE || t == DIGIT || t == UPPER || t == LOWER || t == LETTER
+}
+
+func parse_listable(tokens []*Token, token_index int) (AstListable, int, ParseError) {
 	current_token := tokens[token_index]
-	prim := AstPrimary{}
 	if current_token.tokenType == STRING {
-		str_literal, new_index, err := parse_string(tokens, token_index)
-		if err.isError {
-			return nil, new_index, err
-		}
-		prim.literal = str_literal
-		return &prim, new_index, NoError()
+		// TODO add range
+		return parse_string(tokens, token_index)
+	} else if isListableClass(current_token.tokenType) {
+		return parse_character_class(tokens, token_index)
+	}
+	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected listable literal")
+}
+
+func parse_literal(tokens []*Token, token_index int) (AstLiteral, int, ParseError) {
+	current_token := tokens[token_index]
+	if current_token.tokenType == STRING {
+		return parse_string(tokens, token_index)
 	} else if current_token.tokenType == IDENTIFIER {
-		variable, new_index, err := parse_variable(tokens, token_index)
-		if err.isError {
-			return nil, new_index, err
-		}
-		prim.literal = variable
-		return &prim, new_index, NoError()
+		return parse_variable(tokens, token_index)
 	} else if current_token.tokenType == OPENPAREN {
-		sub_expr, new_index, err := parse_sub_expression(tokens, token_index)
-		if err.isError {
-			return nil, new_index, err
-		}
-		prim.literal = sub_expr
-		return &prim, new_index, NoError()
+		return parse_sub_expression(tokens, token_index)
 	} else if current_token.tokenType == ANY ||
 		current_token.tokenType == WHITESPACE || current_token.tokenType == DIGIT ||
 		current_token.tokenType == UPPER || current_token.tokenType == LOWER ||
 		current_token.tokenType == LETTER || current_token.tokenType == LINE ||
 		current_token.tokenType == FILE {
-		cc_literal, new_index, err := parse_character_class(tokens, token_index)
-		if err.isError {
-			return nil, new_index, err
-		}
-		prim.literal = cc_literal
-
-		return &prim, new_index, NoError()
+		return parse_character_class(tokens, token_index)
 	}
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected '(', '<string>', '<identifier>', or a character class.")
+}
+
+func parse_primary(tokens []*Token, token_index int) (*AstPrimary, int, ParseError) {
+	prim := AstPrimary{}
+
+	literal, new_index, err := parse_literal(tokens, token_index)
+	if err.isError {
+		return nil, new_index, err
+	}
+	prim.literal = literal
+
+	return &prim, new_index, NoError()
 }
 
 func parse_atom(tokens []*Token, token_index int) (AstAtom, int, ParseError) {

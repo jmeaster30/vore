@@ -103,6 +103,17 @@ func (l AstLoop) print() {
 	fmt.Print(")")
 }
 
+type AstOptional struct {
+	body AstLiteral
+}
+
+func (l AstOptional) isExpr() {}
+func (l AstOptional) print() {
+	fmt.Print("(optional ")
+	l.body.print()
+	fmt.Print(")")
+}
+
 type AstBranch struct {
 	left  AstLiteral
 	right AstLiteral
@@ -227,7 +238,8 @@ type AstCharacterClass struct {
 	classType AstCharacterClassType
 }
 
-func (c AstCharacterClass) isLiteral() {}
+func (c AstCharacterClass) isLiteral()  {}
+func (c AstCharacterClass) isListable() {}
 func (c AstCharacterClass) print() {
 	fmt.Printf("(class ")
 	switch c.classType {
