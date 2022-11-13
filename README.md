@@ -22,7 +22,7 @@ In the above example you can see the functionality of replacing text but it also
 
 >Vore find statement: 
 >
->```find all sol (at least zero any) = myLine eol```
+>```find all line start (at least zero any) = myLine line end```
 >
 >Equivalent regular expression
 >
@@ -73,7 +73,7 @@ N/A          | ```line end``` (end of line)**
 ```(ABC)``` (capturing group) (subexpression behavior) | ```("ABC")``` (subexpression)
 ```(?:ABC)``` (non-capturing group) | ```("ABC")``` (subexpression)
 **Subroutines** |
-```(?P<name>[abc])``` (subroutine) | ```('a', 'b', 'c') := name```
+```(?P<name>[abc])``` (subroutine) | ```(in 'a', 'b', 'c') := name```
 ```(?P>name)``` (call subroutine) | ```name```
 **Recursion**
 ```a(?R)?b``` (Recurses on the entire regex) | ```("a" maybe mySub 'b') := mySub``` (Recursion only within the subroutine)

@@ -90,8 +90,8 @@ func (s AstSet) print() {
 }
 
 type AstLoop struct {
-	min    uint64
-	max    uint64
+	min    int
+	max    int
 	fewest bool
 	body   AstLiteral
 }

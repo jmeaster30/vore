@@ -140,6 +140,8 @@ func (t TokenType) pp() string {
 		return "LEAST"
 	case BETWEEN:
 		return "BETWEEN"
+	case AND:
+		return "AND"
 	case EXACTLY:
 		return "EXACTLY"
 	case MAYBE:

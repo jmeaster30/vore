@@ -222,11 +222,11 @@ func parse_amount(tokens []*Token, token_index int) (bool, int, int, int, ParseE
 func parse_expression(tokens []*Token, token_index int) (AstExpression, int, ParseError) {
 	current_token := tokens[token_index]
 	if current_token.tokenType == AT {
-		panic("aa") //return parse_at(tokens, token_index)
+		return parse_at(tokens, token_index)
 	} else if current_token.tokenType == BETWEEN {
-		panic("aa") //return parse_between(tokens, token_index)
+		return parse_between(tokens, token_index)
 	} else if current_token.tokenType == EXACTLY {
-		panic("aa") //return parse_exactly(tokens, token_index)
+		return parse_exactly(tokens, token_index)
 	} else if current_token.tokenType == MAYBE {
 		return parse_maybe(tokens, token_index)
 	} else if current_token.tokenType == IN {
@@ -241,6 +241,125 @@ func parse_expression(tokens []*Token, token_index int) (AstExpression, int, Par
 	}
 	fmt.Println("BAD")
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected 'at', 'between', 'exactly', 'maybe', 'in', '<string>', '<identifier>', or a character class ")
+}
+
+func parse_at(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
+	current_index := consumeIgnoreableTokens(tokens, token_index+1)
+	current_token := tokens[current_index]
+
+	if current_token.tokenType != LEAST && current_token.tokenType != MOST {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'least' or 'most'.")
+	}
+
+	isLeast := current_token.tokenType == LEAST
+
+	current_index = consumeIgnoreableTokens(tokens, current_index+1)
+	current_token = tokens[current_index]
+	if current_token.tokenType != NUMBER {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected a number.")
+	}
+	value, err := strconv.Atoi(current_token.lexeme)
+	if err != nil {
+		return nil, current_index, NewParseError(*current_token, "Error converting lexeme to number value")
+	}
+
+	current_index = consumeIgnoreableTokens(tokens, current_index+1)
+	literal, next_index, parseError := parse_literal(tokens, current_index)
+	if parseError.isError {
+		return nil, next_index, parseError
+	}
+
+	var min int
+	var max int
+	if isLeast {
+		min = value
+		max = -1
+	} else {
+		min = 0
+		max = value
+	}
+
+	atLoop := AstLoop{
+		min:    min,
+		max:    max,
+		fewest: false,
+		body:   literal,
+	}
+
+	return &atLoop, next_index, NoError()
+}
+
+func parse_between(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
+	current_index := consumeIgnoreableTokens(tokens, token_index+1)
+	current_token := tokens[current_index]
+
+	if current_token.tokenType != NUMBER {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected a number.")
+	}
+	minValue, err := strconv.Atoi(current_token.lexeme)
+	if err != nil {
+		return nil, current_index, NewParseError(*current_token, "Error converting lexeme to number value")
+	}
+
+	current_index = consumeIgnoreableTokens(tokens, current_index+1)
+	current_token = tokens[current_index]
+	if current_token.tokenType != AND {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'and'.")
+	}
+
+	current_index = consumeIgnoreableTokens(tokens, current_index+1)
+	current_token = tokens[current_index]
+	if current_token.tokenType != NUMBER {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected a number.")
+	}
+	maxValue, err := strconv.Atoi(current_token.lexeme)
+	if err != nil {
+		return nil, current_index, NewParseError(*current_token, "Error converting lexeme to number value")
+	}
+
+	current_index = consumeIgnoreableTokens(tokens, current_index+1)
+	current_token = tokens[current_index]
+	literal, next_index, parseError := parse_literal(tokens, current_index)
+	if parseError.isError {
+		return nil, next_index, parseError
+	}
+
+	between := AstLoop{
+		min:    minValue,
+		max:    maxValue,
+		fewest: false,
+		body:   literal,
+	}
+
+	return &between, next_index, NoError()
+}
+
+func parse_exactly(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
+	current_index := consumeIgnoreableTokens(tokens, token_index+1)
+	current_token := tokens[current_index]
+
+	if current_token.tokenType != NUMBER {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected a number.")
+	}
+	value, err := strconv.Atoi(current_token.lexeme)
+	if err != nil {
+		return nil, current_index, NewParseError(*current_token, "Error converting lexeme to number value")
+	}
+
+	current_index = consumeIgnoreableTokens(tokens, current_index+1)
+	literal, next_index, parseError := parse_literal(tokens, current_index)
+	if parseError.isError {
+		return nil, next_index, parseError
+	}
+
+	exactly := AstLoop{
+		min:    value,
+		max:    value,
+		fewest: false,
+		body:   literal,
+	}
+
+	return &exactly, next_index, NoError()
 }
 
 func parse_maybe(tokens []*Token, token_index int) (*AstOptional, int, ParseError) {
