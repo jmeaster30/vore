@@ -80,7 +80,7 @@ N/A          | ```line end``` (end of line)**
 ```(a(?1)?b)``` (Recurses only on that capture group) | ```("a" maybe mySub 'b') := mySub``` (same as before)
 **Quantifiers & Alternation**
 ```a+``` (plus) | ```at least 1 'a'``` (at least)
-```a*``` (start) | ```at least 0 "a"``` (at least)
+```a*``` (star) | ```at least 0 "a"``` (at least)
 ```a{3}``` (quantifier) | ```exactly 3 'a'``` (exactly)
 ```a{4,}``` (quantifier) | ```at least 4 'a'``` (at least)
 ```a{5,8}``` (quantifier) | ```between 5 and 8 'a'``` (between)

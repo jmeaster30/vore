@@ -1,7 +1,6 @@
 package libvore
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -237,9 +236,8 @@ func parse_expression(tokens []*Token, token_index int) (AstExpression, int, Par
 		current_token.tokenType == UPPER || current_token.tokenType == LOWER ||
 		current_token.tokenType == LETTER || current_token.tokenType == LINE ||
 		current_token.tokenType == FILE {
-		return parse_primary(tokens, token_index)
+		return parse_primary_or_dec(tokens, token_index)
 	}
-	fmt.Println("BAD")
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected 'at', 'between', 'exactly', 'maybe', 'in', '<string>', '<identifier>', or a character class ")
 }
 
@@ -269,6 +267,13 @@ func parse_at(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
 		return nil, next_index, parseError
 	}
 
+	current_index = consumeIgnoreableTokens(tokens, next_index)
+	current_token = tokens[current_index]
+	fewest := current_token.tokenType == FEWEST
+	if fewest {
+		current_index += 1
+	}
+
 	var min int
 	var max int
 	if isLeast {
@@ -282,11 +287,11 @@ func parse_at(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
 	atLoop := AstLoop{
 		min:    min,
 		max:    max,
-		fewest: false,
+		fewest: fewest,
 		body:   literal,
 	}
 
-	return &atLoop, next_index, NoError()
+	return &atLoop, current_index, NoError()
 }
 
 func parse_between(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
@@ -324,14 +329,21 @@ func parse_between(tokens []*Token, token_index int) (*AstLoop, int, ParseError)
 		return nil, next_index, parseError
 	}
 
+	current_index = consumeIgnoreableTokens(tokens, next_index)
+	current_token = tokens[current_index]
+	fewest := current_token.tokenType == FEWEST
+	if fewest {
+		current_index += 1
+	}
+
 	between := AstLoop{
 		min:    minValue,
 		max:    maxValue,
-		fewest: false,
+		fewest: fewest,
 		body:   literal,
 	}
 
-	return &between, next_index, NoError()
+	return &between, current_index, NoError()
 }
 
 func parse_exactly(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
@@ -432,6 +444,51 @@ func parse_literal(tokens []*Token, token_index int) (AstLiteral, int, ParseErro
 		return parse_character_class(tokens, token_index)
 	}
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected '(', '<string>', '<identifier>', or a character class.")
+}
+
+func parse_primary_or_dec(tokens []*Token, token_index int) (AstExpression, int, ParseError) {
+	literal, new_index, err := parse_literal(tokens, token_index)
+	if err.isError {
+		return nil, new_index, err
+	}
+
+	current_index := consumeIgnoreableTokens(tokens, new_index)
+	current_token := tokens[current_index]
+	if current_token.tokenType == EQUAL || current_token.tokenType == COLONEQ {
+		isSubroutine := current_token.tokenType == COLONEQ
+		current_index = consumeIgnoreableTokens(tokens, current_index+1)
+		current_token = tokens[current_index]
+
+		if current_token.tokenType != IDENTIFIER {
+			return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected identifier.")
+		}
+
+		dec := AstDec{
+			isSubroutine: isSubroutine,
+			name:         current_token.lexeme,
+			body:         literal,
+		}
+		return &dec, current_index + 1, NoError()
+	}
+
+	if current_token.tokenType == OR {
+		current_index = consumeIgnoreableTokens(tokens, current_index+1)
+		right_literal, final_index, err := parse_literal(tokens, current_index)
+		if err.isError {
+			return nil, final_index, err
+		}
+
+		branch := AstBranch{
+			left:  literal,
+			right: right_literal,
+		}
+		return &branch, final_index, NoError()
+	}
+
+	prim := AstPrimary{}
+	prim.literal = literal
+
+	return &prim, new_index, NoError()
 }
 
 func parse_primary(tokens []*Token, token_index int) (*AstPrimary, int, ParseError) {
