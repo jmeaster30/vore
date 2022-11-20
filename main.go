@@ -46,17 +46,13 @@ func main() {
 
 	var vore libvore.Vore
 	if len(source) != 0 {
-		// Use source file
 		vore = libvore.CompileFile(source)
-		//test.PrintTokens()
 	} else {
-		// Use command
 		vore = libvore.Compile(command)
-		//test.PrintTokens()
 	}
 
-	vore.PrintTokens()
-	vore.PrintAST()
+	//vore.PrintTokens()
+	//vore.PrintAST()
 	results := vore.Run([]string{*files_arg})
 	for _, match := range results {
 		match.Print()

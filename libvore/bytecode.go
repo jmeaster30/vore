@@ -37,30 +37,27 @@ func (c FindCommand) print() {
 }
 
 func (c FindCommand) execute(filename string) []Match {
-	fmt.Println("FIND COMMAND")
-
 	file, filesize := readFile(filename)
 	matches := []Match{}
 	matchNumber := 0
 	fileOffset := 0
 	lineNumber := 1
 	columnNumber := 1
-	fmt.Printf("searching %s %d\n", filename, filesize)
-	fmt.Printf("%t %d %d\n", c.all, c.skip, c.take)
+	//fmt.Printf("searching %s %d\n", filename, filesize)
+	//fmt.Printf("%t %d %d\n", c.all, c.skip, c.take)
 	for c.all || matchNumber < c.skip+c.take {
 		currentState := CreateState(filename, file, fileOffset, lineNumber, columnNumber)
 		for currentState.status == INPROCESS {
 			inst := c.body[currentState.programCounter]
-			fmt.Printf("inst: %d\n", currentState.programCounter)
-			inst.print()
+			//fmt.Printf("inst: %d\n", currentState.programCounter)
+			//inst.print()
 			currentState = inst.execute(currentState)
 			if currentState.status == INPROCESS && currentState.programCounter >= len(c.body) {
 				currentState.SUCCESS()
 			}
 		}
 
-		if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 {
-			fmt.Println("SUCCESS!!!!")
+		if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 && matchNumber >= c.skip {
 			foundMatch := Match{
 				filename:     filename,
 				matchNumber:  matchNumber + 1,
@@ -76,6 +73,9 @@ func (c FindCommand) execute(filename string) []Match {
 			columnNumber = currentState.currentColumnNum
 			matchNumber += 1
 		} else {
+			if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 {
+				matchNumber += 1
+			}
 			skipC := make([]byte, 1)
 			n, err := file.ReadAt(skipC, int64(fileOffset))
 			if n != 1 || err != nil {
