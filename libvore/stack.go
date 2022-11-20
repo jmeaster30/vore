@@ -8,6 +8,12 @@ func NewStack[T any]() *Stack[T] {
 	return &Stack[T]{}
 }
 
+func (s *Stack[T]) Copy() *Stack[T] {
+	return &Stack[T]{
+		store: s.store,
+	}
+}
+
 // peek
 func (s *Stack[T]) Peek() *T {
 	if s.IsEmpty() {

@@ -16,12 +16,18 @@ func main() {
 	flag.Parse()
 
 	source := *source_arg
-	var _ = *files_arg // TODO
+	files := *files_arg // TODO
 	ide := *ide_arg
 	command := *command_arg
 
 	if ide {
 		fmt.Println("Sorry repl mode is not implemented :(")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	if len(files) == 0 {
+		fmt.Println("Please supply some files to search.")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -51,4 +57,8 @@ func main() {
 
 	vore.PrintTokens()
 	vore.PrintAST()
+	results := vore.Run([]string{*files_arg})
+	for _, match := range results {
+		match.Print()
+	}
 }

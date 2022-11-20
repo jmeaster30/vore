@@ -4,17 +4,6 @@ import (
 	"strconv"
 )
 
-type ParseState int
-
-const (
-	P_START ParseState = iota
-	P_COMMAND
-	P_FIND
-	P_REPLACE
-	P_SET
-	P_COMMAND_AMOUNT
-)
-
 type ParseError struct {
 	isError bool
 	token   Token
@@ -152,8 +141,8 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, ParseError) {
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
 	current_token = tokens[current_index]
 
-	if current_token.tokenType != EQUAL && current_token.tokenType != COLONEQ {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected '='")
+	if current_token.tokenType != TO {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'to'")
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)

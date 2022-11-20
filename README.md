@@ -88,6 +88,19 @@ N/A          | ```line end``` (end of line)**
 ```a?``` (optional) | ```maybe 'a'``` (maybe)
 ```a+?``` (lazy) | ```at least 1 'a' fewest``` (at least followed by fewest)
 ```a\|b``` (alternation) | ```'a' or "b"``` (or)
+**Lookaround**
+```(?=ABC)``` (positive lookahead) | TODO ```followed by "ABC"```
+```(?!ABC)``` (negative lookahead) | TODO ```not followed by "ABC"```
+```(?<=ABC)``` (positive lookbehind) | TODO ```preceded by "ABC"```
+```(?<!ABC)``` (negative lookbehind) | TODO ```not preceded by "ABC"```
+**SPECIAL**
+```(?#This is a comment)``` (comment) | ```-- This is a comment``` (comment)
+```(?'one'a)?(?('one')b\|c)``` (conditional) | TODO
+```(?>regex)``` (atomic group) | MAYBE WONT DO - I don't see the use for it. Maybe it helps with performance?
+```(?\|regex)``` (branch reset group) | WONT DO - Not useful since we don't use unnamed capture groups
+```\K``` (Keep text out) | WONT DO - Doesn't seem useful with proper look around support
+**_Replacement_**
+all of them :) | There are a lot of things that would be useful but my plans for replacement will obsolete all of these
 
 \* also matches start of file for the first line
 
@@ -96,6 +109,17 @@ N/A          | ```line end``` (end of line)**
 \*** I know I want to add this sometime in the future but I am just trying to get this basic language out. Also, many of the stuff marked "N/A" in VORE is something that could potentially be added.
 
 \**** all characters in quotes are "escaped" so far I added basic C-style escape characters but will probably expand on it more when I add Unicode characters.
+
+## Language TODOs
+
+### Lookaround
+- If there is a lookaround operator any where in the regex string it ignores the position and works how a look around would sensibly
+> ```/(?<=s\w{1,7})t/g```
+
+matches any letter 't' as long as it is preceded by an 's' followed by 1 to 7 instances of any word character:
+
+> ```[A-Za-z0-9_]```
+- Even though exisiting implementations allow you to put the lookaround operators everywhere, I would probably want the compiler to enforce that they be put first or last (depending on if it is lookahead or lookbehind)
 
 ## Notes on the RegEx modifiers
 I do not like the idea of these modifiers in regular expressions. They are just kinda weird and personally I rarely used them (besides global and multiline), so I figured I wouldn't add them or add language contructs to replace them. Here is a table of the regex modifiers and their equivalents in VORE

@@ -5,26 +5,31 @@ import "fmt"
 type AstCommand interface {
 	isCmd()
 	print()
+	generate() Command
 }
 
 type AstExpression interface {
 	isExpr()
 	print()
+	generate(offset int) []Instruction
 }
 
 type AstLiteral interface {
 	isLiteral()
 	print()
+	generate(offset int) []Instruction
 }
 
 type AstListable interface {
 	isListable()
 	print()
+	generate(offset int) []Instruction
 }
 
 type AstAtom interface {
 	isAtom()
 	print()
+	generate(offset int) []Instruction
 }
 
 type AstFind struct {
@@ -140,7 +145,7 @@ func (d AstDec) print() {
 	if d.isSubroutine {
 		fmt.Print("sub ")
 	}
-	fmt.Printf("id %s ", d.name)
+	fmt.Printf("'%s' ", d.name)
 	d.body.print()
 	fmt.Print(")")
 }
