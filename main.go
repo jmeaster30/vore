@@ -16,7 +16,7 @@ func main() {
 	flag.Parse()
 
 	source := *source_arg
-	files := *files_arg // TODO
+	files := *files_arg
 	ide := *ide_arg
 	command := *command_arg
 
