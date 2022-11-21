@@ -54,7 +54,12 @@ func main() {
 	//vore.PrintTokens()
 	//vore.PrintAST()
 	results := vore.Run([]string{*files_arg})
-	for _, match := range results {
-		match.Print()
+	if len(results) == 0 {
+		fmt.Println("There were no matches :(")
+	} else {
+		fmt.Printf("There were %d matches :)\n", len(results))
+		for _, match := range results {
+			match.Print()
+		}
 	}
 }

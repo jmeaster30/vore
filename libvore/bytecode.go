@@ -117,7 +117,32 @@ func (i MatchCharClass) print() {
 }
 
 func (i MatchCharClass) execute(current_state *EngineState) *EngineState {
-	return &EngineState{}
+	next_state := current_state.Copy()
+	switch i.class {
+	case ClassAny:
+		next_state.MATCHANY()
+	case ClassWhitespace:
+		next_state.MATCHOPTIONS([]string{" ", "\t", "\n", "\r"})
+	case ClassDigit:
+		next_state.MATCHRANGE("0", "9")
+	case ClassUpper:
+		next_state.MATCHRANGE("A", "Z")
+	case ClassLower:
+		next_state.MATCHRANGE("a", "z")
+	case ClassLetter:
+		fallthrough
+	case ClassLineStart:
+		fallthrough
+	case ClassLineEnd:
+		fallthrough
+	case ClassFileStart:
+		fallthrough
+	case ClassFileEnd:
+		fallthrough
+	default:
+		panic("Unexpected character class type")
+	}
+	return next_state
 }
 
 type MatchVariable struct {

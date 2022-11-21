@@ -1,6 +1,7 @@
 package libvore
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -91,6 +92,46 @@ func (es *EngineState) FAIL() {
 
 func (es *EngineState) SUCCESS() {
 	es.status = SUCCESS
+}
+
+func (es *EngineState) MATCHANY() {
+	value := es.READ(1)
+	if value == "" {
+		es.BACKTRACK()
+	} else {
+		es.CONSUME(1)
+		es.NEXT()
+	}
+}
+
+func (es *EngineState) MATCHRANGE(from string, to string) {
+	//? Is it possible to extend this to fit our need of range matches?
+	value := es.READ(1)
+	if from <= value && value <= to {
+		es.CONSUME(1)
+		es.NEXT()
+	} else {
+		es.BACKTRACK()
+	}
+}
+
+func (es *EngineState) MATCHOPTIONS(options []string) {
+	value := es.READ(1)
+	if value == "" {
+		es.BACKTRACK()
+		return
+	}
+
+	for _, opt := range options {
+		fmt.Printf("comparing '%s' and '%s'\n", value, opt)
+		if value == opt {
+			es.CONSUME(1)
+			es.NEXT()
+			return
+		}
+	}
+
+	es.BACKTRACK()
 }
 
 func (es *EngineState) MATCH(value string) {
