@@ -130,7 +130,7 @@ func (i MatchCharClass) execute(current_state *EngineState) *EngineState {
 	case ClassLower:
 		next_state.MATCHRANGE("a", "z")
 	case ClassLetter:
-		fallthrough
+		next_state.MATCHLETTER()
 	case ClassLineStart:
 		fallthrough
 	case ClassLineEnd:

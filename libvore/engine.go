@@ -55,6 +55,8 @@ func (es *EngineState) READ(length int) string {
 	currentString := make([]byte, length)
 	n, err := es.file.Read(currentString)
 	if err != nil {
+		// TODO this panics when it hits the end of the file and we are expecting a character
+		// TODO need to make it so this fails the search instead of panicking
 		panic(err)
 	}
 	if n != length {
@@ -108,6 +110,17 @@ func (es *EngineState) MATCHRANGE(from string, to string) {
 	//? Is it possible to extend this to fit our need of range matches?
 	value := es.READ(1)
 	if from <= value && value <= to {
+		es.CONSUME(1)
+		es.NEXT()
+	} else {
+		es.BACKTRACK()
+	}
+}
+
+func (es *EngineState) MATCHLETTER() {
+	// TODO I would prefer if I had a generic way to do these multirange searches
+	value := es.READ(1)
+	if ("a" <= value && value <= "z") || ("A" <= value && value <= "Z") {
 		es.CONSUME(1)
 		es.NEXT()
 	} else {
