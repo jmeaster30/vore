@@ -51,9 +51,32 @@ func (es *EngineState) SEEK() {
 	}
 }
 
+func (es *EngineState) SEEKTO(offset int) {
+	_, serr := es.file.Seek(int64(offset), 0)
+	if serr != nil {
+		panic(serr)
+	}
+}
+
 func (es *EngineState) READ(length int) string {
 	es.SEEK()
 	if es.currentFileOffset+length-1 >= es.filesize {
+		return ""
+	}
+	currentString := make([]byte, length)
+	n, err := es.file.Read(currentString)
+	if err != nil {
+		panic(err)
+	}
+	if n != length {
+		return ""
+	}
+	return string(currentString)
+}
+
+func (es *EngineState) READAT(offset int, length int) string {
+	es.SEEKTO(offset)
+	if offset+length-1 >= es.filesize {
 		return ""
 	}
 	currentString := make([]byte, length)
@@ -108,6 +131,29 @@ func (es *EngineState) MATCHFILESTART() {
 
 func (es *EngineState) MATCHFILEEND() {
 	if es.currentFileOffset == es.filesize {
+		es.NEXT()
+	} else {
+		es.BACKTRACK()
+	}
+}
+
+func (es *EngineState) MATCHLINESTART() {
+	if es.currentFileOffset == 0 {
+		es.NEXT()
+		return
+	}
+
+	value := es.READAT(es.currentFileOffset-1, 1)
+	if value == "\n" {
+		es.NEXT()
+	} else {
+		es.BACKTRACK()
+	}
+}
+
+func (es *EngineState) MATCHLINEEND() {
+	value := es.READ(1)
+	if value == "\n" || es.currentFileOffset == es.filesize {
 		es.NEXT()
 	} else {
 		es.BACKTRACK()

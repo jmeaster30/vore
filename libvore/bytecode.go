@@ -136,9 +136,9 @@ func (i MatchCharClass) execute(current_state *EngineState) *EngineState {
 	case ClassFileEnd:
 		next_state.MATCHFILEEND()
 	case ClassLineStart:
-		fallthrough
+		next_state.MATCHLINESTART()
 	case ClassLineEnd:
-		fallthrough
+		next_state.MATCHLINEEND()
 	default:
 		panic("Unexpected character class type")
 	}
