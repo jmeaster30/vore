@@ -59,8 +59,6 @@ func (es *EngineState) READ(length int) string {
 	currentString := make([]byte, length)
 	n, err := es.file.Read(currentString)
 	if err != nil {
-		// TODO this panics when it hits the end of the file and we are expecting a character
-		// TODO need to make it so this fails the search instead of panicking
 		panic(err)
 	}
 	if n != length {
