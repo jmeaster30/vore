@@ -131,13 +131,13 @@ func (i MatchCharClass) execute(current_state *EngineState) *EngineState {
 		next_state.MATCHRANGE("a", "z")
 	case ClassLetter:
 		next_state.MATCHLETTER()
+	case ClassFileStart:
+		next_state.MATCHFILESTART()
+	case ClassFileEnd:
+		next_state.MATCHFILEEND()
 	case ClassLineStart:
 		fallthrough
 	case ClassLineEnd:
-		fallthrough
-	case ClassFileStart:
-		fallthrough
-	case ClassFileEnd:
 		fallthrough
 	default:
 		panic("Unexpected character class type")

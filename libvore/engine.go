@@ -98,6 +98,22 @@ func (es *EngineState) SUCCESS() {
 	es.status = SUCCESS
 }
 
+func (es *EngineState) MATCHFILESTART() {
+	if es.currentFileOffset == 0 {
+		es.NEXT()
+	} else {
+		es.BACKTRACK()
+	}
+}
+
+func (es *EngineState) MATCHFILEEND() {
+	if es.currentFileOffset == es.filesize {
+		es.NEXT()
+	} else {
+		es.BACKTRACK()
+	}
+}
+
 func (es *EngineState) MATCHANY() {
 	value := es.READ(1)
 	if value == "" {
