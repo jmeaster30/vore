@@ -46,7 +46,7 @@ func (c FindCommand) execute(filename string) []Match {
 	//fmt.Printf("searching %s %d\n", filename, filesize)
 	//fmt.Printf("%t %d %d\n", c.all, c.skip, c.take)
 	for c.all || matchNumber < c.skip+c.take {
-		currentState := CreateState(filename, file, fileOffset, lineNumber, columnNumber)
+		currentState := CreateState(filename, int(filesize), file, fileOffset, lineNumber, columnNumber)
 		for currentState.status == INPROCESS {
 			inst := c.body[currentState.programCounter]
 			//fmt.Printf("inst: %d\n", currentState.programCounter)

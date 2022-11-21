@@ -26,7 +26,7 @@ type VariableRecord struct {
 
 type EngineState struct {
 	loopStack     *Stack[LoopState]
-	backtrack     *Queue[EngineState]
+	backtrack     *Queue[EngineState] // TODO this may need to be a stack of queues
 	variableStack *Stack[VariableRecord]
 	environment   map[string]string
 
@@ -41,6 +41,7 @@ type EngineState struct {
 	startColumnNum    int
 	file              *os.File
 	filename          string
+	filesize          int
 }
 
 func (es *EngineState) SEEK() {
@@ -52,6 +53,9 @@ func (es *EngineState) SEEK() {
 
 func (es *EngineState) READ(length int) string {
 	es.SEEK()
+	if es.currentFileOffset+length-1 >= es.filesize {
+		return ""
+	}
 	currentString := make([]byte, length)
 	n, err := es.file.Read(currentString)
 	if err != nil {
@@ -192,7 +196,7 @@ func (es *EngineState) ENDVAR(name string) {
 	es.NEXT()
 }
 
-func CreateState(filename string, file *os.File, fileOffset int, lineNumber int, columnNumber int) *EngineState {
+func CreateState(filename string, filesize int, file *os.File, fileOffset int, lineNumber int, columnNumber int) *EngineState {
 	return &EngineState{
 		loopStack:         NewStack[LoopState](),
 		backtrack:         NewQueue[EngineState](),
@@ -208,6 +212,7 @@ func CreateState(filename string, file *os.File, fileOffset int, lineNumber int,
 		startColumnNum:    columnNumber,
 		file:              file,
 		filename:          filename,
+		filesize:          filesize,
 	}
 }
 
@@ -233,6 +238,7 @@ func (es *EngineState) Copy() *EngineState {
 		startColumnNum:    es.startColumnNum,
 		file:              es.file,
 		filename:          es.filename,
+		filesize:          es.filesize,
 	}
 }
 
@@ -252,6 +258,7 @@ func (es *EngineState) Set(value *EngineState) {
 	es.startColumnNum = value.startColumnNum
 	es.file = value.file
 	es.filename = value.filename
+	es.filesize = value.filesize
 }
 
 func (es *EngineState) MakeMatch(matchNumber int) Match {
