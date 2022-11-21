@@ -39,7 +39,26 @@ func (l *AstBranch) generate(offset int) []Instruction {
 }
 
 func (l *AstDec) generate(offset int) []Instruction {
-	panic(":(")
+	insts := []Instruction{}
+	if l.isSubroutine {
+		panic("subroutines aren't generated yet")
+	} else {
+		// offset
+		startVarDec := StartVarDec{
+			name: l.name,
+		}
+
+		bodyinsts := l.body.generate(offset + 1)
+
+		endVarDec := EndVarDec{
+			name: l.name,
+		}
+
+		insts = append(insts, startVarDec)
+		insts = append(insts, bodyinsts...)
+		insts = append(insts, endVarDec)
+	}
+	return insts
 }
 
 func (l *AstList) generate(offset int) []Instruction {
@@ -58,7 +77,6 @@ func (l *AstString) generate(offset int) []Instruction {
 	result := MatchLiteral{
 		toFind: l.value,
 	}
-
 	return []Instruction{result}
 }
 
@@ -76,7 +94,10 @@ func (l *AstSubExpr) generate(offset int) []Instruction {
 }
 
 func (l *AstVariable) generate(offset int) []Instruction {
-	panic(":(")
+	result := MatchVariable{
+		name: l.name,
+	}
+	return []Instruction{result}
 }
 
 func (l *AstCharacterClass) generate(offset int) []Instruction {

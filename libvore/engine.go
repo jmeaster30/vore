@@ -102,8 +102,40 @@ func (es *EngineState) MATCH(value string) {
 	}
 }
 
+func (es *EngineState) MATCHVAR(name string) {
+	value, found := es.environment[name]
+	if !found {
+		es.BACKTRACK()
+	} else {
+		es.MATCH(value)
+	}
+}
+
 func (es *EngineState) NEXT() {
 	es.programCounter += 1
+}
+
+func (es *EngineState) JUMP(pc int) {
+	es.programCounter = pc
+}
+
+func (es *EngineState) STARTVAR(name string) {
+	record := VariableRecord{
+		name:        name,
+		startOffset: len(es.currentMatch),
+	}
+	es.variableStack.Push(record)
+	es.NEXT()
+}
+
+func (es *EngineState) ENDVAR(name string) {
+	record := es.variableStack.Pop()
+	if record.name != name {
+		panic("UHOH BAD INSTRUCTIONS I TRIED RESOLVING A VARIABLE THAT I WASN'T EXPECTING")
+	}
+	value := es.currentMatch[record.startOffset:]
+	es.environment[name] = value
+	es.NEXT()
 }
 
 func CreateState(filename string, file *os.File, fileOffset int, lineNumber int, columnNumber int) *EngineState {
@@ -166,4 +198,22 @@ func (es *EngineState) Set(value *EngineState) {
 	es.startColumnNum = value.startColumnNum
 	es.file = value.file
 	es.filename = value.filename
+}
+
+func (es *EngineState) MakeMatch(matchNumber int) Match {
+	result := Match{
+		filename:     es.filename,
+		matchNumber:  matchNumber,
+		fileOffset:   *NewRange(uint64(es.startFileOffset), uint64(es.currentFileOffset)),
+		lineNumber:   *NewRange(uint64(es.startLineNum), uint64(es.currentLineNum)),
+		columnNumber: *NewRange(uint64(es.startColumnNum), uint64(es.currentColumnNum)),
+		value:        es.currentMatch,
+		variables:    make(map[string]string),
+	}
+
+	for key, value := range es.environment {
+		result.variables[key] = value
+	}
+
+	return result
 }

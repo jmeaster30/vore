@@ -25,6 +25,12 @@ func (m Match) Print() {
 	fmt.Printf("FileOffset: %d %d\n", m.fileOffset.Start, m.fileOffset.End)
 	fmt.Printf("Line: %d %d\n", m.lineNumber.Start, m.lineNumber.End)
 	fmt.Printf("Column: %d %d\n", m.columnNumber.Start, m.columnNumber.End)
+	fmt.Println("Variables:")
+	fmt.Println("\t[key] = [value]")
+	for key, value := range m.variables {
+		fmt.Printf("\t%s = %s\n", key, value)
+	}
+	fmt.Println("============")
 }
 
 type Vore struct {

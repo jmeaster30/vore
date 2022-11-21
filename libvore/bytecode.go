@@ -58,15 +58,7 @@ func (c FindCommand) execute(filename string) []Match {
 		}
 
 		if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 && matchNumber >= c.skip {
-			foundMatch := Match{
-				filename:     filename,
-				matchNumber:  matchNumber + 1,
-				fileOffset:   *NewRange(uint64(currentState.startFileOffset), uint64(currentState.currentFileOffset)),
-				lineNumber:   *NewRange(uint64(currentState.startLineNum), uint64(currentState.currentLineNum)),
-				columnNumber: *NewRange(uint64(currentState.startColumnNum), uint64(currentState.currentColumnNum)),
-				value:        currentState.currentMatch,
-				variables:    make(map[string]string),
-			}
+			foundMatch := currentState.MakeMatch(matchNumber + 1)
 			matches = append(matches, foundMatch)
 			fileOffset = currentState.currentFileOffset
 			lineNumber = currentState.currentLineNum
@@ -133,11 +125,13 @@ type MatchVariable struct {
 }
 
 func (i MatchVariable) print() {
-	fmt.Println("MATCH VAR")
+	fmt.Printf("MATCH VAR '%s'\n", i.name)
 }
 
 func (i MatchVariable) execute(current_state *EngineState) *EngineState {
-	return &EngineState{}
+	next_state := current_state.Copy()
+	next_state.MATCHVAR(i.name)
+	return next_state
 }
 
 type CallSubroutine struct {
@@ -199,11 +193,13 @@ type StartVarDec struct {
 }
 
 func (i StartVarDec) print() {
-	fmt.Println("START VARDEC")
+	fmt.Printf("START VARDEC '%s'\n", i.name)
 }
 
 func (i StartVarDec) execute(current_state *EngineState) *EngineState {
-	return &EngineState{}
+	next_state := current_state.Copy()
+	next_state.STARTVAR(i.name)
+	return next_state
 }
 
 type EndVarDec struct {
@@ -211,11 +207,13 @@ type EndVarDec struct {
 }
 
 func (i EndVarDec) print() {
-	fmt.Println("END VARDEC")
+	fmt.Printf("END VARDEC '%s'\n", i.name)
 }
 
 func (i EndVarDec) execute(current_state *EngineState) *EngineState {
-	return &EngineState{}
+	next_state := current_state.Copy()
+	next_state.ENDVAR(i.name)
+	return next_state
 }
 
 type Jump struct {
@@ -227,5 +225,7 @@ func (i Jump) print() {
 }
 
 func (i Jump) execute(current_state *EngineState) *EngineState {
-	return &EngineState{}
+	next_state := current_state.Copy()
+	next_state.JUMP(i.newProgramCounter)
+	return next_state
 }
