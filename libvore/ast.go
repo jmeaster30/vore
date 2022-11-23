@@ -108,17 +108,6 @@ func (l AstLoop) print() {
 	fmt.Print(")")
 }
 
-type AstOptional struct {
-	body AstLiteral
-}
-
-func (l AstOptional) isExpr() {}
-func (l AstOptional) print() {
-	fmt.Print("(optional ")
-	l.body.print()
-	fmt.Print(")")
-}
-
 type AstBranch struct {
 	left  AstLiteral
 	right AstLiteral

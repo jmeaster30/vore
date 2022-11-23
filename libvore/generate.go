@@ -27,21 +27,60 @@ func (s *AstSet) generate() Command {
 }
 
 func (l *AstLoop) generate(offset int) []Instruction {
-	panic(":(")
-}
 
-func (l *AstOptional) generate(offset int) []Instruction {
-	panic(":(")
+	body := l.body.generate(offset + 1)
+
+	start := StartLoop{
+		minLoops: l.min,
+		maxLoops: l.max,
+		exitLoop: offset + len(body),
+		fewest:   l.fewest,
+	}
+
+	stop := StopLoop{
+		minLoops:  l.min,
+		maxLoops:  l.max,
+		startLoop: offset,
+		fewest:    l.fewest,
+	}
+
+	result := []Instruction{start}
+	result = append(result, body...)
+	result = append(result, stop)
+	return result
 }
 
 func (l *AstBranch) generate(offset int) []Instruction {
-	panic(":(")
+
+	left := l.left.generate(offset + 1)
+	right := l.right.generate(offset + 2 + len(left))
+
+	b := Branch{
+		branches: []int{
+			offset + 1,
+			offset + len(left) + 2,
+		},
+	}
+
+	insts := []Instruction{b}
+	insts = append(insts, left...)
+	insts = append(insts, Jump{
+		newProgramCounter: offset + len(left) + len(right) + 3,
+	})
+	insts = append(insts, right...)
+	insts = append(insts, Jump{
+		newProgramCounter: offset + len(left) + len(right) + 3,
+	})
+	return insts
 }
 
 func (l *AstDec) generate(offset int) []Instruction {
 	insts := []Instruction{}
 	if l.isSubroutine {
 		panic("subroutines aren't generated yet")
+		// start sub routine
+		// sub routine body
+		// end sub routine
 	} else {
 		// offset
 		startVarDec := StartVarDec{
@@ -62,7 +101,33 @@ func (l *AstDec) generate(offset int) []Instruction {
 }
 
 func (l *AstList) generate(offset int) []Instruction {
-	panic(":(")
+	b := Branch{
+		branches: []int{},
+	}
+
+	pc := offset + 1
+	branches := [][]Instruction{}
+	for _, elem := range l.contents {
+		branch_insts := elem.generate(pc)
+		b.branches = append(b.branches, pc)
+		pc += len(branch_insts) + 1
+		branches = append(branches, branch_insts)
+	}
+
+	end := offset + 1
+	for _, instss := range branches {
+		end += len(instss) + 1
+	}
+
+	insts := []Instruction{b}
+	for _, instss := range branches {
+		insts = append(insts, instss...)
+		insts = append(insts, Jump{
+			newProgramCounter: end,
+		})
+	}
+
+	return insts
 }
 
 func (l *AstPrimary) generate(offset int) []Instruction {
@@ -70,7 +135,11 @@ func (l *AstPrimary) generate(offset int) []Instruction {
 }
 
 func (l *AstRange) generate(offset int) []Instruction {
-	panic(":(")
+	result := MatchRange{
+		from: l.from.value,
+		to:   l.to.value,
+	}
+	return []Instruction{result}
 }
 
 func (l *AstString) generate(offset int) []Instruction {

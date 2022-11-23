@@ -363,16 +363,23 @@ func parse_exactly(tokens []*Token, token_index int) (*AstLoop, int, ParseError)
 	return &exactly, next_index, NoError()
 }
 
-func parse_maybe(tokens []*Token, token_index int) (*AstOptional, int, ParseError) {
+func parse_maybe(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
 	new_index := consumeIgnoreableTokens(tokens, token_index+1)
 	literal, next_index, err := parse_literal(tokens, new_index)
 	if err.isError {
 		return nil, next_index, err
 	}
 
-	maybe := AstOptional{literal}
+	current_index := consumeIgnoreableTokens(tokens, next_index)
+	current_token := tokens[current_index]
+	fewest := current_token.tokenType == FEWEST
+	if fewest {
+		current_index += 1
+	}
 
-	return &maybe, next_index, NoError()
+	maybe := AstLoop{0, 1, fewest, literal}
+
+	return &maybe, current_index, NoError()
 }
 
 func parse_in(tokens []*Token, token_index int) (*AstList, int, ParseError) {

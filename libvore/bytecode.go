@@ -51,13 +51,17 @@ func (c FindCommand) execute(filename string) []Match {
 			inst := c.body[currentState.programCounter]
 			//fmt.Printf("inst: %d\n", currentState.programCounter)
 			//inst.print()
+			//fmt.Printf("BEFORE = PC: %d\tBTK: %d\n", currentState.programCounter, currentState.backtrack.Size())
 			currentState = inst.execute(currentState)
+
+			//fmt.Printf("AFTER  = PC: %d\tBTK: %d\n", currentState.programCounter, currentState.backtrack.Size())
 			if currentState.status == INPROCESS && currentState.programCounter >= len(c.body) {
 				currentState.SUCCESS()
 			}
 		}
 
 		if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 && matchNumber >= c.skip {
+			//fmt.Println("SUCCESS")
 			foundMatch := currentState.MakeMatch(matchNumber + 1)
 			matches = append(matches, foundMatch)
 			fileOffset = currentState.currentFileOffset
@@ -65,6 +69,7 @@ func (c FindCommand) execute(filename string) []Match {
 			columnNumber = currentState.currentColumnNum
 			matchNumber += 1
 		} else {
+			//fmt.Println("FAIL")
 			if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 {
 				matchNumber += 1
 			}
@@ -159,6 +164,21 @@ func (i MatchVariable) execute(current_state *EngineState) *EngineState {
 	return next_state
 }
 
+type MatchRange struct {
+	from string
+	to   string
+}
+
+func (i MatchRange) print() {
+	fmt.Printf("MATCH RANGE '%s' to '%s'\n", i.from, i.to)
+}
+
+func (i MatchRange) execute(current_state *EngineState) *EngineState {
+	next_state := current_state.Copy()
+	panic("not implemented")
+	return next_state
+}
+
 type CallSubroutine struct {
 	name string
 }
@@ -172,23 +192,38 @@ func (i CallSubroutine) execute(current_state *EngineState) *EngineState {
 }
 
 type Branch struct {
-	left  int
-	right int
+	branches []int
 }
 
 func (i Branch) print() {
-	fmt.Println("BRANCH")
+	fmt.Print("BRANCH ")
+	for _, b := range i.branches {
+		fmt.Printf("%d\t", b)
+	}
+	fmt.Println()
 }
 
 func (i Branch) execute(current_state *EngineState) *EngineState {
-	return &EngineState{}
+	next_state := current_state.Copy()
+	flipped := []int{}
+	for k := range i.branches {
+		flipped = append(flipped, i.branches[len(i.branches)-1-k])
+	}
+
+	for _, f := range flipped[:len(flipped)-1] {
+		next_state.JUMP(f)
+		next_state.CHECKPOINT()
+	}
+
+	next_state.JUMP(i.branches[0])
+	return next_state
 }
 
 type StartLoop struct {
-	minLoops  int
-	maxLoopes int
-	loopBody  int
-	exitLoop  int
+	minLoops int
+	maxLoops int
+	exitLoop int
+	fewest   bool
 }
 
 func (i StartLoop) print() {
@@ -201,8 +236,9 @@ func (i StartLoop) execute(current_state *EngineState) *EngineState {
 
 type StopLoop struct {
 	minLoops  int
-	maxLoopes int
+	maxLoops  int
 	startLoop int
+	fewest    bool
 }
 
 func (i StopLoop) print() {
@@ -246,7 +282,7 @@ type Jump struct {
 }
 
 func (i Jump) print() {
-	fmt.Println("JUMP")
+	fmt.Printf("JUMP %d\n", i.newProgramCounter)
 }
 
 func (i Jump) execute(current_state *EngineState) *EngineState {

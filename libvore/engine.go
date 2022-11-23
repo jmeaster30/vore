@@ -256,6 +256,11 @@ func (es *EngineState) ENDVAR(name string) {
 	es.NEXT()
 }
 
+func (es *EngineState) CHECKPOINT() {
+	checkpoint := es.Copy()
+	es.backtrack.PushFront(*checkpoint)
+}
+
 func CreateState(filename string, filesize int, file *os.File, fileOffset int, lineNumber int, columnNumber int) *EngineState {
 	return &EngineState{
 		loopStack:         NewStack[LoopState](),
