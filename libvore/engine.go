@@ -150,8 +150,9 @@ func (es *EngineState) MATCHLINESTART() {
 }
 
 func (es *EngineState) MATCHLINEEND() {
-	value := es.READ(1)
-	if value == "\n" || es.currentFileOffset == es.filesize {
+	nextChar := es.READ(1)
+	nextTwoChar := es.READ(2)
+	if nextChar == "\n" || nextTwoChar == "\r\n" || es.currentFileOffset == es.filesize {
 		es.NEXT()
 	} else {
 		es.BACKTRACK()
@@ -362,13 +363,13 @@ func (es *EngineState) Set(value *EngineState) {
 
 func (es *EngineState) MakeMatch(matchNumber int) Match {
 	result := Match{
-		filename:     es.filename,
-		matchNumber:  matchNumber,
-		fileOffset:   *NewRange(uint64(es.startFileOffset), uint64(es.currentFileOffset)),
-		lineNumber:   *NewRange(uint64(es.startLineNum), uint64(es.currentLineNum)),
-		columnNumber: *NewRange(uint64(es.startColumnNum), uint64(es.currentColumnNum)),
-		value:        es.currentMatch,
-		variables:    make(map[string]string),
+		filename:    es.filename,
+		matchNumber: matchNumber,
+		offset:      *NewRange(es.startFileOffset, es.currentFileOffset),
+		line:        *NewRange(es.startLineNum, es.currentLineNum),
+		column:      *NewRange(es.startColumnNum, es.currentColumnNum),
+		value:       es.currentMatch,
+		variables:   make(map[string]string),
 	}
 
 	for key, value := range es.environment {

@@ -1,10 +1,10 @@
 package libvore
 
 type Range struct {
-	Start uint64
-	End   uint64
+	Start int
+	End   int
 }
 
-func NewRange(start uint64, end uint64) *Range {
+func NewRange(start int, end int) *Range {
 	return &Range{start, end}
 }

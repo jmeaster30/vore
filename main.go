@@ -12,11 +12,19 @@ func main() {
 	source_arg := flag.String("src", "", "Vore source file to run on search files")
 	command_arg := flag.String("com", "", "Vore command to run on search files")
 	files_arg := flag.String("files", "", "Files to search")
+	out_json_arg := flag.Bool("json", false, "JSON output file")
+	out_fjson_arg := flag.Bool("formatted-json", false, "Formatted JSON output file")
+	json_file_arg := flag.String("json-file", "", "JSON output file")
+	fjson_file_arg := flag.String("formatted-json-file", "", "Formatted JSON output file")
 	ide_arg := flag.Bool("ide", false, "Open source and files in vore ide")
 	flag.Parse()
 
 	source := *source_arg
 	files := *files_arg
+	json_file := *json_file_arg
+	fjson_file := *fjson_file_arg
+	out_json := *out_json_arg
+	out_fjson := *out_fjson_arg
 	ide := *ide_arg
 	command := *command_arg
 
@@ -44,6 +52,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	if out_json && out_fjson {
+		fmt.Println("Can't output both json and formatted json to stdout.")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
 	var vore libvore.Vore
 	if len(source) != 0 {
 		vore = libvore.CompileFile(source)
@@ -57,9 +71,44 @@ func main() {
 	if len(results) == 0 {
 		fmt.Println("There were no matches :(")
 	} else {
-		fmt.Printf("There were %d matches :)\n", len(results))
-		for _, match := range results {
-			match.Print()
+		if !out_json && !out_fjson {
+			fmt.Printf("There were %d matches :)\n", len(results))
 		}
+		if len(json_file) != 0 {
+			f := OpenFile(json_file)
+			Truncate(f)
+			f.WriteString(results.Json())
+		}
+		if len(fjson_file) != 0 {
+			f := OpenFile(fjson_file)
+			Truncate(f)
+			f.WriteString(results.FormattedJson())
+		}
+		if out_json {
+			fmt.Println(results.Json())
+		} else if out_fjson {
+			fmt.Println(results.FormattedJson())
+		} else {
+			results.Print()
+		}
+	}
+}
+
+func OpenFile(filename string) *os.File {
+	f, err := os.OpenFile(filename, os.O_CREATE, os.ModeAppend)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
+func Truncate(f *os.File) {
+	terr := f.Truncate(0)
+	if terr != nil {
+		panic(terr)
+	}
+	_, serr := f.Seek(0, 0)
+	if serr != nil {
+		panic(serr)
 	}
 }

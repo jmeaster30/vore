@@ -166,9 +166,9 @@ type Token struct {
 }
 
 type PositionInfo struct {
-	offset   uint64
-	line     uint64
-	column   uint64
+	offset   int
+	line     int
+	column   int
 	lastRead rune
 }
 
