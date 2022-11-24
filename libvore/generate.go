@@ -1,6 +1,9 @@
 package libvore
 
+var loop_id int
+
 func (f *AstFind) generate() Command {
+	loop_id = 0
 	result := FindCommand{
 		all:  f.all,
 		skip: f.skip,
@@ -27,17 +30,19 @@ func (s *AstSet) generate() Command {
 }
 
 func (l *AstLoop) generate(offset int) []Instruction {
-
+	loop_id += 1
 	body := l.body.generate(offset + 1)
 
 	start := StartLoop{
+		id:       loop_id,
 		minLoops: l.min,
 		maxLoops: l.max,
-		exitLoop: offset + len(body),
+		exitLoop: offset + len(body) + 1,
 		fewest:   l.fewest,
 	}
 
 	stop := StopLoop{
+		id:        loop_id,
 		minLoops:  l.min,
 		maxLoops:  l.max,
 		startLoop: offset,

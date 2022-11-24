@@ -61,7 +61,7 @@ func (c FindCommand) execute(filename string) []Match {
 		}
 
 		if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 && matchNumber >= c.skip {
-			//fmt.Println("SUCCESS")
+			//fmt.Println("SUCCESS ====================================================")
 			foundMatch := currentState.MakeMatch(matchNumber + 1)
 			matches = append(matches, foundMatch)
 			fileOffset = currentState.currentFileOffset
@@ -69,7 +69,7 @@ func (c FindCommand) execute(filename string) []Match {
 			columnNumber = currentState.currentColumnNum
 			matchNumber += 1
 		} else {
-			//fmt.Println("FAIL")
+			//fmt.Println("FAIL =======================================================")
 			if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 {
 				matchNumber += 1
 			}
@@ -220,33 +220,63 @@ func (i Branch) execute(current_state *EngineState) *EngineState {
 }
 
 type StartLoop struct {
+	id       int
 	minLoops int
 	maxLoops int
-	exitLoop int
 	fewest   bool
+	exitLoop int
 }
 
 func (i StartLoop) print() {
-	fmt.Println("START LOOP")
+	fmt.Printf("START LOOP %d %d %t %d\n", i.minLoops, i.maxLoops, i.fewest, i.exitLoop)
 }
 
 func (i StartLoop) execute(current_state *EngineState) *EngineState {
-	return &EngineState{}
+	next_state := current_state.Copy()
+
+	inited := next_state.INITLOOPSTACK(i.id)
+	if !inited {
+		next_state.INCLOOPSTACK()
+	}
+	currentIteration := next_state.GETITERATIONSTEP()
+
+	if currentIteration < i.minLoops-1 {
+		next_state.NEXT()
+	} else if (i.maxLoops == -1 || currentIteration <= i.maxLoops) && i.fewest {
+		next_state.NEXT()
+		next_state.CHECKPOINT()
+		next_state.POPLOOPSTACK()
+		next_state.JUMP(i.exitLoop + 1)
+	} else if (i.maxLoops == -1 || currentIteration <= i.maxLoops) && !i.fewest {
+		loop_state := next_state.POPLOOPSTACK()
+		pc := next_state.GETPC()
+		next_state.JUMP(i.exitLoop + 1)
+		next_state.CHECKPOINT()
+		next_state.PUSHLOOPSTACK(loop_state)
+		next_state.JUMP(pc + 1)
+	} else {
+		next_state.BACKTRACK()
+	}
+
+	return next_state
 }
 
 type StopLoop struct {
+	id        int
 	minLoops  int
 	maxLoops  int
-	startLoop int
 	fewest    bool
+	startLoop int
 }
 
 func (i StopLoop) print() {
-	fmt.Println("STOP LOOP")
+	fmt.Printf("END LOOP %d %d %t %d\n", i.minLoops, i.maxLoops, i.fewest, i.startLoop)
 }
 
 func (i StopLoop) execute(current_state *EngineState) *EngineState {
-	return &EngineState{}
+	next_state := current_state.Copy()
+	next_state.JUMP(i.startLoop)
+	return next_state
 }
 
 type StartVarDec struct {

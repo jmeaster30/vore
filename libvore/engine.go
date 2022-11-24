@@ -1,7 +1,6 @@
 package libvore
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -14,9 +13,8 @@ const (
 )
 
 type LoopState struct {
-	iterationStep      int
-	iterationDirection int
-	engineState        EngineState
+	loopId        int
+	iterationStep int
 }
 
 type VariableRecord struct {
@@ -26,7 +24,7 @@ type VariableRecord struct {
 
 type EngineState struct {
 	loopStack     *Stack[LoopState]
-	backtrack     *Queue[EngineState] // TODO this may need to be a stack of queues
+	backtrack     *Queue[EngineState] // TODO this may need to be a stack
 	variableStack *Stack[VariableRecord]
 	environment   map[string]string
 
@@ -200,7 +198,6 @@ func (es *EngineState) MATCHOPTIONS(options []string) {
 	}
 
 	for _, opt := range options {
-		fmt.Printf("comparing '%s' and '%s'\n", value, opt)
 		if value == opt {
 			es.CONSUME(1)
 			es.NEXT()
@@ -235,6 +232,43 @@ func (es *EngineState) NEXT() {
 
 func (es *EngineState) JUMP(pc int) {
 	es.programCounter = pc
+}
+
+func (es *EngineState) GETPC() int {
+	return es.programCounter
+}
+
+func (es *EngineState) INITLOOPSTACK(loopId int) bool {
+	if es.loopStack.IsEmpty() || es.loopStack.Peek().loopId != loopId {
+		es.loopStack.Push(LoopState{
+			loopId:        loopId,
+			iterationStep: 0,
+		})
+		return true
+	}
+	return false
+}
+
+func (es *EngineState) INCLOOPSTACK() {
+	if es.loopStack.IsEmpty() {
+		panic("oh crap :(")
+	}
+	es.loopStack.Peek().iterationStep += 1
+}
+
+func (es *EngineState) GETITERATIONSTEP() int {
+	if es.loopStack.IsEmpty() {
+		panic("oh crap :(")
+	}
+	return es.loopStack.Peek().iterationStep
+}
+
+func (es *EngineState) POPLOOPSTACK() LoopState {
+	return *es.loopStack.Pop()
+}
+
+func (es *EngineState) PUSHLOOPSTACK(loopState LoopState) {
+	es.loopStack.Push(loopState)
 }
 
 func (es *EngineState) STARTVAR(name string) {
