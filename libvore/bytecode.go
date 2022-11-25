@@ -2,23 +2,10 @@ package libvore
 
 import (
 	"fmt"
-	"os"
 )
 
-func readFile(filename string) (*os.File, int64) {
-	dat, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	fstat, ferr := dat.Stat()
-	if ferr != nil {
-		panic(ferr)
-	}
-	return dat, fstat.Size()
-}
-
 type Command interface {
-	execute(string) []Match
+	execute(string, *VReader) []Match
 	print()
 }
 
@@ -36,8 +23,7 @@ func (c FindCommand) print() {
 	}
 }
 
-func (c FindCommand) execute(filename string) []Match {
-	file, filesize := readFile(filename)
+func (c FindCommand) execute(filename string, reader *VReader) []Match {
 	matches := []Match{}
 	matchNumber := 0
 	fileOffset := 0
@@ -46,7 +32,7 @@ func (c FindCommand) execute(filename string) []Match {
 	//fmt.Printf("searching %s %d\n", filename, filesize)
 	//fmt.Printf("%t %d %d\n", c.all, c.skip, c.take)
 	for c.all || matchNumber < c.skip+c.take {
-		currentState := CreateState(filename, int(filesize), file, fileOffset, lineNumber, columnNumber)
+		currentState := CreateState(filename, reader, fileOffset, lineNumber, columnNumber)
 		for currentState.status == INPROCESS {
 			inst := c.body[currentState.programCounter]
 			//fmt.Printf("inst: %d\n", currentState.programCounter)
@@ -73,9 +59,8 @@ func (c FindCommand) execute(filename string) []Match {
 			if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 {
 				matchNumber += 1
 			}
-			skipC := make([]byte, 1)
-			n, err := file.ReadAt(skipC, int64(fileOffset))
-			if n != 1 || err != nil {
+			skipC := reader.ReadAt(1, fileOffset)
+			if len(skipC) != 1 {
 				panic("WOW THAT IS NOT GOOD :(")
 			}
 			fileOffset += 1
@@ -86,7 +71,7 @@ func (c FindCommand) execute(filename string) []Match {
 			}
 		}
 
-		if int64(fileOffset) >= filesize {
+		if fileOffset >= reader.size {
 			break
 		}
 	}
@@ -175,7 +160,7 @@ func (i MatchRange) print() {
 
 func (i MatchRange) execute(current_state *EngineState) *EngineState {
 	next_state := current_state.Copy()
-	panic("not implemented")
+	next_state.MATCHRANGE(i.from, i.to)
 	return next_state
 }
 
@@ -188,7 +173,7 @@ func (i CallSubroutine) print() {
 }
 
 func (i CallSubroutine) execute(current_state *EngineState) *EngineState {
-	return &EngineState{}
+	panic("unimplemented subroutines")
 }
 
 type Branch struct {

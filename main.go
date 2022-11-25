@@ -67,7 +67,7 @@ func main() {
 
 	//vore.PrintTokens()
 	//vore.PrintAST()
-	results := vore.Run([]string{*files_arg})
+	results := vore.RunFiles([]string{*files_arg})
 	if len(results) == 0 {
 		fmt.Println("There were no matches :(")
 	} else {

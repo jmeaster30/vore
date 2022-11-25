@@ -416,8 +416,29 @@ func isListableClass(t TokenType) bool {
 func parse_listable(tokens []*Token, token_index int) (AstListable, int, ParseError) {
 	current_token := tokens[token_index]
 	if current_token.tokenType == STRING {
-		// TODO add range
-		return parse_string(tokens, token_index)
+		from, next_index, err := parse_string(tokens, token_index)
+		if err.isError {
+			return nil, next_index, err
+		}
+
+		current_index := consumeIgnoreableTokens(tokens, next_index)
+		current_token := tokens[current_index]
+		if current_token.tokenType != TO {
+			return from, current_index, NoError()
+		}
+
+		current_index = consumeIgnoreableTokens(tokens, current_index+1)
+		to, new_index, terr := parse_string(tokens, current_index)
+		if terr.isError {
+			return nil, new_index, terr
+		}
+
+		r := AstRange{
+			from: from,
+			to:   to,
+		}
+		return &r, new_index, NoError()
+
 	} else if isListableClass(current_token.tokenType) {
 		return parse_character_class(tokens, token_index)
 	}

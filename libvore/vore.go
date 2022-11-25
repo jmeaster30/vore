@@ -200,13 +200,23 @@ func compile(filename string, reader io.Reader) Vore {
 	return Vore{tokens, commands, bytecode}
 }
 
-func (v *Vore) Run(filenames []string) Matches {
-	result := []Match{}
+func (v *Vore) RunFiles(filenames []string) Matches {
+	result := Matches{}
 	for _, command := range v.bytecode {
 		//command.print()
 		for _, filename := range filenames {
-			result = append(result, command.execute(filename)...)
+			reader := VReaderFromFile(filename)
+			result = append(result, command.execute(filename, reader)...)
 		}
+	}
+	return result
+}
+
+func (v *Vore) Run(searchText string) Matches {
+	result := Matches{}
+	for _, command := range v.bytecode {
+		reader := VReaderFromString(searchText)
+		result = append(result, command.execute("text", reader)...)
 	}
 	return result
 }

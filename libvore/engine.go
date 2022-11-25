@@ -1,9 +1,5 @@
 package libvore
 
-import (
-	"os"
-)
-
 type Status int
 
 const (
@@ -24,7 +20,7 @@ type VariableRecord struct {
 
 type EngineState struct {
 	loopStack     *Stack[LoopState]
-	backtrack     *Queue[EngineState] // TODO this may need to be a stack
+	backtrack     *Stack[EngineState]
 	variableStack *Stack[VariableRecord]
 	environment   map[string]string
 
@@ -37,55 +33,26 @@ type EngineState struct {
 	startFileOffset   int
 	startLineNum      int
 	startColumnNum    int
-	file              *os.File
+	reader            *VReader
 	filename          string
-	filesize          int
 }
 
 func (es *EngineState) SEEK() {
-	_, serr := es.file.Seek(int64(es.currentFileOffset), 0)
-	if serr != nil {
-		panic(serr)
-	}
+	es.reader.Seek(es.currentFileOffset)
 }
 
 func (es *EngineState) SEEKTO(offset int) {
-	_, serr := es.file.Seek(int64(offset), 0)
-	if serr != nil {
-		panic(serr)
-	}
+	es.reader.Seek(offset)
 }
 
 func (es *EngineState) READ(length int) string {
 	es.SEEK()
-	if es.currentFileOffset+length-1 >= es.filesize {
-		return ""
-	}
-	currentString := make([]byte, length)
-	n, err := es.file.Read(currentString)
-	if err != nil {
-		panic(err)
-	}
-	if n != length {
-		return ""
-	}
-	return string(currentString)
+	return es.reader.Read(length)
 }
 
 func (es *EngineState) READAT(offset int, length int) string {
 	es.SEEKTO(offset)
-	if offset+length-1 >= es.filesize {
-		return ""
-	}
-	currentString := make([]byte, length)
-	n, err := es.file.Read(currentString)
-	if err != nil {
-		panic(err)
-	}
-	if n != length {
-		return ""
-	}
-	return string(currentString)
+	return es.reader.Read(length)
 }
 
 func (es *EngineState) CONSUME(amount int) {
@@ -128,7 +95,7 @@ func (es *EngineState) MATCHFILESTART() {
 }
 
 func (es *EngineState) MATCHFILEEND() {
-	if es.currentFileOffset == es.filesize {
+	if es.currentFileOffset == es.reader.size {
 		es.NEXT()
 	} else {
 		es.BACKTRACK()
@@ -152,7 +119,7 @@ func (es *EngineState) MATCHLINESTART() {
 func (es *EngineState) MATCHLINEEND() {
 	nextChar := es.READ(1)
 	nextTwoChar := es.READ(2)
-	if nextChar == "\n" || nextTwoChar == "\r\n" || es.currentFileOffset == es.filesize {
+	if nextChar == "\n" || nextTwoChar == "\r\n" || es.currentFileOffset == es.reader.size {
 		es.NEXT()
 	} else {
 		es.BACKTRACK()
@@ -170,14 +137,19 @@ func (es *EngineState) MATCHANY() {
 }
 
 func (es *EngineState) MATCHRANGE(from string, to string) {
-	//? Is it possible to extend this to fit our need of range matches?
-	value := es.READ(1)
-	if from <= value && value <= to {
-		es.CONSUME(1)
-		es.NEXT()
-	} else {
-		es.BACKTRACK()
+	min := len(from)
+	max := len(to)
+
+	for i := max; i >= min; i-- {
+		value := es.READ(i)
+		if from <= value && value <= to {
+			es.CONSUME(i)
+			es.NEXT()
+			return
+		}
 	}
+
+	es.BACKTRACK()
 }
 
 func (es *EngineState) MATCHLETTER() {
@@ -293,13 +265,13 @@ func (es *EngineState) ENDVAR(name string) {
 
 func (es *EngineState) CHECKPOINT() {
 	checkpoint := es.Copy()
-	es.backtrack.PushFront(*checkpoint)
+	es.backtrack.Push(*checkpoint)
 }
 
-func CreateState(filename string, filesize int, file *os.File, fileOffset int, lineNumber int, columnNumber int) *EngineState {
+func CreateState(filename string, reader *VReader, fileOffset int, lineNumber int, columnNumber int) *EngineState {
 	return &EngineState{
 		loopStack:         NewStack[LoopState](),
-		backtrack:         NewQueue[EngineState](),
+		backtrack:         NewStack[EngineState](),
 		variableStack:     NewStack[VariableRecord](),
 		environment:       make(map[string]string),
 		status:            INPROCESS,
@@ -310,9 +282,8 @@ func CreateState(filename string, filesize int, file *os.File, fileOffset int, l
 		startFileOffset:   fileOffset,
 		startLineNum:      lineNumber,
 		startColumnNum:    columnNumber,
-		file:              file,
+		reader:            reader,
 		filename:          filename,
-		filesize:          filesize,
 	}
 }
 
@@ -336,9 +307,8 @@ func (es *EngineState) Copy() *EngineState {
 		startFileOffset:   es.startFileOffset,
 		startLineNum:      es.startLineNum,
 		startColumnNum:    es.startColumnNum,
-		file:              es.file,
+		reader:            es.reader,
 		filename:          es.filename,
-		filesize:          es.filesize,
 	}
 }
 
@@ -356,9 +326,8 @@ func (es *EngineState) Set(value *EngineState) {
 	es.startFileOffset = value.startFileOffset
 	es.startLineNum = value.startLineNum
 	es.startColumnNum = value.startColumnNum
-	es.file = value.file
+	es.reader = value.reader
 	es.filename = value.filename
-	es.filesize = value.filesize
 }
 
 func (es *EngineState) MakeMatch(matchNumber int) Match {
