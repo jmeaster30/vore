@@ -1,5 +1,7 @@
 # VORE - **V**erb**O**se **R**egular **E**xpressions
 
+[![Tests](https://github.com/jmeaster30/vore/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/jmeaster30/vore/actions/workflows/go.yml)
+
 VORE is just a regular expression engine but with more readable syntax and some extra features that I felt would be useful from processing text. With this project, I wanted to learn about language design and implementation with a strong enough constraint that would keep me from expanding the scope to an unmanageable level.
 
 ## Getting Started
