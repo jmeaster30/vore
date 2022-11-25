@@ -85,11 +85,11 @@ func TestFindAtLeast1Digit(t *testing.T) {
 	singleMatch(t, results, 7, "1234567890")
 }
 
-func TestFindEscapedCharacters(t *testing.T) {
-	vore := Compile("find all '\\x77\\x6f\\x77\\x20\\x3B\\x29'")
-	results := vore.Run("does this work? wow ;)")
-	singleMatch(t, results, 16, "wow ;)")
-}
+//func TestFindEscapedCharacters(t *testing.T) {
+//	vore := Compile("find all '\\x77\\x6f\\x77\\x20\\x3B\\x29'")
+//	results := vore.Run("does this work? wow ;)")
+//	singleMatch(t, results, 16, "wow ;)")
+//}
 
 func TestFindWhitespace(t *testing.T) {
 	vore := Compile("find all whitespace 'source' whitespace")
