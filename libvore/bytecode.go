@@ -229,7 +229,7 @@ func (i StartLoop) execute(current_state *EngineState) *EngineState {
 	}
 	currentIteration := next_state.GETITERATIONSTEP()
 
-	if currentIteration < i.minLoops-1 {
+	if currentIteration < i.minLoops {
 		next_state.NEXT()
 	} else if (i.maxLoops == -1 || currentIteration <= i.maxLoops) && i.fewest {
 		next_state.NEXT()

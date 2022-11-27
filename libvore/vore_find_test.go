@@ -103,6 +103,26 @@ func TestFindLetter(t *testing.T) {
 	singleMatch(t, results, 3, "A")
 }
 
+func TestFindAtLeast3Upper(t *testing.T) {
+	vore := Compile("find all at least 3 upper")
+	results := vore.Run("it SHOULD get THIS but THis")
+	matches(t, results, []TestMatch{
+		{3, "SHOULD", []TestVar{}},
+		{14, "THIS", []TestVar{}},
+	})
+}
+
+func TestFindAtMost2Lower(t *testing.T) {
+	vore := Compile("find all at most 2 lower")
+	results := vore.Run("IT WILL CATCH this AND it WILL GET me")
+	matches(t, results, []TestMatch{
+		{14, "th", []TestVar{}},
+		{16, "is", []TestVar{}},
+		{23, "it", []TestVar{}},
+		{35, "me", []TestVar{}},
+	})
+}
+
 func TestSkipTest(t *testing.T) {
 	vore := Compile("find skip 1 take 1 'here'")
 	results := vore.Run("here >here< here")
