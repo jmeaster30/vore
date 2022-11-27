@@ -5,7 +5,7 @@ import (
 )
 
 type Command interface {
-	execute(string, *VReader) Matches
+	execute(string, *VReader, ReplaceMode) Matches
 	print()
 }
 
@@ -24,7 +24,7 @@ func (c FindCommand) print() {
 	}
 }
 
-func (c FindCommand) execute(filename string, reader *VReader) Matches {
+func (c FindCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
 	matches := NewQueue[Match]()
 	matchNumber := 0
 	fileOffset := 0
@@ -96,7 +96,7 @@ func (c ReplaceCommand) print() {
 	fmt.Println("replace command")
 }
 
-func (c ReplaceCommand) execute(filename string, reader *VReader) Matches {
+func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
 	matches := NewQueue[Match]()
 	matchNumber := 0
 	fileOffset := 0
@@ -163,7 +163,15 @@ func (c ReplaceCommand) execute(filename string, reader *VReader) Matches {
 		replacedMatches = append(replacedMatches, current_state.match)
 	}
 
-	writer := NewVWriter(filename + ".vored")
+	var writer *VWriter
+	if mode == NEW {
+		writer = NewVWriter(filename + ".vored")
+	} else if mode == OVERWRITE {
+		writer = NewVWriter(filename)
+	} else if mode == NOTHING {
+		writer = DummyVWriter()
+	}
+
 	lastReaderOffset := 0
 	currentWriterOffset := 0
 	for i := 0; i < len(replacedMatches); i++ {
@@ -191,7 +199,7 @@ func (c SetCommand) print() {
 	fmt.Println("set command")
 }
 
-func (c SetCommand) execute(filename string, reader *VReader) Matches {
+func (c SetCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
 	return Matches{}
 }
 

@@ -20,7 +20,7 @@ func NewMemoryStream() *MemoryStream {
 func (ms *MemoryStream) Write(buf []byte) (n int, err error) {
 	minCap := ms.pos + len(buf)
 	if minCap > cap(ms.contents) { // Make sure buf has enough capacity:
-		buf2 := make([]byte, len(ms.contents), 2*len(ms.contents)) // add some extra
+		buf2 := make([]byte, len(ms.contents), 2*(ms.pos+len(buf))) // add some extra
 		copy(buf2, ms.contents)
 		ms.contents = buf2
 	}

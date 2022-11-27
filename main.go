@@ -1,12 +1,31 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 
 	"github.com/jmeaster30/vore/libvore"
 )
+
+var replaceModeArg libvore.ReplaceMode
+
+func replaceMode(value string) error {
+	switch value {
+	case "OVERWRITE":
+		replaceModeArg = libvore.OVERWRITE
+	case "NOTHING":
+		replaceModeArg = libvore.NOTHING
+	case "":
+		fallthrough
+	case "NEW":
+		replaceModeArg = libvore.NEW
+	default:
+		return errors.New("Expected [NEW, NOTHING, OVERWRITE] but got '" + value + "'.")
+	}
+	return nil
+}
 
 func main() {
 	source_arg := flag.String("src", "", "Vore source file to run on search files")
@@ -17,6 +36,7 @@ func main() {
 	json_file_arg := flag.String("json-file", "", "JSON output file")
 	fjson_file_arg := flag.String("formatted-json-file", "", "Formatted JSON output file")
 	ide_arg := flag.Bool("ide", false, "Open source and files in vore ide")
+	flag.Func("replace-mode", "File mode for replace statements [OVERWRITE, NEW] (default: NEW)", replaceMode)
 	flag.Parse()
 
 	source := *source_arg
@@ -67,7 +87,7 @@ func main() {
 
 	//vore.PrintTokens()
 	//vore.PrintAST()
-	results := vore.RunFiles([]string{*files_arg})
+	results := vore.RunFiles([]string{*files_arg}, replaceModeArg)
 	if len(results) == 0 {
 		fmt.Println("There were no matches :(")
 	} else {

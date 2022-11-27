@@ -9,6 +9,14 @@ import (
 	"strings"
 )
 
+type ReplaceMode int
+
+const (
+	OVERWRITE ReplaceMode = iota
+	NEW
+	NOTHING
+)
+
 type Match struct {
 	filename    string
 	matchNumber int
@@ -204,13 +212,13 @@ func compile(filename string, reader io.Reader) Vore {
 	return Vore{tokens, commands, bytecode}
 }
 
-func (v *Vore) RunFiles(filenames []string) Matches {
+func (v *Vore) RunFiles(filenames []string, mode ReplaceMode) Matches {
 	result := Matches{}
 	for _, command := range v.bytecode {
 		//command.print()
 		for _, filename := range filenames {
 			reader := VReaderFromFile(filename)
-			result = append(result, command.execute(filename, reader)...)
+			result = append(result, command.execute(filename, reader, mode)...)
 		}
 	}
 	return result
@@ -220,7 +228,7 @@ func (v *Vore) Run(searchText string) Matches {
 	result := Matches{}
 	for _, command := range v.bytecode {
 		reader := VReaderFromString(searchText)
-		result = append(result, command.execute("text", reader)...)
+		result = append(result, command.execute("text", reader, NOTHING)...)
 	}
 	return result
 }
