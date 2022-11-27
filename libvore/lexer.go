@@ -41,6 +41,8 @@ const (
 	ALL
 	SKIP
 	TAKE
+	TOP
+	LAST
 
 	// classes
 	ANY
@@ -110,6 +112,10 @@ func (t TokenType) pp() string {
 		return "SKIP"
 	case TAKE:
 		return "TAKE"
+	case TOP:
+		return "TOP"
+	case LAST:
+		return "LAST"
 	case ANY:
 		return "ANY"
 	case WHITESPACE:
@@ -358,6 +364,10 @@ func (s *Lexer) getNextToken() *Token {
 			token.tokenType = SKIP
 		case "take":
 			token.tokenType = TAKE
+		case "top":
+			token.tokenType = TOP
+		case "last":
+			token.tokenType = LAST
 		case "any":
 			token.tokenType = ANY
 		case "whitespace":

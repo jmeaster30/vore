@@ -52,7 +52,7 @@ func parse_command(tokens []*Token, token_index int) (AstCommand, int, ParseErro
 }
 
 func parse_find(tokens []*Token, token_index int) (*AstFind, int, ParseError) {
-	all, skipValue, takeValue, new_index, amountError := parse_amount(tokens, token_index+1)
+	all, skipValue, takeValue, lastValue, new_index, amountError := parse_amount(tokens, token_index+1)
 	if amountError.isError {
 		return nil, new_index, amountError
 	}
@@ -61,6 +61,7 @@ func parse_find(tokens []*Token, token_index int) (*AstFind, int, ParseError) {
 		all:  all,
 		skip: skipValue,
 		take: takeValue,
+		last: lastValue,
 		body: []AstExpression{},
 	}
 
@@ -82,7 +83,7 @@ func parse_find(tokens []*Token, token_index int) (*AstFind, int, ParseError) {
 }
 
 func parse_replace(tokens []*Token, token_index int) (*AstReplace, int, ParseError) {
-	all, skipValue, takeValue, new_index, amountError := parse_amount(tokens, token_index+1)
+	all, skipValue, takeValue, lastValue, new_index, amountError := parse_amount(tokens, token_index+1)
 	if amountError.isError {
 		return nil, new_index, amountError
 	}
@@ -91,6 +92,7 @@ func parse_replace(tokens []*Token, token_index int) (*AstReplace, int, ParseErr
 		all:  all,
 		skip: skipValue,
 		take: takeValue,
+		last: lastValue,
 		body: []AstExpression{},
 	}
 
@@ -159,18 +161,18 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, ParseError) {
 	return &setCommand, current_index, NoError()
 }
 
-func parse_amount(tokens []*Token, token_index int) (bool, int, int, int, ParseError) {
+func parse_amount(tokens []*Token, token_index int) (bool, int, int, int, int, ParseError) {
 	new_index := consumeIgnoreableTokens(tokens, token_index)
 
 	if tokens[new_index].tokenType == ALL {
 		new_index += 1
-		return true, 0, 0, new_index, NoError()
+		return true, 0, 0, 0, new_index, NoError()
 	} else if tokens[new_index].tokenType == SKIP {
 		new_index = consumeIgnoreableTokens(tokens, new_index+1)
 		if tokens[new_index].tokenType == NUMBER {
 			skipValue, skipValueError := strconv.Atoi(tokens[new_index].lexeme)
 			if skipValueError != nil {
-				return false, 0, 0, 0, NewParseError(*tokens[new_index], "Error converting to int value")
+				return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Error converting to int value")
 			}
 
 			new_index = consumeIgnoreableTokens(tokens, new_index+1)
@@ -179,32 +181,44 @@ func parse_amount(tokens []*Token, token_index int) (bool, int, int, int, ParseE
 				if tokens[new_index].tokenType == NUMBER {
 					takeValue, takeValueError := strconv.Atoi(tokens[new_index].lexeme)
 					if takeValueError != nil {
-						return false, 0, 0, 0, NewParseError(*tokens[new_index], "Error converting to int value")
+						return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Error converting to int value")
 					}
 					new_index++
-					return false, skipValue, takeValue, new_index, NoError()
+					return false, skipValue, takeValue, 0, new_index, NoError()
 				} else {
-					return false, 0, 0, 0, NewParseError(*tokens[new_index], "Unexpected token. Expected a number")
+					return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected a number")
 				}
 			}
-			return true, skipValue, 0, new_index, NoError()
+			return true, skipValue, 0, 0, new_index, NoError()
 		} else {
-			return false, 0, 0, 0, NewParseError(*tokens[new_index], "Unexpected token. Expected a number")
+			return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected a number")
 		}
-	} else if tokens[new_index].tokenType == TAKE {
+	} else if tokens[new_index].tokenType == TAKE || tokens[new_index].tokenType == TOP {
 		new_index = consumeIgnoreableTokens(tokens, new_index+1)
 		if tokens[new_index].tokenType == NUMBER {
 			takeValue, takeValueError := strconv.Atoi(tokens[new_index].lexeme)
 			if takeValueError != nil {
-				return false, 0, 0, 0, NewParseError(*tokens[new_index], "Error converting to int value")
+				return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Error converting to int value")
 			}
 			new_index++
-			return false, 0, takeValue, new_index, NoError()
+			return false, 0, takeValue, 0, new_index, NoError()
 		} else {
-			return false, 0, 0, 0, NewParseError(*tokens[new_index], "Unexpected token. Expected a number")
+			return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected a number")
+		}
+	} else if tokens[new_index].tokenType == LAST {
+		new_index = consumeIgnoreableTokens(tokens, new_index+1)
+		if tokens[new_index].tokenType == NUMBER {
+			lastValue, lastValueError := strconv.Atoi(tokens[new_index].lexeme)
+			if lastValueError != nil {
+				return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Error converting to int value")
+			}
+			new_index++
+			return true, 0, 0, lastValue, new_index, NoError()
+		} else {
+			return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected a number")
 		}
 	}
-	return false, 0, 0, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'all', 'skip', or 'take'")
+	return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'all', 'skip', or 'take'")
 }
 
 func parse_expression(tokens []*Token, token_index int) (AstExpression, int, ParseError) {

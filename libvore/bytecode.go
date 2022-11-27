@@ -13,6 +13,7 @@ type FindCommand struct {
 	all  bool
 	skip int
 	take int
+	last int
 	body []Instruction
 }
 
@@ -24,7 +25,7 @@ func (c FindCommand) print() {
 }
 
 func (c FindCommand) execute(filename string, reader *VReader) []Match {
-	matches := []Match{}
+	matches := NewQueue[Match]()
 	matchNumber := 0
 	fileOffset := 0
 	lineNumber := 1
@@ -49,7 +50,10 @@ func (c FindCommand) execute(filename string, reader *VReader) []Match {
 		if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 && matchNumber >= c.skip {
 			//fmt.Println("SUCCESS ====================================================")
 			foundMatch := currentState.MakeMatch(matchNumber + 1)
-			matches = append(matches, foundMatch)
+			matches.PushBack(foundMatch)
+			if c.last != 0 {
+				matches.Limit(c.last)
+			}
 			fileOffset = currentState.currentFileOffset
 			lineNumber = currentState.currentLineNum
 			columnNumber = currentState.currentColumnNum
@@ -76,7 +80,7 @@ func (c FindCommand) execute(filename string, reader *VReader) []Match {
 		}
 	}
 
-	return matches
+	return matches.Contents()
 }
 
 type Instruction interface {

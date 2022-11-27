@@ -102,3 +102,24 @@ func TestFindLetter(t *testing.T) {
 	results := vore.Run("345A98(&$(#*%")
 	singleMatch(t, results, 3, "A")
 }
+
+func TestSkipTest(t *testing.T) {
+	vore := Compile("find skip 1 take 1 'here'")
+	results := vore.Run("here >here< here")
+	singleMatch(t, results, 6, "here")
+}
+
+func TestTopTest(t *testing.T) {
+	vore := Compile("find top 1 'here'")
+	results := vore.Run(">here< here here")
+	singleMatch(t, results, 1, "here")
+}
+
+func TestLastTest(t *testing.T) {
+	vore := Compile("find last 2 'here'")
+	results := vore.Run("here >here< >here<")
+	matches(t, results, []TestMatch{
+		{6, "here", []TestVar{}},
+		{13, "here", []TestVar{}},
+	})
+}

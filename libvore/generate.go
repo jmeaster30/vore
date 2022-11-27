@@ -8,6 +8,7 @@ func (f *AstFind) generate() Command {
 		all:  f.all,
 		skip: f.skip,
 		take: f.take,
+		last: f.last,
 		body: []Instruction{},
 	}
 

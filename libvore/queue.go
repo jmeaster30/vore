@@ -41,6 +41,12 @@ func (s *Queue[T]) Pop() *T {
 	return &result
 }
 
+func (s *Queue[T]) Limit(amount int) {
+	for s.Size() > uint64(amount) {
+		s.Pop()
+	}
+}
+
 // isEmpty
 func (s *Queue[T]) IsEmpty() bool {
 	return len(s.store) == 0
@@ -48,4 +54,8 @@ func (s *Queue[T]) IsEmpty() bool {
 
 func (s *Queue[T]) Size() uint64 {
 	return uint64(len(s.store))
+}
+
+func (s *Queue[T]) Contents() []T {
+	return s.store
 }

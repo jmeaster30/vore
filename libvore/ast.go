@@ -36,6 +36,7 @@ type AstFind struct {
 	all  bool
 	skip int
 	take int
+	last int
 	body []AstExpression
 }
 
@@ -58,6 +59,7 @@ type AstReplace struct {
 	all    bool
 	skip   int
 	take   int
+	last   int
 	body   []AstExpression
 	result []AstAtom
 }
