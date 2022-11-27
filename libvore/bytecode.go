@@ -5,7 +5,7 @@ import (
 )
 
 type Command interface {
-	execute(string, *VReader) []Match
+	execute(string, *VReader) Matches
 	print()
 }
 
@@ -24,7 +24,7 @@ func (c FindCommand) print() {
 	}
 }
 
-func (c FindCommand) execute(filename string, reader *VReader) []Match {
+func (c FindCommand) execute(filename string, reader *VReader) Matches {
 	matches := NewQueue[Match]()
 	matchNumber := 0
 	fileOffset := 0
@@ -81,6 +81,28 @@ func (c FindCommand) execute(filename string, reader *VReader) []Match {
 	}
 
 	return matches.Contents()
+}
+
+type ReplaceCommand struct {
+}
+
+func (c ReplaceCommand) print() {
+	fmt.Println("replace command")
+}
+
+func (c ReplaceCommand) execute(filename string, reader *VReader) Matches {
+	return Matches{}
+}
+
+type SetCommand struct {
+}
+
+func (c SetCommand) print() {
+	fmt.Println("set command")
+}
+
+func (c SetCommand) execute(filename string, reader *VReader) Matches {
+	return Matches{}
 }
 
 type Instruction interface {

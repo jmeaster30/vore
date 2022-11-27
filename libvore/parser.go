@@ -33,7 +33,9 @@ func parse(tokens []*Token) ([]AstCommand, ParseError) {
 			return []AstCommand{}, e
 		}
 		token_index = new_index
-		commands = append(commands, command)
+		if command != nil {
+			commands = append(commands, command)
+		}
 	}
 
 	return commands, NoError()
@@ -46,6 +48,8 @@ func parse_command(tokens []*Token, token_index int) (AstCommand, int, ParseErro
 		return parse_replace(tokens, token_index)
 	} else if tokens[token_index].tokenType == SET {
 		return parse_set(tokens, token_index)
+	} else if tokens[token_index].tokenType == EOF {
+		return nil, token_index, NoError()
 	} else {
 		return nil, token_index, NewParseError(*tokens[token_index], "Unexpected token. Expected 'find', 'replace', or 'set'.")
 	}

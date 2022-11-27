@@ -23,11 +23,11 @@ func (f *AstFind) generate() Command {
 }
 
 func (r *AstReplace) generate() Command {
-	panic(":(")
+	return ReplaceCommand{}
 }
 
 func (s *AstSet) generate() Command {
-	panic(":(")
+	return SetCommand{}
 }
 
 func (l *AstLoop) generate(offset int) []Instruction {
