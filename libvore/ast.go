@@ -30,6 +30,7 @@ type AstAtom interface {
 	isAtom()
 	print()
 	generate(offset int) []Instruction
+	generateReplace(offset int) []RInstruction
 }
 
 type AstFind struct {

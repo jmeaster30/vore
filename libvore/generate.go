@@ -23,7 +23,31 @@ func (f *AstFind) generate() Command {
 }
 
 func (r *AstReplace) generate() Command {
-	return ReplaceCommand{}
+	loop_id = 0
+	result := ReplaceCommand{
+		all:      r.all,
+		skip:     r.skip,
+		take:     r.take,
+		last:     r.last,
+		body:     []Instruction{},
+		replacer: []RInstruction{},
+	}
+
+	offset := 0
+	for _, expr := range r.body {
+		expr_insts := expr.generate(offset)
+		offset = offset + len(expr_insts)
+		result.body = append(result.body, expr_insts...)
+	}
+
+	offset = 0
+	for _, expr := range r.result {
+		expr_insts := expr.generateReplace(offset)
+		offset = offset + len(expr_insts)
+		result.replacer = append(result.replacer, expr_insts...)
+	}
+
+	return result
 }
 
 func (s *AstSet) generate() Command {
@@ -180,4 +204,18 @@ func (l *AstCharacterClass) generate(offset int) []Instruction {
 		class: l.classType,
 	}
 	return []Instruction{result}
+}
+
+func (l *AstString) generateReplace(offset int) []RInstruction {
+	result := ReplaceString{
+		value: l.value,
+	}
+	return []RInstruction{result}
+}
+
+func (l *AstVariable) generateReplace(offset int) []RInstruction {
+	result := ReplaceVariable{
+		name: l.name,
+	}
+	return []RInstruction{result}
 }

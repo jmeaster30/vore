@@ -1,5 +1,7 @@
 package libvore
 
+import "strconv"
+
 type Status int
 
 const (
@@ -346,4 +348,65 @@ func (es *EngineState) MakeMatch(matchNumber int) Match {
 	}
 
 	return result
+}
+
+type ReplacerState struct {
+	variables      map[string]string
+	match          Match
+	programCounter int
+}
+
+func InitReplacerState(match Match, totalMatches int) *ReplacerState {
+	variables := make(map[string]string)
+	for key, value := range match.variables {
+		variables[key] = value
+	}
+
+	variables["totalMatches"] = strconv.Itoa(totalMatches)
+	variables["matchNumber"] = strconv.Itoa(match.matchNumber)
+	variables["startOffset"] = strconv.Itoa(match.offset.Start)
+	variables["endOffset"] = strconv.Itoa(match.offset.Start)
+	variables["lineNumber"] = strconv.Itoa(match.line.Start)
+	variables["columnNumber"] = strconv.Itoa(match.column.Start)
+	variables["value"] = strconv.Itoa(match.offset.Start)
+	variables["filename"] = strconv.Itoa(match.offset.Start)
+	return &ReplacerState{
+		variables:      variables,
+		match:          match,
+		programCounter: 0,
+	}
+}
+
+func (rs *ReplacerState) NEXT() {
+	rs.programCounter += 1
+}
+
+func (rs *ReplacerState) WRITESTRING(value string) {
+	rs.match.replacement += value
+}
+
+func (rs *ReplacerState) WRITEVAR(name string) {
+	value, found := rs.variables[name]
+	if found {
+		rs.match.replacement += value
+	}
+}
+
+func (rs *ReplacerState) Copy() *ReplacerState {
+	varsCopy := make(map[string]string)
+	for k, v := range rs.variables {
+		varsCopy[k] = v
+	}
+
+	return &ReplacerState{
+		programCounter: rs.programCounter,
+		match:          rs.match,
+		variables:      varsCopy,
+	}
+}
+
+func (rs *ReplacerState) Set(from *ReplacerState) {
+	rs.variables = from.variables
+	rs.match = from.match
+	rs.programCounter = from.programCounter
 }

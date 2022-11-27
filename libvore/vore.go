@@ -16,6 +16,7 @@ type Match struct {
 	line        Range
 	column      Range
 	value       string
+	replacement string
 	variables   map[string]string
 }
 
@@ -70,6 +71,7 @@ func (m Match) FormattedJson() string {
 	result += "\t\"line\": {\n\t\t\"start\": \"" + strconv.Itoa(m.line.Start) + "\",\n\t\t\"end\": \"" + strconv.Itoa(m.line.End) + "\"\n\t},\n"
 	result += "\t\"column\": {\n\t\t\"start\": \"" + strconv.Itoa(m.column.Start) + "\",\n\t\t\"end\": \"" + strconv.Itoa(m.column.End) + "\"\n\t},\n"
 	result += "\t\"value\": \"" + cleanControlCharacters(m.value) + "\",\n"
+	result += "\t\"replaced\": \"" + cleanControlCharacters(m.replacement) + "\",\n"
 	result += "\t\"variables\": [\n"
 
 	keys := make([]string, 0, len(m.variables))
@@ -116,6 +118,7 @@ func (m Match) Json() string {
 	result += "\"line\":{\"start\":\"" + strconv.Itoa(m.line.Start) + "\",\"end\":\"" + strconv.Itoa(m.line.End) + "\"},"
 	result += "\"column\":{\"start\":\"" + strconv.Itoa(m.column.Start) + "\",\"end\":\"" + strconv.Itoa(m.column.End) + "\"},"
 	result += "\"value\":\"" + cleanControlCharacters(m.value) + "\","
+	result += "\"replaced\":\"" + cleanControlCharacters(m.replacement) + "\","
 	result += "\"variables\":["
 
 	keys := make([]string, 0, len(m.variables))
@@ -154,6 +157,7 @@ func (m Match) Print() {
 	fmt.Printf("Filename: %s\n", m.filename)
 	fmt.Printf("MatchNumber: %d\n", m.matchNumber)
 	fmt.Printf("Value: %s\n", m.value)
+	fmt.Printf("Replaced: %s\n", m.replacement)
 	fmt.Printf("Offset: %d %d\n", m.offset.Start, m.offset.End)
 	fmt.Printf("Line: %d %d\n", m.line.Start, m.line.End)
 	fmt.Printf("Column: %d %d\n", m.column.Start, m.column.End)

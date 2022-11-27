@@ -84,6 +84,12 @@ func (c FindCommand) execute(filename string, reader *VReader) Matches {
 }
 
 type ReplaceCommand struct {
+	all      bool
+	skip     int
+	take     int
+	last     int
+	body     []Instruction
+	replacer []RInstruction
 }
 
 func (c ReplaceCommand) print() {
@@ -91,7 +97,91 @@ func (c ReplaceCommand) print() {
 }
 
 func (c ReplaceCommand) execute(filename string, reader *VReader) Matches {
-	return Matches{}
+	matches := NewQueue[Match]()
+	matchNumber := 0
+	fileOffset := 0
+	lineNumber := 1
+	columnNumber := 1
+	//fmt.Printf("searching %s %d\n", filename, filesize)
+	//fmt.Printf("%t %d %d\n", c.all, c.skip, c.take)
+	for c.all || matchNumber < c.skip+c.take {
+		currentState := CreateState(filename, reader, fileOffset, lineNumber, columnNumber)
+		for currentState.status == INPROCESS {
+			inst := c.body[currentState.programCounter]
+			//fmt.Printf("inst: %d\n", currentState.programCounter)
+			//inst.print()
+			//fmt.Printf("BEFORE = PC: %d\tBTK: %d\n", currentState.programCounter, currentState.backtrack.Size())
+			currentState = inst.execute(currentState)
+
+			//fmt.Printf("AFTER  = PC: %d\tBTK: %d\n", currentState.programCounter, currentState.backtrack.Size())
+			if currentState.status == INPROCESS && currentState.programCounter >= len(c.body) {
+				currentState.SUCCESS()
+			}
+		}
+
+		if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 && matchNumber >= c.skip {
+			//fmt.Println("SUCCESS ====================================================")
+			foundMatch := currentState.MakeMatch(matchNumber + 1)
+			matches.PushBack(foundMatch)
+			if c.last != 0 {
+				matches.Limit(c.last)
+			}
+			fileOffset = currentState.currentFileOffset
+			lineNumber = currentState.currentLineNum
+			columnNumber = currentState.currentColumnNum
+			matchNumber += 1
+		} else {
+			//fmt.Println("FAIL =======================================================")
+			if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 {
+				matchNumber += 1
+			}
+			skipC := reader.ReadAt(1, fileOffset)
+			if len(skipC) != 1 {
+				panic("WOW THAT IS NOT GOOD :(")
+			}
+			fileOffset += 1
+			columnNumber += 1
+			if rune(skipC[0]) == rune('\n') {
+				lineNumber += 1
+				columnNumber = 1
+			}
+		}
+
+		if fileOffset >= reader.size {
+			break
+		}
+	}
+
+	foundMatches := matches.Contents()
+	replacedMatches := Matches{}
+	for _, match := range foundMatches {
+		current_state := InitReplacerState(match, len(foundMatches))
+		for current_state.programCounter < len(c.replacer) {
+			inst := c.replacer[current_state.programCounter]
+			current_state = inst.execute(current_state)
+		}
+		replacedMatches = append(replacedMatches, current_state.match)
+	}
+
+	writer := NewVWriter(filename + ".vored")
+	lastReaderOffset := 0
+	currentWriterOffset := 0
+	for i := 0; i < len(replacedMatches); i++ {
+		currentReaderLength := replacedMatches[i].offset.Start - lastReaderOffset
+		orig := reader.ReadAt(currentReaderLength, lastReaderOffset)
+		writer.WriteAt(currentWriterOffset, orig)
+		currentWriterOffset += currentReaderLength
+		lastReaderOffset += currentReaderLength
+		writer.WriteAt(currentWriterOffset, replacedMatches[i].replacement)
+		currentWriterOffset += len(replacedMatches[i].replacement)
+		lastReaderOffset += len(replacedMatches[i].value)
+	}
+	if lastReaderOffset < reader.size {
+		outputValue := reader.ReadAt(reader.size-lastReaderOffset, lastReaderOffset)
+		writer.WriteAt(currentWriterOffset, outputValue)
+	}
+
+	return replacedMatches
 }
 
 type SetCommand struct {
@@ -108,6 +198,10 @@ func (c SetCommand) execute(filename string, reader *VReader) Matches {
 type Instruction interface {
 	execute(*EngineState) *EngineState
 	print()
+}
+
+type RInstruction interface {
+	execute(*ReplacerState) *ReplacerState
 }
 
 type MatchLiteral struct {
@@ -329,5 +423,35 @@ func (i Jump) print() {
 func (i Jump) execute(current_state *EngineState) *EngineState {
 	next_state := current_state.Copy()
 	next_state.JUMP(i.newProgramCounter)
+	return next_state
+}
+
+type ReplaceString struct {
+	value string
+}
+
+func (i ReplaceString) print() {
+	fmt.Printf("replace string")
+}
+
+func (i ReplaceString) execute(current_state *ReplacerState) *ReplacerState {
+	next_state := current_state.Copy()
+	next_state.WRITESTRING(i.value)
+	next_state.NEXT()
+	return next_state
+}
+
+type ReplaceVariable struct {
+	name string
+}
+
+func (i ReplaceVariable) print() {
+	fmt.Printf("replace variable")
+}
+
+func (i ReplaceVariable) execute(current_state *ReplacerState) *ReplacerState {
+	next_state := current_state.Copy()
+	next_state.WRITEVAR(i.name)
+	next_state.NEXT()
 	return next_state
 }

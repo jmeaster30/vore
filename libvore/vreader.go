@@ -40,7 +40,10 @@ func VReaderFromString(contents string) *VReader {
 
 func (v *VReader) Seek(offset int) {
 	v.offset = offset
-	v.contents.Seek(int64(offset), 0)
+	_, err := v.contents.Seek(int64(offset), 0)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (v *VReader) Read(length int) string {

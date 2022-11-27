@@ -253,6 +253,16 @@ func (s *Lexer) getNextToken() *Token {
 				break
 			}
 			buf.WriteRune(ch)
+		} else if current_state == SSTRING_DOUBLE {
+			if ch == '"' {
+				break
+			}
+			buf.WriteRune(ch)
+		} else if current_state == SSTRING_SINGLE {
+			if ch == '\'' {
+				break
+			}
+			buf.WriteRune(ch)
 		} else if ch == '(' && current_state == SSTART {
 			buf.WriteRune(ch)
 			current_state = SOPENPAREN
@@ -307,11 +317,6 @@ func (s *Lexer) getNextToken() *Token {
 		} else if current_state == SSTRING_D_ESCAPE {
 			buf.WriteRune(getEscapedRune(ch))
 			current_state = SSTRING_DOUBLE
-		} else if current_state == SSTRING_DOUBLE {
-			if ch == '"' {
-				break
-			}
-			buf.WriteRune(ch)
 		} else if ch == '\'' && current_state == SSTART {
 			current_state = SSTRING_SINGLE
 		} else if ch == '\\' && current_state == SSTRING_SINGLE {
@@ -319,11 +324,6 @@ func (s *Lexer) getNextToken() *Token {
 		} else if current_state == SSTRING_S_ESCAPE {
 			buf.WriteRune(getEscapedRune(ch))
 			current_state = SSTRING_SINGLE
-		} else if current_state == SSTRING_SINGLE {
-			if ch == '\'' {
-				break
-			}
-			buf.WriteRune(ch)
 		} else {
 			if current_state != SSTART || unicode.IsDigit(ch) || unicode.IsLetter(ch) || unicode.IsSpace(ch) || ch == '(' || ch == ')' || ch == ',' || ch == ':' || ch == '=' || ch == '"' || ch == '\'' || ch == '-' {
 				s.unread_last()
@@ -441,6 +441,7 @@ func (s *Lexer) getNextToken() *Token {
 	token.column = NewRange(startPosInfo.column, endPosInfo.column)
 	token.line = NewRange(startPosInfo.line, endPosInfo.line)
 	token.lexeme = buf.String()
+	fmt.Printf("[%s] '%s' \tline: %d, \tstart column: %d, \tend column: %d\n", token.tokenType.pp(), token.lexeme, token.line.Start, token.column.Start, token.column.End)
 	return token
 }
 
