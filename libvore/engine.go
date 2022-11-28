@@ -1,6 +1,8 @@
 package libvore
 
-import "strconv"
+import (
+	"strconv"
+)
 
 type Status int
 
@@ -20,10 +22,16 @@ type VariableRecord struct {
 	startOffset int
 }
 
+type CallState struct {
+	id           int
+	returnOffset int
+}
+
 type EngineState struct {
 	loopStack     *Stack[LoopState]
 	backtrack     *Stack[EngineState]
 	variableStack *Stack[VariableRecord]
+	callStack     *Stack[CallState]
 	environment   map[string]string
 
 	status            Status
@@ -184,10 +192,14 @@ func (es *EngineState) MATCHOPTIONS(options []string) {
 }
 
 func (es *EngineState) MATCH(value string) {
-	if value == es.READ(len(value)) {
+	comp := es.READ(len(value))
+	//fmt.Printf("is(%d) '%s' == '%s'\n", es.currentFileOffset, value, comp)
+	if value == comp {
+		//	fmt.Println("YEAH!!")
 		es.CONSUME(len(value))
 		es.NEXT()
 	} else {
+		//	fmt.Println("no :(")
 		es.BACKTRACK()
 	}
 }
@@ -265,6 +277,28 @@ func (es *EngineState) ENDVAR(name string) {
 	es.NEXT()
 }
 
+func (es *EngineState) VALIDATECALL(id int, returnOffset int) {
+	top := es.callStack.Peek()
+	if top == nil || top.id != id {
+		es.CALL(id, returnOffset)
+	}
+}
+
+func (es *EngineState) CALL(id int, returnOffset int) {
+	es.callStack.Push(CallState{
+		id:           id,
+		returnOffset: returnOffset,
+	})
+}
+
+func (es *EngineState) RETURN() {
+	top := es.callStack.Pop()
+	if top == nil {
+		panic("BAD CALL STACK :(")
+	}
+	es.programCounter = top.returnOffset
+}
+
 func (es *EngineState) CHECKPOINT() {
 	checkpoint := es.Copy()
 	es.backtrack.Push(*checkpoint)
@@ -275,6 +309,7 @@ func CreateState(filename string, reader *VReader, fileOffset int, lineNumber in
 		loopStack:         NewStack[LoopState](),
 		backtrack:         NewStack[EngineState](),
 		variableStack:     NewStack[VariableRecord](),
+		callStack:         NewStack[CallState](),
 		environment:       make(map[string]string),
 		status:            INPROCESS,
 		programCounter:    0,
@@ -299,6 +334,7 @@ func (es *EngineState) Copy() *EngineState {
 		loopStack:         es.loopStack.Copy(),
 		backtrack:         es.backtrack.Copy(),
 		variableStack:     es.variableStack.Copy(),
+		callStack:         es.callStack.Copy(),
 		environment:       envCopy,
 		status:            es.status,
 		programCounter:    es.programCounter,
@@ -318,6 +354,7 @@ func (es *EngineState) Set(value *EngineState) {
 	es.loopStack = value.loopStack
 	es.backtrack = value.backtrack
 	es.variableStack = value.variableStack
+	es.callStack = value.callStack
 	es.environment = value.environment
 	es.status = value.status
 	es.programCounter = value.programCounter

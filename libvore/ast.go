@@ -11,26 +11,26 @@ type AstCommand interface {
 type AstExpression interface {
 	isExpr()
 	print()
-	generate(offset int) []Instruction
+	generate(offset int, state *GenState) []Instruction
 }
 
 type AstLiteral interface {
 	isLiteral()
 	print()
-	generate(offset int) []Instruction
+	generate(offset int, state *GenState) []Instruction
 }
 
 type AstListable interface {
 	isListable()
 	print()
-	generate(offset int) []Instruction
+	generate(offset int, state *GenState) []Instruction
 }
 
 type AstAtom interface {
 	isAtom()
 	print()
-	generate(offset int) []Instruction
-	generateReplace(offset int) []RInstruction
+	generate(offset int, state *GenState) []Instruction
+	generateReplace(offset int, state *GenState) []RInstruction
 }
 
 type AstFind struct {
@@ -126,19 +126,29 @@ func (b AstBranch) print() {
 }
 
 type AstDec struct {
-	isSubroutine bool
-	name         string
-	body         AstLiteral
+	name string
+	body AstLiteral
 }
 
 func (d AstDec) isExpr() {}
 func (d AstDec) print() {
-	fmt.Print("(dec ")
-	if d.isSubroutine {
-		fmt.Print("sub ")
-	}
-	fmt.Printf("'%s' ", d.name)
+	fmt.Printf("(dec '%s' ", d.name)
 	d.body.print()
+	fmt.Print(")")
+}
+
+type AstSub struct {
+	name string
+	body []AstExpression
+}
+
+func (d AstSub) isExpr() {}
+func (d AstSub) print() {
+	fmt.Printf("(subdec '%s'", d.name)
+	for _, expr := range d.body {
+		fmt.Print(" ")
+		expr.print()
+	}
 	fmt.Print(")")
 }
 

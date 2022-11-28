@@ -30,7 +30,7 @@ func (c FindCommand) execute(filename string, reader *VReader, mode ReplaceMode)
 	fileOffset := 0
 	lineNumber := 1
 	columnNumber := 1
-	//fmt.Printf("searching %s %d\n", filename, filesize)
+	//fmt.Printf("searching %s\n", filename)
 	//fmt.Printf("%t %d %d\n", c.all, c.skip, c.take)
 	for c.all || matchNumber < c.skip+c.take {
 		currentState := CreateState(filename, reader, fileOffset, lineNumber, columnNumber)
@@ -38,10 +38,10 @@ func (c FindCommand) execute(filename string, reader *VReader, mode ReplaceMode)
 			inst := c.body[currentState.programCounter]
 			//fmt.Printf("inst: %d\n", currentState.programCounter)
 			//inst.print()
-			//fmt.Printf("BEFORE = PC: %d\tBTK: %d\n", currentState.programCounter, currentState.backtrack.Size())
+			//fmt.Printf("BEFORE = PC: %d\tBTK: %d\tCALL: %d\tFO: %d\n", currentState.programCounter, currentState.backtrack.Size(), currentState.callStack.Size(), currentState.currentFileOffset)
 			currentState = inst.execute(currentState)
 
-			//fmt.Printf("AFTER  = PC: %d\tBTK: %d\n", currentState.programCounter, currentState.backtrack.Size())
+			//fmt.Printf("AFTER  = PC: %d\tBTK: %d\tCALL: %d\tFO: %d\n", currentState.programCounter, currentState.backtrack.Size(), currentState.callStack.Size(), currentState.currentFileOffset)
 			if currentState.status == INPROCESS && currentState.programCounter >= len(c.body) {
 				currentState.SUCCESS()
 			}
@@ -102,7 +102,7 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 	fileOffset := 0
 	lineNumber := 1
 	columnNumber := 1
-	//fmt.Printf("searching %s %d\n", filename, filesize)
+	//fmt.Printf("searching %s\n", filename)
 	//fmt.Printf("%t %d %d\n", c.all, c.skip, c.take)
 	for c.all || matchNumber < c.skip+c.take {
 		currentState := CreateState(filename, reader, fileOffset, lineNumber, columnNumber)
@@ -294,6 +294,7 @@ func (i MatchRange) execute(current_state *EngineState) *EngineState {
 
 type CallSubroutine struct {
 	name string
+	toPC int
 }
 
 func (i CallSubroutine) print() {
@@ -301,7 +302,10 @@ func (i CallSubroutine) print() {
 }
 
 func (i CallSubroutine) execute(current_state *EngineState) *EngineState {
-	panic("unimplemented subroutines")
+	next_state := current_state.Copy()
+	next_state.CALL(i.toPC, next_state.programCounter+1)
+	next_state.JUMP(i.toPC)
+	return next_state
 }
 
 type Branch struct {
@@ -417,6 +421,37 @@ func (i EndVarDec) print() {
 func (i EndVarDec) execute(current_state *EngineState) *EngineState {
 	next_state := current_state.Copy()
 	next_state.ENDVAR(i.name)
+	return next_state
+}
+
+type StartSubroutine struct {
+	id        int
+	name      string
+	endOffset int
+}
+
+func (i StartSubroutine) print() {
+	fmt.Printf("START SUBROUTINE '%s'\n", i.name)
+}
+
+func (i StartSubroutine) execute(current_state *EngineState) *EngineState {
+	next_state := current_state.Copy()
+	next_state.VALIDATECALL(i.id, i.endOffset+1)
+	next_state.NEXT()
+	return next_state
+}
+
+type EndSubroutine struct {
+	name string
+}
+
+func (i EndSubroutine) print() {
+	fmt.Printf("END SUBROUTINE '%s'\n", i.name)
+}
+
+func (i EndSubroutine) execute(current_state *EngineState) *EngineState {
+	next_state := current_state.Copy()
+	next_state.RETURN()
 	return next_state
 }
 

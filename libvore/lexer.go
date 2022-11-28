@@ -29,6 +29,8 @@ const (
 	COMMA
 	OPENPAREN
 	CLOSEPAREN
+	OPENCURLY
+	CLOSECURLY
 
 	// commands
 	FIND
@@ -96,6 +98,10 @@ func (t TokenType) pp() string {
 		return "OPENPAREN"
 	case CLOSEPAREN:
 		return "CLOSEPAREN"
+	case OPENCURLY:
+		return "OPENCURLY"
+	case CLOSECURLY:
+		return "CLOSECURLY"
 	case FIND:
 		return "FIND"
 	case REPLACE:
@@ -227,6 +233,8 @@ func (s *Lexer) getNextToken() *Token {
 		SCOMMA
 		SOPENPAREN
 		SCLOSEPAREN
+		SOPENCURLY
+		SCLOSECURLY
 		SCOMMENT
 		SDASH
 		SERROR
@@ -270,6 +278,14 @@ func (s *Lexer) getNextToken() *Token {
 		} else if ch == ')' && current_state == SSTART {
 			buf.WriteRune(ch)
 			current_state = SCLOSEPAREN
+			break
+		} else if ch == '{' && current_state == SSTART {
+			buf.WriteRune(ch)
+			current_state = SOPENCURLY
+			break
+		} else if ch == '}' && current_state == SSTART {
+			buf.WriteRune(ch)
+			current_state = SCLOSECURLY
 			break
 		} else if ch == ',' && current_state == SSTART {
 			buf.WriteRune(ch)
@@ -325,7 +341,7 @@ func (s *Lexer) getNextToken() *Token {
 			buf.WriteRune(getEscapedRune(ch))
 			current_state = SSTRING_SINGLE
 		} else {
-			if current_state != SSTART || unicode.IsDigit(ch) || unicode.IsLetter(ch) || unicode.IsSpace(ch) || ch == '(' || ch == ')' || ch == ',' || ch == ':' || ch == '=' || ch == '"' || ch == '\'' || ch == '-' {
+			if current_state != SSTART || unicode.IsDigit(ch) || unicode.IsLetter(ch) || unicode.IsSpace(ch) || ch == '(' || ch == ')' || ch == '{' || ch == '}' || ch == ',' || ch == ':' || ch == '=' || ch == '"' || ch == '\'' || ch == '-' {
 				s.unread_last()
 			} else {
 				buf.WriteRune(ch)
@@ -417,6 +433,10 @@ func (s *Lexer) getNextToken() *Token {
 		token.tokenType = OPENPAREN
 	case SCLOSEPAREN:
 		token.tokenType = CLOSEPAREN
+	case SOPENCURLY:
+		token.tokenType = OPENCURLY
+	case SCLOSECURLY:
+		token.tokenType = CLOSECURLY
 	case SCOMMA:
 		token.tokenType = COMMA
 	case SEQUAL:
@@ -441,7 +461,7 @@ func (s *Lexer) getNextToken() *Token {
 	token.column = NewRange(startPosInfo.column, endPosInfo.column)
 	token.line = NewRange(startPosInfo.line, endPosInfo.line)
 	token.lexeme = buf.String()
-	fmt.Printf("[%s] '%s' \tline: %d, \tstart column: %d, \tend column: %d\n", token.tokenType.pp(), token.lexeme, token.line.Start, token.column.Start, token.column.End)
+	//fmt.Printf("[%s] '%s' \tline: %d, \tstart column: %d, \tend column: %d\n", token.tokenType.pp(), token.lexeme, token.line.Start, token.column.Start, token.column.End)
 	return token
 }
 

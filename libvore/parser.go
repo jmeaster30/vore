@@ -237,6 +237,8 @@ func parse_expression(tokens []*Token, token_index int) (AstExpression, int, Par
 		return parse_maybe(tokens, token_index)
 	} else if current_token.tokenType == IN {
 		return parse_in(tokens, token_index)
+	} else if current_token.tokenType == OPENCURLY {
+		return parse_subroutine(tokens, token_index)
 	} else if current_token.tokenType == STRING || current_token.tokenType == IDENTIFIER ||
 		current_token.tokenType == OPENPAREN || current_token.tokenType == ANY ||
 		current_token.tokenType == WHITESPACE || current_token.tokenType == DIGIT ||
@@ -489,8 +491,7 @@ func parse_primary_or_dec(tokens []*Token, token_index int) (AstExpression, int,
 
 	current_index := consumeIgnoreableTokens(tokens, new_index)
 	current_token := tokens[current_index]
-	if current_token.tokenType == EQUAL || current_token.tokenType == COLONEQ {
-		isSubroutine := current_token.tokenType == COLONEQ
+	if current_token.tokenType == EQUAL {
 		current_index = consumeIgnoreableTokens(tokens, current_index+1)
 		current_token = tokens[current_index]
 
@@ -499,9 +500,8 @@ func parse_primary_or_dec(tokens []*Token, token_index int) (AstExpression, int,
 		}
 
 		dec := AstDec{
-			isSubroutine: isSubroutine,
-			name:         current_token.lexeme,
-			body:         literal,
+			name: current_token.lexeme,
+			body: literal,
 		}
 		return &dec, current_index + 1, NoError()
 	}
@@ -595,6 +595,47 @@ func parse_sub_expression(tokens []*Token, token_index int) (*AstSubExpr, int, P
 
 	sub_expr := AstSubExpr{body: expr_list}
 	return &sub_expr, current_index + 1, NoError()
+}
+
+func parse_subroutine(tokens []*Token, token_index int) (*AstSub, int, ParseError) {
+	current_token := tokens[token_index+1]
+	current_index := token_index + 1
+	expr_list := []AstExpression{}
+
+	for current_token.tokenType != CLOSECURLY && current_token.tokenType != FIND && current_token.tokenType != REPLACE && current_token.tokenType != SET && current_token.tokenType != EOF {
+		ws_index := consumeIgnoreableTokens(tokens, current_index)
+		expr, new_index, parseError := parse_expression(tokens, ws_index)
+		if parseError.isError {
+			return nil, new_index, parseError
+		}
+
+		expr_list = append(expr_list, expr)
+		current_index = consumeIgnoreableTokens(tokens, new_index)
+		current_token = tokens[current_index]
+	}
+
+	if current_token.tokenType != CLOSECURLY {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected '}'")
+	}
+
+	current_index = consumeIgnoreableTokens(tokens, current_index+1)
+	current_token = tokens[current_index]
+	if current_token.tokenType != EQUAL {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected '='")
+	}
+
+	current_index = consumeIgnoreableTokens(tokens, current_index+1)
+	current_token = tokens[current_index]
+
+	if current_token.tokenType != IDENTIFIER {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected identifier.")
+	}
+
+	dec := AstSub{
+		name: current_token.lexeme,
+		body: expr_list,
+	}
+	return &dec, current_index + 1, NoError()
 }
 
 func parse_character_class(tokens []*Token, token_index int) (*AstCharacterClass, int, ParseError) {
