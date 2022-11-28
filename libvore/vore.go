@@ -41,7 +41,15 @@ func cleanControlCharacters(s string) string {
 		case '\n':
 			result += "\\n"
 		case '\\':
-			result += "\\"
+			result += "\\\\"
+		case '\a':
+			result += "\\a"
+		case '\b':
+			result += "\\b"
+		case '\f':
+			result += "\\f"
+		case '\v':
+			result += "\\v"
 		default:
 			result += string(c)
 		}

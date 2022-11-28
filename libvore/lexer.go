@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -261,11 +262,15 @@ func (s *Lexer) getNextToken() *Token {
 				break
 			}
 			buf.WriteRune(ch)
+		} else if ch == '\\' && current_state == SSTRING_DOUBLE {
+			current_state = SSTRING_D_ESCAPE
 		} else if current_state == SSTRING_DOUBLE {
 			if ch == '"' {
 				break
 			}
 			buf.WriteRune(ch)
+		} else if ch == '\\' && current_state == SSTRING_SINGLE {
+			current_state = SSTRING_S_ESCAPE
 		} else if current_state == SSTRING_SINGLE {
 			if ch == '\'' {
 				break
@@ -328,17 +333,35 @@ func (s *Lexer) getNextToken() *Token {
 			buf.WriteRune(ch)
 		} else if ch == '"' && current_state == SSTART {
 			current_state = SSTRING_DOUBLE
-		} else if ch == '\\' && current_state == SSTRING_DOUBLE {
-			current_state = SSTRING_D_ESCAPE
 		} else if current_state == SSTRING_D_ESCAPE {
-			buf.WriteRune(getEscapedRune(ch))
+			if ch == 'x' {
+				next_ch := s.read()
+				next_next_ch := s.read()
+				if IsHex(next_ch) && IsHex(next_next_ch) {
+					buf.WriteRune(HexToAscii(next_ch, next_next_ch))
+				} else {
+					s.unread(2)
+					buf.WriteRune('x')
+				}
+			} else {
+				buf.WriteRune(getEscapedRune(ch))
+			}
 			current_state = SSTRING_DOUBLE
 		} else if ch == '\'' && current_state == SSTART {
 			current_state = SSTRING_SINGLE
-		} else if ch == '\\' && current_state == SSTRING_SINGLE {
-			current_state = SSTRING_S_ESCAPE
 		} else if current_state == SSTRING_S_ESCAPE {
-			buf.WriteRune(getEscapedRune(ch))
+			if ch == 'x' {
+				next_ch := s.read()
+				next_next_ch := s.read()
+				if IsHex(next_ch) && IsHex(next_next_ch) {
+					buf.WriteRune(HexToAscii(next_ch, next_next_ch))
+				} else {
+					s.unread(2)
+					buf.WriteRune('x')
+				}
+			} else {
+				buf.WriteRune(getEscapedRune(ch))
+			}
 			current_state = SSTRING_SINGLE
 		} else {
 			if current_state != SSTART || unicode.IsDigit(ch) || unicode.IsLetter(ch) || unicode.IsSpace(ch) || ch == '(' || ch == ')' || ch == '{' || ch == '}' || ch == ',' || ch == ':' || ch == '=' || ch == '"' || ch == '\'' || ch == '-' {
@@ -472,6 +495,14 @@ func getEscapedRune(ch rune) rune {
 		return rune(9)
 	} else if ch == 'r' {
 		return rune(13)
+	} else if ch == 'a' {
+		return rune(7)
+	} else if ch == 'b' {
+		return rune(8)
+	} else if ch == 'f' {
+		return rune(12)
+	} else if ch == 'v' {
+		return rune(11)
 	}
 	return rune(ch)
 }
@@ -513,6 +544,22 @@ func (s *Lexer) unread(amount uint64) {
 		lastPopped = s.position.Pop()
 	}
 	s.currentChar = lastPopped.lastRead
+}
+
+func IsHex(ch rune) bool {
+	return ('0' <= ch && ch <= '9') ||
+		('A' <= ch && ch <= 'F') ||
+		('a' <= ch && ch <= 'f')
+}
+
+func HexToAscii(ch1 rune, ch2 rune) rune {
+	input := string(ch1) + string(ch2)
+	value, err := strconv.ParseInt(input, 16, 64)
+	if err != nil {
+		panic("COULDN'T CONVERT")
+	}
+	//fmt.Printf("FOUND HEX RUNE (%s): %s\n", input, string(rune(value)))
+	return rune(value)
 }
 
 func check(e error) {
