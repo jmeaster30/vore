@@ -143,3 +143,21 @@ func TestLastTest(t *testing.T) {
 		{13, "here", []TestVar{}},
 	})
 }
+
+func TestRecursion1(t *testing.T) {
+	vore := Compile("find all {'a' maybe mySub 'b'} = mySub")
+	results := vore.Run("aaaabbbb")
+	singleMatch(t, results, 0, "aaaabbbb")
+}
+
+func TestRecursion2(t *testing.T) {
+	vore := Compile("find all {'a' maybe mySub 'b'} = mySub")
+	results := vore.Run("aabbb")
+	singleMatch(t, results, 0, "aabb")
+}
+
+func TestRecursion3(t *testing.T) {
+	vore := Compile("find all {'a' maybe mySub 'b'} = mySub")
+	results := vore.Run("aaaaab")
+	singleMatch(t, results, 4, "ab")
+}

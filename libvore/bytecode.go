@@ -24,42 +24,35 @@ func (c FindCommand) print() {
 	}
 }
 
-func (c FindCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
+func findMatches(insts []Instruction, all bool, skip int, take int, last int, filename string, reader *VReader) Matches {
 	matches := NewQueue[Match]()
 	matchNumber := 0
 	fileOffset := 0
 	lineNumber := 1
 	columnNumber := 1
-	//fmt.Printf("searching %s\n", filename)
-	//fmt.Printf("%t %d %d\n", c.all, c.skip, c.take)
-	for c.all || matchNumber < c.skip+c.take {
+
+	for all || matchNumber < skip+take {
 		currentState := CreateState(filename, reader, fileOffset, lineNumber, columnNumber)
 		for currentState.status == INPROCESS {
-			inst := c.body[currentState.programCounter]
-			//fmt.Printf("inst: %d\n", currentState.programCounter)
-			//inst.print()
-			//fmt.Printf("BEFORE = PC: %d\tBTK: %d\tCALL: %d\tFO: %d\n", currentState.programCounter, currentState.backtrack.Size(), currentState.callStack.Size(), currentState.currentFileOffset)
+			inst := insts[currentState.programCounter]
 			currentState = inst.execute(currentState)
 
-			//fmt.Printf("AFTER  = PC: %d\tBTK: %d\tCALL: %d\tFO: %d\n", currentState.programCounter, currentState.backtrack.Size(), currentState.callStack.Size(), currentState.currentFileOffset)
-			if currentState.status == INPROCESS && currentState.programCounter >= len(c.body) {
+			if currentState.status == INPROCESS && currentState.programCounter >= len(insts) {
 				currentState.SUCCESS()
 			}
 		}
 
-		if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 && matchNumber >= c.skip {
-			//fmt.Println("SUCCESS ====================================================")
+		if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 && matchNumber >= skip {
 			foundMatch := currentState.MakeMatch(matchNumber + 1)
 			matches.PushBack(foundMatch)
-			if c.last != 0 {
-				matches.Limit(c.last)
+			if last != 0 {
+				matches.Limit(last)
 			}
 			fileOffset = currentState.currentFileOffset
 			lineNumber = currentState.currentLineNum
 			columnNumber = currentState.currentColumnNum
 			matchNumber += 1
 		} else {
-			//fmt.Println("FAIL =======================================================")
 			if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 {
 				matchNumber += 1
 			}
@@ -83,6 +76,10 @@ func (c FindCommand) execute(filename string, reader *VReader, mode ReplaceMode)
 	return matches.Contents()
 }
 
+func (c FindCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
+	return findMatches(c.body, c.all, c.skip, c.take, c.last, filename, reader)
+}
+
 type ReplaceCommand struct {
 	all      bool
 	skip     int
@@ -97,62 +94,8 @@ func (c ReplaceCommand) print() {
 }
 
 func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
-	matches := NewQueue[Match]()
-	matchNumber := 0
-	fileOffset := 0
-	lineNumber := 1
-	columnNumber := 1
-	//fmt.Printf("searching %s\n", filename)
-	//fmt.Printf("%t %d %d\n", c.all, c.skip, c.take)
-	for c.all || matchNumber < c.skip+c.take {
-		currentState := CreateState(filename, reader, fileOffset, lineNumber, columnNumber)
-		for currentState.status == INPROCESS {
-			inst := c.body[currentState.programCounter]
-			//fmt.Printf("inst: %d\n", currentState.programCounter)
-			//inst.print()
-			//fmt.Printf("BEFORE = PC: %d\tBTK: %d\n", currentState.programCounter, currentState.backtrack.Size())
-			currentState = inst.execute(currentState)
+	foundMatches := findMatches(c.body, c.all, c.skip, c.take, c.last, filename, reader)
 
-			//fmt.Printf("AFTER  = PC: %d\tBTK: %d\n", currentState.programCounter, currentState.backtrack.Size())
-			if currentState.status == INPROCESS && currentState.programCounter >= len(c.body) {
-				currentState.SUCCESS()
-			}
-		}
-
-		if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 && matchNumber >= c.skip {
-			//fmt.Println("SUCCESS ====================================================")
-			foundMatch := currentState.MakeMatch(matchNumber + 1)
-			matches.PushBack(foundMatch)
-			if c.last != 0 {
-				matches.Limit(c.last)
-			}
-			fileOffset = currentState.currentFileOffset
-			lineNumber = currentState.currentLineNum
-			columnNumber = currentState.currentColumnNum
-			matchNumber += 1
-		} else {
-			//fmt.Println("FAIL =======================================================")
-			if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 {
-				matchNumber += 1
-			}
-			skipC := reader.ReadAt(1, fileOffset)
-			if len(skipC) != 1 {
-				panic("WOW THAT IS NOT GOOD :(")
-			}
-			fileOffset += 1
-			columnNumber += 1
-			if rune(skipC[0]) == rune('\n') {
-				lineNumber += 1
-				columnNumber = 1
-			}
-		}
-
-		if fileOffset >= reader.size {
-			break
-		}
-	}
-
-	foundMatches := matches.Contents()
 	replacedMatches := Matches{}
 	for _, match := range foundMatches {
 		current_state := InitReplacerState(match, len(foundMatches))
@@ -358,13 +301,16 @@ func (i StartLoop) execute(current_state *EngineState) *EngineState {
 	currentIteration := next_state.GETITERATIONSTEP()
 
 	if currentIteration < i.minLoops {
+		//fmt.Println("Less than min")
 		next_state.NEXT()
 	} else if (i.maxLoops == -1 || currentIteration <= i.maxLoops) && i.fewest {
+		//fmt.Println("All or less than max FEWEST")
 		next_state.NEXT()
 		next_state.CHECKPOINT()
 		next_state.POPLOOPSTACK()
 		next_state.JUMP(i.exitLoop + 1)
 	} else if (i.maxLoops == -1 || currentIteration <= i.maxLoops) && !i.fewest {
+		//fmt.Println("All or less than max")
 		loop_state := next_state.POPLOOPSTACK()
 		pc := next_state.GETPC()
 		next_state.JUMP(i.exitLoop + 1)
@@ -372,6 +318,7 @@ func (i StartLoop) execute(current_state *EngineState) *EngineState {
 		next_state.PUSHLOOPSTACK(loop_state)
 		next_state.JUMP(pc + 1)
 	} else {
+		//fmt.Printf("FAIL! current: %d min: %d max: %d\n", currentIteration, i.minLoops, i.maxLoops)
 		next_state.BACKTRACK()
 	}
 

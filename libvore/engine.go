@@ -14,6 +14,7 @@ const (
 
 type LoopState struct {
 	loopId        int
+	callLevel     int
 	iterationStep int
 }
 
@@ -195,11 +196,11 @@ func (es *EngineState) MATCH(value string) {
 	comp := es.READ(len(value))
 	//fmt.Printf("is(%d) '%s' == '%s'\n", es.currentFileOffset, value, comp)
 	if value == comp {
-		//	fmt.Println("YEAH!!")
+		//fmt.Println("YEAH!!")
 		es.CONSUME(len(value))
 		es.NEXT()
 	} else {
-		//	fmt.Println("no :(")
+		//fmt.Println("no :(")
 		es.BACKTRACK()
 	}
 }
@@ -226,9 +227,11 @@ func (es *EngineState) GETPC() int {
 }
 
 func (es *EngineState) INITLOOPSTACK(loopId int) bool {
-	if es.loopStack.IsEmpty() || es.loopStack.Peek().loopId != loopId {
+	top := es.loopStack.Peek()
+	if es.loopStack.IsEmpty() || top.loopId != loopId || top.callLevel != int(es.callStack.Size()) {
 		es.loopStack.Push(LoopState{
 			loopId:        loopId,
+			callLevel:     int(es.callStack.Size()),
 			iterationStep: 0,
 		})
 		return true
@@ -289,6 +292,10 @@ func (es *EngineState) CALL(id int, returnOffset int) {
 		id:           id,
 		returnOffset: returnOffset,
 	})
+	//fmt.Println("CALLSTACK")
+	//for i, s := range es.callStack.store {
+	//	fmt.Printf("(%d) %d - %d\n", i, s.id, s.returnOffset)
+	//}
 }
 
 func (es *EngineState) RETURN() {
