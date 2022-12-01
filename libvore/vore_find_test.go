@@ -115,6 +115,39 @@ func TestFindLetter(t *testing.T) {
 	singleMatch(t, results, 3, "A")
 }
 
+func TestFindAny(t *testing.T) {
+	vore, err := Compile("find all between 3 and 5 any")
+	checkNoError(t, err)
+	results := vore.Run("omg this is cool :)")
+	matches(t, results, []TestMatch{
+		{0, "omg t", []TestVar{}},
+		{5, "his i", []TestVar{}},
+		{10, "s coo", []TestVar{}},
+		{15, "l :)", []TestVar{}},
+	})
+}
+
+func TestFindAnyFewest(t *testing.T) {
+	vore, err := Compile("find all between 3 and 5 any fewest")
+	checkNoError(t, err)
+	results := vore.Run("omg this is")
+	matches(t, results, []TestMatch{
+		{0, "omg", []TestVar{}},
+		{3, " th", []TestVar{}},
+		{6, "is ", []TestVar{}},
+	})
+}
+
+func TestFindFewest(t *testing.T) {
+	vore, err := Compile("find all at least 3 letter fewest ' '")
+	checkNoError(t, err)
+	results := vore.Run("oh wow geez nice")
+	matches(t, results, []TestMatch{
+		{3, "wow ", []TestVar{}},
+		{7, "geez ", []TestVar{}},
+	})
+}
+
 func TestFindAtLeast3Upper(t *testing.T) {
 	vore, err := Compile("find all at least 3 upper")
 	checkNoError(t, err)
