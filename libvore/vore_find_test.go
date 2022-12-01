@@ -214,3 +214,38 @@ func TestRecursion3(t *testing.T) {
 	results := vore.Run("aaaaab")
 	singleMatch(t, results, 4, "ab")
 }
+
+func TestOrBranch(t *testing.T) {
+	vore, err := Compile("find all 'this' or 'that'")
+	checkNoError(t, err)
+	results := vore.Run("this and that")
+	matches(t, results, []TestMatch{
+		{0, "this", []TestVar{}},
+		{9, "that", []TestVar{}},
+	})
+}
+
+func TestInBranch(t *testing.T) {
+	vore, err := Compile("find all in 'a', 'b', 'c'")
+	checkNoError(t, err)
+	results := vore.Run("abcdefghijklmnopqrstuvwxyz")
+	matches(t, results, []TestMatch{
+		{0, "a", []TestVar{}},
+		{1, "b", []TestVar{}},
+		{2, "c", []TestVar{}},
+	})
+}
+
+func TestInBranchRange(t *testing.T) {
+	vore, err := Compile("find all in 'a' to 'c', 'x' to 'z'")
+	checkNoError(t, err)
+	results := vore.Run("abcdefghijklmnopqrstuvwxyz")
+	matches(t, results, []TestMatch{
+		{0, "a", []TestVar{}},
+		{1, "b", []TestVar{}},
+		{2, "c", []TestVar{}},
+		{23, "x", []TestVar{}},
+		{24, "y", []TestVar{}},
+		{25, "z", []TestVar{}},
+	})
+}
