@@ -249,3 +249,58 @@ func TestInBranchRange(t *testing.T) {
 		{25, "z", []TestVar{}},
 	})
 }
+
+func TestVariables(t *testing.T) {
+	vore, err := Compile("find all (at least 1 (in 'a' to 'c', 'x' to 'z')) = test")
+	checkNoError(t, err)
+	results := vore.Run("abcdefghijklmnopqrstuvwxyz")
+	matches(t, results, []TestMatch{
+		{0, "abc", []TestVar{
+			{"test", "abc"},
+		}},
+		{23, "xyz", []TestVar{
+			{"test", "xyz"},
+		}},
+	})
+}
+
+func TestNameIdMatches(t *testing.T) {
+	vore, err := Compile(`
+		find all 
+			line start (
+				(exactly 2 upper) = country
+				(at least 6 digit) = department
+			) = id 
+			'\t' 
+			(at least 1 any fewest) = name 
+			line end`)
+	checkNoError(t, err)
+	results := vore.Run(`US123456	lilith
+tx555555	martha
+FR420420	celeste`)
+	matches(t, results, []TestMatch{
+		{0, "US123456\tlilith", []TestVar{
+			{"country", "US"},
+			{"department", "123456"},
+			{"id", "US123456"},
+			{"name", "lilith"},
+		}},
+		{32, "FR420420\tceleste", []TestVar{
+			{"country", "FR"},
+			{"department", "420420"},
+			{"id", "FR420420"},
+			{"name", "celeste"},
+		}},
+	})
+}
+
+func TestVariableMatch(t *testing.T) {
+	vore, err := Compile("find all 'wow' = wow wow")
+	checkNoError(t, err)
+	results := vore.Run("wow wowwow")
+	matches(t, results, []TestMatch{
+		{4, "wowwow", []TestVar{
+			{"wow", "wow"},
+		}},
+	})
+}
