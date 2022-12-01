@@ -1,12 +1,7 @@
 package libvore
 
-import (
-	"fmt"
-)
-
 type Command interface {
 	execute(string, *VReader, ReplaceMode) Matches
-	print()
 }
 
 type FindCommand struct {
@@ -15,13 +10,6 @@ type FindCommand struct {
 	take int
 	last int
 	body []Instruction
-}
-
-func (c FindCommand) print() {
-	fmt.Println("FIND COMMAND")
-	for _, inst := range c.body {
-		inst.print()
-	}
 }
 
 func findMatches(insts []Instruction, all bool, skip int, take int, last int, filename string, reader *VReader) Matches {
@@ -89,10 +77,6 @@ type ReplaceCommand struct {
 	replacer []RInstruction
 }
 
-func (c ReplaceCommand) print() {
-	fmt.Println("replace command")
-}
-
 func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
 	foundMatches := findMatches(c.body, c.all, c.skip, c.take, c.last, filename, reader)
 
@@ -138,17 +122,12 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 type SetCommand struct {
 }
 
-func (c SetCommand) print() {
-	fmt.Println("set command")
-}
-
 func (c SetCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
 	return Matches{}
 }
 
 type Instruction interface {
 	execute(*EngineState) *EngineState
-	print()
 }
 
 type RInstruction interface {
@@ -159,10 +138,6 @@ type MatchLiteral struct {
 	toFind string
 }
 
-func (i MatchLiteral) print() {
-	fmt.Printf("MATCH LITERAL '%s'\n", i.toFind)
-}
-
 func (i MatchLiteral) execute(current_state *EngineState) *EngineState {
 	next_state := current_state.Copy()
 	next_state.MATCH(i.toFind)
@@ -171,10 +146,6 @@ func (i MatchLiteral) execute(current_state *EngineState) *EngineState {
 
 type MatchCharClass struct {
 	class AstCharacterClassType
-}
-
-func (i MatchCharClass) print() {
-	fmt.Println("MATCH CLASS")
 }
 
 func (i MatchCharClass) execute(current_state *EngineState) *EngineState {
@@ -210,10 +181,6 @@ type MatchVariable struct {
 	name string
 }
 
-func (i MatchVariable) print() {
-	fmt.Printf("MATCH VAR '%s'\n", i.name)
-}
-
 func (i MatchVariable) execute(current_state *EngineState) *EngineState {
 	next_state := current_state.Copy()
 	next_state.MATCHVAR(i.name)
@@ -223,10 +190,6 @@ func (i MatchVariable) execute(current_state *EngineState) *EngineState {
 type MatchRange struct {
 	from string
 	to   string
-}
-
-func (i MatchRange) print() {
-	fmt.Printf("MATCH RANGE '%s' to '%s'\n", i.from, i.to)
 }
 
 func (i MatchRange) execute(current_state *EngineState) *EngineState {
@@ -240,10 +203,6 @@ type CallSubroutine struct {
 	toPC int
 }
 
-func (i CallSubroutine) print() {
-	fmt.Println("CALL SUB")
-}
-
 func (i CallSubroutine) execute(current_state *EngineState) *EngineState {
 	next_state := current_state.Copy()
 	next_state.CALL(i.toPC, next_state.programCounter+1)
@@ -253,14 +212,6 @@ func (i CallSubroutine) execute(current_state *EngineState) *EngineState {
 
 type Branch struct {
 	branches []int
-}
-
-func (i Branch) print() {
-	fmt.Print("BRANCH ")
-	for _, b := range i.branches {
-		fmt.Printf("%d\t", b)
-	}
-	fmt.Println()
 }
 
 func (i Branch) execute(current_state *EngineState) *EngineState {
@@ -285,10 +236,6 @@ type StartLoop struct {
 	maxLoops int
 	fewest   bool
 	exitLoop int
-}
-
-func (i StartLoop) print() {
-	fmt.Printf("START LOOP %d %d %t %d\n", i.minLoops, i.maxLoops, i.fewest, i.exitLoop)
 }
 
 func (i StartLoop) execute(current_state *EngineState) *EngineState {
@@ -333,10 +280,6 @@ type StopLoop struct {
 	startLoop int
 }
 
-func (i StopLoop) print() {
-	fmt.Printf("END LOOP %d %d %t %d\n", i.minLoops, i.maxLoops, i.fewest, i.startLoop)
-}
-
 func (i StopLoop) execute(current_state *EngineState) *EngineState {
 	next_state := current_state.Copy()
 	next_state.JUMP(i.startLoop)
@@ -347,10 +290,6 @@ type StartVarDec struct {
 	name string
 }
 
-func (i StartVarDec) print() {
-	fmt.Printf("START VARDEC '%s'\n", i.name)
-}
-
 func (i StartVarDec) execute(current_state *EngineState) *EngineState {
 	next_state := current_state.Copy()
 	next_state.STARTVAR(i.name)
@@ -359,10 +298,6 @@ func (i StartVarDec) execute(current_state *EngineState) *EngineState {
 
 type EndVarDec struct {
 	name string
-}
-
-func (i EndVarDec) print() {
-	fmt.Printf("END VARDEC '%s'\n", i.name)
 }
 
 func (i EndVarDec) execute(current_state *EngineState) *EngineState {
@@ -377,10 +312,6 @@ type StartSubroutine struct {
 	endOffset int
 }
 
-func (i StartSubroutine) print() {
-	fmt.Printf("START SUBROUTINE '%s'\n", i.name)
-}
-
 func (i StartSubroutine) execute(current_state *EngineState) *EngineState {
 	next_state := current_state.Copy()
 	next_state.VALIDATECALL(i.id, i.endOffset+1)
@@ -390,10 +321,6 @@ func (i StartSubroutine) execute(current_state *EngineState) *EngineState {
 
 type EndSubroutine struct {
 	name string
-}
-
-func (i EndSubroutine) print() {
-	fmt.Printf("END SUBROUTINE '%s'\n", i.name)
 }
 
 func (i EndSubroutine) execute(current_state *EngineState) *EngineState {
@@ -406,10 +333,6 @@ type Jump struct {
 	newProgramCounter int
 }
 
-func (i Jump) print() {
-	fmt.Printf("JUMP %d\n", i.newProgramCounter)
-}
-
 func (i Jump) execute(current_state *EngineState) *EngineState {
 	next_state := current_state.Copy()
 	next_state.JUMP(i.newProgramCounter)
@@ -418,10 +341,6 @@ func (i Jump) execute(current_state *EngineState) *EngineState {
 
 type ReplaceString struct {
 	value string
-}
-
-func (i ReplaceString) print() {
-	fmt.Printf("replace string")
 }
 
 func (i ReplaceString) execute(current_state *ReplacerState) *ReplacerState {
@@ -433,10 +352,6 @@ func (i ReplaceString) execute(current_state *ReplacerState) *ReplacerState {
 
 type ReplaceVariable struct {
 	name string
-}
-
-func (i ReplaceVariable) print() {
-	fmt.Printf("replace variable")
 }
 
 func (i ReplaceVariable) execute(current_state *ReplacerState) *ReplacerState {
