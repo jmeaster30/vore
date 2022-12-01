@@ -13,6 +13,7 @@ type ReplaceMode int
 
 const (
 	OVERWRITE ReplaceMode = iota
+	CONFIRM
 	NEW
 	NOTHING
 )
@@ -190,34 +191,37 @@ type Vore struct {
 	bytecode []Command
 }
 
-func Compile(command string) Vore {
+func Compile(command string) (*Vore, error) {
 	return compile("source", strings.NewReader(command))
 }
 
-func CompileFile(source string) Vore {
+func CompileFile(source string) (*Vore, error) {
 	dat, err := os.Open(source)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	return compile(source, dat)
 }
 
-func compile(filename string, reader io.Reader) Vore {
+func compile(filename string, reader io.Reader) (*Vore, error) {
 	lexer := initLexer(reader)
 
 	tokens := lexer.getTokens()
 	commands, parseError := parse(tokens)
 	if parseError.isError {
-		panic(fmt.Sprintf("\nERROR:  %s\nToken:  '%s'\nLine:   %d - %d\nColumn: %d - %d\n", parseError.message, parseError.token.lexeme, parseError.token.line.Start, parseError.token.line.End, parseError.token.column.Start, parseError.token.column.End))
+		return nil, fmt.Errorf("ERROR:  %s\nToken:  '%s'\nLine:   %d - %d\nColumn: %d - %d\n", parseError.message, parseError.token.lexeme, parseError.token.line.Start, parseError.token.line.End, parseError.token.column.Start, parseError.token.column.End)
 	}
 
 	bytecode := []Command{}
 	for _, ast_comm := range commands {
-		byte_comm := ast_comm.generate()
+		byte_comm, gen_error := ast_comm.generate()
+		if gen_error != nil {
+			return nil, gen_error
+		}
 		bytecode = append(bytecode, byte_comm)
 	}
 
-	return Vore{tokens, commands, bytecode}
+	return &Vore{tokens, commands, bytecode}, nil
 }
 
 func (v *Vore) RunFiles(filenames []string, mode ReplaceMode) Matches {

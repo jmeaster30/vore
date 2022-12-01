@@ -56,14 +56,22 @@ func matches(t *testing.T, results Matches, expected []TestMatch) {
 	}
 }
 
+func checkNoError(t *testing.T, err error) {
+	if err != nil {
+		t.Fail()
+	}
+}
+
 func TestFindString(t *testing.T) {
-	vore := Compile("find all 'yay'")
+	vore, err := Compile("find all 'yay'")
+	checkNoError(t, err)
 	results := vore.Run("OMG yay :)")
 	singleMatch(t, results, 4, "yay")
 }
 
 func TestFindDigit(t *testing.T) {
-	vore := Compile("find all digit")
+	vore, err := Compile("find all digit")
+	checkNoError(t, err)
 	results := vore.Run("please 1234567890 wow")
 	matches(t, results, []TestMatch{
 		{7, "1", []TestVar{}},
@@ -80,31 +88,36 @@ func TestFindDigit(t *testing.T) {
 }
 
 func TestFindAtLeast1Digit(t *testing.T) {
-	vore := Compile("find all at least 1 digit")
+	vore, err := Compile("find all at least 1 digit")
+	checkNoError(t, err)
 	results := vore.Run("please 1234567890 wow")
 	singleMatch(t, results, 7, "1234567890")
 }
 
 func TestFindEscapedCharacters(t *testing.T) {
-	vore := Compile("find all '\\x77\\x6f\\x77\\x20\\x3B\\x29'")
+	vore, err := Compile("find all '\\x77\\x6f\\x77\\x20\\x3B\\x29'")
+	checkNoError(t, err)
 	results := vore.Run("does this work? wow ;)")
 	singleMatch(t, results, 16, "wow ;)")
 }
 
 func TestFindWhitespace(t *testing.T) {
-	vore := Compile("find all whitespace 'source' whitespace")
+	vore, err := Compile("find all whitespace 'source' whitespace")
+	checkNoError(t, err)
 	results := vore.Run("you must provide a source for your claims.")
 	singleMatch(t, results, 18, " source ")
 }
 
 func TestFindLetter(t *testing.T) {
-	vore := Compile("find all letter")
+	vore, err := Compile("find all letter")
+	checkNoError(t, err)
 	results := vore.Run("345A98(&$(#*%")
 	singleMatch(t, results, 3, "A")
 }
 
 func TestFindAtLeast3Upper(t *testing.T) {
-	vore := Compile("find all at least 3 upper")
+	vore, err := Compile("find all at least 3 upper")
+	checkNoError(t, err)
 	results := vore.Run("it SHOULD get THIS but THis")
 	matches(t, results, []TestMatch{
 		{3, "SHOULD", []TestVar{}},
@@ -113,7 +126,8 @@ func TestFindAtLeast3Upper(t *testing.T) {
 }
 
 func TestFindAtMost2Lower(t *testing.T) {
-	vore := Compile("find all at most 2 lower")
+	vore, err := Compile("find all at most 2 lower")
+	checkNoError(t, err)
 	results := vore.Run("IT WILL CATCH this AND it WILL GET me")
 	matches(t, results, []TestMatch{
 		{14, "th", []TestVar{}},
@@ -124,19 +138,22 @@ func TestFindAtMost2Lower(t *testing.T) {
 }
 
 func TestSkipTest(t *testing.T) {
-	vore := Compile("find skip 1 take 1 'here'")
+	vore, err := Compile("find skip 1 take 1 'here'")
+	checkNoError(t, err)
 	results := vore.Run("here >here< here")
 	singleMatch(t, results, 6, "here")
 }
 
 func TestTopTest(t *testing.T) {
-	vore := Compile("find top 1 'here'")
+	vore, err := Compile("find top 1 'here'")
+	checkNoError(t, err)
 	results := vore.Run(">here< here here")
 	singleMatch(t, results, 1, "here")
 }
 
 func TestLastTest(t *testing.T) {
-	vore := Compile("find last 2 'here'")
+	vore, err := Compile("find last 2 'here'")
+	checkNoError(t, err)
 	results := vore.Run("here >here< >here<")
 	matches(t, results, []TestMatch{
 		{6, "here", []TestVar{}},
@@ -145,19 +162,22 @@ func TestLastTest(t *testing.T) {
 }
 
 func TestRecursion1(t *testing.T) {
-	vore := Compile("find all {'a' maybe mySub 'b'} = mySub")
+	vore, err := Compile("find all {'a' maybe mySub 'b'} = mySub")
+	checkNoError(t, err)
 	results := vore.Run("aaaabbbb")
 	singleMatch(t, results, 0, "aaaabbbb")
 }
 
 func TestRecursion2(t *testing.T) {
-	vore := Compile("find all {'a' maybe mySub 'b'} = mySub")
+	vore, err := Compile("find all {'a' maybe mySub 'b'} = mySub")
+	checkNoError(t, err)
 	results := vore.Run("aabbb")
 	singleMatch(t, results, 0, "aabb")
 }
 
 func TestRecursion3(t *testing.T) {
-	vore := Compile("find all {'a' maybe mySub 'b'} = mySub")
+	vore, err := Compile("find all {'a' maybe mySub 'b'} = mySub")
+	checkNoError(t, err)
 	results := vore.Run("aaaaab")
 	singleMatch(t, results, 4, "ab")
 }

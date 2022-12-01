@@ -5,32 +5,32 @@ import "fmt"
 type AstCommand interface {
 	isCmd()
 	print()
-	generate() Command
+	generate() (Command, error)
 }
 
 type AstExpression interface {
 	isExpr()
 	print()
-	generate(offset int, state *GenState) []Instruction
+	generate(offset int, state *GenState) ([]Instruction, error)
 }
 
 type AstLiteral interface {
 	isLiteral()
 	print()
-	generate(offset int, state *GenState) []Instruction
+	generate(offset int, state *GenState) ([]Instruction, error)
 }
 
 type AstListable interface {
 	isListable()
 	print()
-	generate(offset int, state *GenState) []Instruction
+	generate(offset int, state *GenState) ([]Instruction, error)
 }
 
 type AstAtom interface {
 	isAtom()
 	print()
-	generate(offset int, state *GenState) []Instruction
-	generateReplace(offset int, state *GenState) []RInstruction
+	generate(offset int, state *GenState) ([]Instruction, error)
+	generateReplace(offset int, state *GenState) ([]RInstruction, error)
 }
 
 type AstFind struct {

@@ -78,11 +78,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	var vore libvore.Vore
+	var vore *libvore.Vore
+	var comp_error error
 	if len(source) != 0 {
-		vore = libvore.CompileFile(source)
+		vore, comp_error = libvore.CompileFile(source)
 	} else {
-		vore = libvore.Compile(command)
+		vore, comp_error = libvore.Compile(command)
+	}
+
+	if comp_error != nil {
+		panic(comp_error)
 	}
 
 	//vore.PrintTokens()
