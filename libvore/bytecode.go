@@ -233,6 +233,46 @@ func (i Branch) execute(current_state *EngineState) *EngineState {
 	return next_state
 }
 
+type StartNotIn struct {
+	nextCheckpointPC int
+}
+
+func (i StartNotIn) execute(current_state *EngineState) *EngineState {
+	next_state := current_state.Copy()
+	next_state.JUMP(i.nextCheckpointPC)
+	next_state.CHECKPOINT()
+	next_state.JUMP(current_state.programCounter + 1)
+	return next_state
+}
+
+type FailNotIn struct{}
+
+func (i FailNotIn) execute(current_state *EngineState) *EngineState {
+	next_state := current_state.Copy()
+	next_state.BACKTRACK()
+	next_state.BACKTRACK()
+	return next_state
+}
+
+type EndNotIn struct {
+	maxSize int
+}
+
+func (i EndNotIn) execute(current_state *EngineState) *EngineState {
+	next_state := current_state.Copy()
+	// TODO this should actually let the rest of the expression backtrack from max size to min size (could just be to 1 since things less than the min are not in)
+	cfo := next_state.currentFileOffset
+	next_state.CONSUME(i.maxSize)
+	// FIXME: This was added to make it so we don't have an infinite loop when using "not in" in an un-bounded loop
+	//        I think a better fix would be to come up with a different way to handle the end of the file
+	if cfo == next_state.currentFileOffset {
+		next_state.BACKTRACK()
+	} else {
+		next_state.NEXT()
+	}
+	return next_state
+}
+
 type StartLoop struct {
 	id       int
 	minLoops int

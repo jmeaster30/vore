@@ -29,11 +29,12 @@ type CallState struct {
 }
 
 type EngineState struct {
-	loopStack     *Stack[LoopState]
-	backtrack     *Stack[EngineState]
-	variableStack *Stack[VariableRecord]
-	callStack     *Stack[CallState]
-	environment   map[string]string
+	loopStack              *Stack[LoopState]
+	backtrack              *Stack[EngineState]
+	variableStack          *Stack[VariableRecord]
+	callStack              *Stack[CallState]
+	environment            map[string]string
+	previousBacktrackState *EngineState
 
 	status            Status
 	programCounter    int
@@ -69,7 +70,7 @@ func (es *EngineState) READAT(offset int, length int) string {
 func (es *EngineState) CONSUME(amount int) {
 	value := es.READ(amount)
 	es.currentMatch += value
-	es.currentFileOffset += amount
+	es.currentFileOffset += len(value)
 	for _, c := range value {
 		es.currentColumnNum += 1
 		if c == rune('\n') {
@@ -83,9 +84,10 @@ func (es *EngineState) BACKTRACK() {
 	if es.backtrack.Size() == 0 {
 		es.FAIL()
 	} else {
+		current_state := es.Copy()
 		next_state := es.backtrack.Pop()
 		es.Set(next_state)
-		// TODO we may need some stuff here to better do backtracking
+		es.previousBacktrackState = current_state
 	}
 }
 

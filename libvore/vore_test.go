@@ -322,3 +322,39 @@ func TestReplaceStatement(t *testing.T) {
 		}},
 	})
 }
+
+func TestNot(t *testing.T) {
+	vore, err := Compile("find all at least 1 not whitespace")
+	checkNoError(t, err)
+	results := vore.Run("this \tfinds all  \nnon-whitespace!")
+	matches(t, results, []TestMatch{
+		{0, "this", "", []TestVar{}},
+		{6, "finds", "", []TestVar{}},
+		{12, "all", "", []TestVar{}},
+		{18, "non-whitespace!", "", []TestVar{}},
+	})
+}
+
+func TestNotInBasic(t *testing.T) {
+	vore, err := Compile("find all not in 'a' to 'c', 'x' to 'z'")
+	checkNoError(t, err)
+	results := vore.Run("abcdefxyzghi")
+	matches(t, results, []TestMatch{
+		{3, "d", "", []TestVar{}},
+		{4, "e", "", []TestVar{}},
+		{5, "f", "", []TestVar{}},
+		{9, "g", "", []TestVar{}},
+		{10, "h", "", []TestVar{}},
+		{11, "i", "", []TestVar{}},
+	})
+}
+
+func TestNotInInLoop(t *testing.T) {
+	vore, err := Compile("find all at least 1 (not in 'a' to 'c', 'x' to 'z')")
+	checkNoError(t, err)
+	results := vore.Run("abcdefxyzghi")
+	matches(t, results, []TestMatch{
+		{3, "def", "", []TestVar{}},
+		{9, "ghi", "", []TestVar{}},
+	})
+}

@@ -200,6 +200,14 @@ func (l *AstSub) generate(offset int, state *GenState) ([]Instruction, error) {
 }
 
 func (l *AstList) generate(offset int, state *GenState) ([]Instruction, error) {
+	if l.not {
+		return l.generate_not(offset, state)
+	} else {
+		return l.generate_not_not(offset, state)
+	}
+}
+
+func (l *AstList) generate_not_not(offset int, state *GenState) ([]Instruction, error) {
 	b := Branch{
 		branches: []int{},
 	}
@@ -229,6 +237,30 @@ func (l *AstList) generate(offset int, state *GenState) ([]Instruction, error) {
 		})
 	}
 
+	return insts, nil
+}
+
+func (l *AstList) generate_not(offset int, state *GenState) ([]Instruction, error) {
+	insts := []Instruction{}
+
+	pc := offset
+	for _, item := range l.contents {
+		item_insts, err := item.generate(pc+1, state)
+		if err != nil {
+			return []Instruction{}, err
+		}
+
+		insts = append(insts, StartNotIn{
+			nextCheckpointPC: pc + len(item_insts) + 2,
+		})
+		insts = append(insts, item_insts...)
+		insts = append(insts, FailNotIn{})
+		pc = pc + len(item_insts) + 2
+	}
+
+	insts = append(insts, EndNotIn{
+		maxSize: l.getMaxSize(),
+	})
 	return insts, nil
 }
 

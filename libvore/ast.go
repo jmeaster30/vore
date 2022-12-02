@@ -24,6 +24,7 @@ type AstListable interface {
 	isListable()
 	print()
 	generate(offset int, state *GenState) ([]Instruction, error)
+	getMaxSize() int
 }
 
 type AstAtom interface {
@@ -158,6 +159,16 @@ type AstList struct {
 }
 
 func (l AstList) isExpr() {}
+func (l AstList) getMaxSize() int {
+	max := -1
+	for _, c := range l.contents {
+		s := c.getMaxSize()
+		if s > max {
+			max = s
+		}
+	}
+	return max
+}
 func (l AstList) print() {
 	fmt.Print("(in ")
 	for _, expr := range l.contents {
@@ -184,6 +195,10 @@ type AstRange struct {
 }
 
 func (r AstRange) isListable() {}
+func (r AstRange) getMaxSize() int {
+	//? Can we guarantee that "from" is going to be greater than "to"??
+	return len(r.to.value)
+}
 func (r AstRange) print() {
 	fmt.Print("(range ")
 	r.from.print()
@@ -199,7 +214,10 @@ type AstString struct {
 
 func (s AstString) isLiteral()  {}
 func (s AstString) isListable() {}
-func (s AstString) isAtom()     {}
+func (s AstString) getMaxSize() int {
+	return len(s.value)
+}
+func (s AstString) isAtom() {}
 func (s AstString) print() {
 	fmt.Printf("(string '%s')", s.value)
 }
@@ -250,6 +268,31 @@ type AstCharacterClass struct {
 
 func (c AstCharacterClass) isLiteral()  {}
 func (c AstCharacterClass) isListable() {}
+func (c AstCharacterClass) getMaxSize() int {
+	switch c.classType {
+	case ClassAny:
+		return 1
+	case ClassWhitespace:
+		return 1
+	case ClassDigit:
+		return 1
+	case ClassUpper:
+		return 1
+	case ClassLower:
+		return 1
+	case ClassLetter:
+		return 1
+	case ClassLineStart:
+		return 0
+	case ClassFileStart:
+		return 0
+	case ClassLineEnd:
+		return 0
+	case ClassFileEnd:
+		return 0
+	}
+	panic("shouldn't get here")
+}
 func (c AstCharacterClass) print() {
 	fmt.Printf("(class ")
 	switch c.classType {
