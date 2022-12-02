@@ -236,9 +236,11 @@ func parse_expression(tokens []*Token, token_index int) (AstExpression, int, Par
 	} else if current_token.tokenType == MAYBE {
 		return parse_maybe(tokens, token_index)
 	} else if current_token.tokenType == IN {
-		return parse_in(tokens, token_index)
+		return parse_in(tokens, token_index, false)
 	} else if current_token.tokenType == OPENCURLY {
 		return parse_subroutine(tokens, token_index)
+	} else if current_token.tokenType == NOT {
+		return parse_not_expression(tokens, token_index)
 	} else if current_token.tokenType == STRING || current_token.tokenType == IDENTIFIER ||
 		current_token.tokenType == OPENPAREN || current_token.tokenType == ANY ||
 		current_token.tokenType == WHITESPACE || current_token.tokenType == DIGIT ||
@@ -402,7 +404,51 @@ func parse_maybe(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
 	return &maybe, current_index, NoError()
 }
 
-func parse_in(tokens []*Token, token_index int) (*AstList, int, ParseError) {
+func parse_not_expression(tokens []*Token, token_index int) (AstExpression, int, ParseError) {
+	new_index := consumeIgnoreableTokens(tokens, token_index+1)
+	current_token := tokens[new_index]
+
+	if current_token.tokenType == IN {
+		return parse_in(tokens, new_index, true)
+	} else if current_token.tokenType == STRING {
+		ast_str, idx, err := parse_string(tokens, new_index, true)
+		if err.isError {
+			return nil, idx, err
+		}
+		return &AstPrimary{literal: ast_str}, idx, err
+	} else if current_token.tokenType == ANY ||
+		current_token.tokenType == WHITESPACE || current_token.tokenType == DIGIT ||
+		current_token.tokenType == UPPER || current_token.tokenType == LOWER ||
+		current_token.tokenType == LETTER || current_token.tokenType == LINE ||
+		current_token.tokenType == FILE {
+		ast_chclass, idx, err := parse_character_class(tokens, new_index, true)
+		if err.isError {
+			return nil, idx, err
+		}
+		return &AstPrimary{literal: ast_chclass}, idx, err
+	} else {
+		return nil, new_index, NewParseError(*current_token, "Unexpected token. Expected 'in', <string>, <character class>")
+	}
+}
+
+func parse_not_literal(tokens []*Token, token_index int) (AstLiteral, int, ParseError) {
+	new_index := consumeIgnoreableTokens(tokens, token_index+1)
+	current_token := tokens[new_index]
+
+	if current_token.tokenType == STRING {
+		return parse_string(tokens, new_index, true)
+	} else if current_token.tokenType == ANY ||
+		current_token.tokenType == WHITESPACE || current_token.tokenType == DIGIT ||
+		current_token.tokenType == UPPER || current_token.tokenType == LOWER ||
+		current_token.tokenType == LETTER || current_token.tokenType == LINE ||
+		current_token.tokenType == FILE {
+		return parse_character_class(tokens, new_index, true)
+	} else {
+		return nil, new_index, NewParseError(*current_token, "Unexpected token. Expected 'in', <string>, <character class>")
+	}
+}
+
+func parse_in(tokens []*Token, token_index int, not bool) (*AstList, int, ParseError) {
 	new_index := consumeIgnoreableTokens(tokens, token_index+1)
 	contents := []AstListable{}
 
@@ -425,7 +471,7 @@ func parse_in(tokens []*Token, token_index int) (*AstList, int, ParseError) {
 		current_token = tokens[current_index]
 	}
 
-	inList := AstList{contents: contents}
+	inList := AstList{contents: contents, not: not}
 	return &inList, current_index, NoError()
 }
 
@@ -436,7 +482,7 @@ func isListableClass(t TokenType) bool {
 func parse_listable(tokens []*Token, token_index int) (AstListable, int, ParseError) {
 	current_token := tokens[token_index]
 	if current_token.tokenType == STRING {
-		from, next_index, err := parse_string(tokens, token_index)
+		from, next_index, err := parse_string(tokens, token_index, false)
 		if err.isError {
 			return nil, next_index, err
 		}
@@ -448,7 +494,7 @@ func parse_listable(tokens []*Token, token_index int) (AstListable, int, ParseEr
 		}
 
 		current_index = consumeIgnoreableTokens(tokens, current_index+1)
-		to, new_index, terr := parse_string(tokens, current_index)
+		to, new_index, terr := parse_string(tokens, current_index, false)
 		if terr.isError {
 			return nil, new_index, terr
 		}
@@ -460,7 +506,7 @@ func parse_listable(tokens []*Token, token_index int) (AstListable, int, ParseEr
 		return &r, new_index, NoError()
 
 	} else if isListableClass(current_token.tokenType) {
-		return parse_character_class(tokens, token_index)
+		return parse_character_class(tokens, token_index, false)
 	}
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected listable literal")
 }
@@ -468,17 +514,19 @@ func parse_listable(tokens []*Token, token_index int) (AstListable, int, ParseEr
 func parse_literal(tokens []*Token, token_index int) (AstLiteral, int, ParseError) {
 	current_token := tokens[token_index]
 	if current_token.tokenType == STRING {
-		return parse_string(tokens, token_index)
+		return parse_string(tokens, token_index, false)
 	} else if current_token.tokenType == IDENTIFIER {
 		return parse_variable(tokens, token_index)
 	} else if current_token.tokenType == OPENPAREN {
 		return parse_sub_expression(tokens, token_index)
+	} else if current_token.tokenType == NOT {
+		return parse_not_literal(tokens, token_index)
 	} else if current_token.tokenType == ANY ||
 		current_token.tokenType == WHITESPACE || current_token.tokenType == DIGIT ||
 		current_token.tokenType == UPPER || current_token.tokenType == LOWER ||
 		current_token.tokenType == LETTER || current_token.tokenType == LINE ||
 		current_token.tokenType == FILE {
-		return parse_character_class(tokens, token_index)
+		return parse_character_class(tokens, token_index, false)
 	}
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected '(', '<string>', '<identifier>', or a character class.")
 }
@@ -541,16 +589,18 @@ func parse_primary(tokens []*Token, token_index int) (*AstPrimary, int, ParseErr
 func parse_atom(tokens []*Token, token_index int) (AstAtom, int, ParseError) {
 	current_token := tokens[token_index]
 	if current_token.tokenType == STRING {
-		return parse_string(tokens, token_index)
+		return parse_string(tokens, token_index, false)
 	} else if current_token.tokenType == IDENTIFIER {
 		return parse_variable(tokens, token_index)
 	}
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected '<string>' or '<identifier>'.")
 }
 
-func parse_string(tokens []*Token, token_index int) (*AstString, int, ParseError) {
+func parse_string(tokens []*Token, token_index int, not bool) (*AstString, int, ParseError) {
 	current_token := tokens[token_index]
-	str_literal := AstString{}
+	str_literal := AstString{
+		not: not,
+	}
 
 	if current_token.tokenType == STRING {
 		str_literal.value = current_token.lexeme
@@ -638,9 +688,11 @@ func parse_subroutine(tokens []*Token, token_index int) (*AstSub, int, ParseErro
 	return &dec, current_index + 1, NoError()
 }
 
-func parse_character_class(tokens []*Token, token_index int) (*AstCharacterClass, int, ParseError) {
+func parse_character_class(tokens []*Token, token_index int, not bool) (*AstCharacterClass, int, ParseError) {
 	current_token := tokens[token_index]
-	charClass := AstCharacterClass{}
+	charClass := AstCharacterClass{
+		not: not,
+	}
 	if current_token.tokenType == ANY {
 		charClass.classType = ClassAny
 		return &charClass, token_index + 1, NoError()

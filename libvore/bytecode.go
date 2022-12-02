@@ -135,16 +135,18 @@ type RInstruction interface {
 }
 
 type MatchLiteral struct {
+	not    bool
 	toFind string
 }
 
 func (i MatchLiteral) execute(current_state *EngineState) *EngineState {
 	next_state := current_state.Copy()
-	next_state.MATCH(i.toFind)
+	next_state.MATCH(i.toFind, i.not)
 	return next_state
 }
 
 type MatchCharClass struct {
+	not   bool
 	class AstCharacterClassType
 }
 
@@ -152,25 +154,25 @@ func (i MatchCharClass) execute(current_state *EngineState) *EngineState {
 	next_state := current_state.Copy()
 	switch i.class {
 	case ClassAny:
-		next_state.MATCHANY()
+		next_state.MATCHANY(i.not)
 	case ClassWhitespace:
-		next_state.MATCHOPTIONS([]string{" ", "\t", "\n", "\r"})
+		next_state.MATCHOPTIONS([]string{" ", "\t", "\n", "\r"}, i.not)
 	case ClassDigit:
-		next_state.MATCHRANGE("0", "9")
+		next_state.MATCHRANGE("0", "9", i.not)
 	case ClassUpper:
-		next_state.MATCHRANGE("A", "Z")
+		next_state.MATCHRANGE("A", "Z", i.not)
 	case ClassLower:
-		next_state.MATCHRANGE("a", "z")
+		next_state.MATCHRANGE("a", "z", i.not)
 	case ClassLetter:
-		next_state.MATCHLETTER()
+		next_state.MATCHLETTER(i.not)
 	case ClassFileStart:
-		next_state.MATCHFILESTART()
+		next_state.MATCHFILESTART(i.not)
 	case ClassFileEnd:
-		next_state.MATCHFILEEND()
+		next_state.MATCHFILEEND(i.not)
 	case ClassLineStart:
-		next_state.MATCHLINESTART()
+		next_state.MATCHLINESTART(i.not)
 	case ClassLineEnd:
-		next_state.MATCHLINEEND()
+		next_state.MATCHLINEEND(i.not)
 	default:
 		panic("Unexpected character class type")
 	}
@@ -188,13 +190,14 @@ func (i MatchVariable) execute(current_state *EngineState) *EngineState {
 }
 
 type MatchRange struct {
+	not  bool
 	from string
 	to   string
 }
 
 func (i MatchRange) execute(current_state *EngineState) *EngineState {
 	next_state := current_state.Copy()
-	next_state.MATCHRANGE(i.from, i.to)
+	next_state.MATCHRANGE(i.from, i.to, i.not)
 	return next_state
 }
 

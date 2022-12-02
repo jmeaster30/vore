@@ -153,6 +153,7 @@ func (d AstSub) print() {
 }
 
 type AstList struct {
+	not      bool
 	contents []AstListable
 }
 
@@ -192,6 +193,7 @@ func (r AstRange) print() {
 }
 
 type AstString struct {
+	not   bool
 	value string
 }
 
@@ -242,6 +244,7 @@ const (
 )
 
 type AstCharacterClass struct {
+	not       bool
 	classType AstCharacterClassType
 }
 

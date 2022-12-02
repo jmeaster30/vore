@@ -240,6 +240,7 @@ func (l *AstRange) generate(offset int, state *GenState) ([]Instruction, error) 
 	result := MatchRange{
 		from: l.from.value,
 		to:   l.to.value,
+		not:  false,
 	}
 	return []Instruction{result}, nil
 }
@@ -247,6 +248,7 @@ func (l *AstRange) generate(offset int, state *GenState) ([]Instruction, error) 
 func (l *AstString) generate(offset int, state *GenState) ([]Instruction, error) {
 	result := MatchLiteral{
 		toFind: l.value,
+		not:    l.not,
 	}
 	return []Instruction{result}, nil
 }
@@ -289,6 +291,7 @@ func (l *AstVariable) generate(offset int, state *GenState) ([]Instruction, erro
 func (l *AstCharacterClass) generate(offset int, state *GenState) ([]Instruction, error) {
 	result := MatchCharClass{
 		class: l.classType,
+		not:   l.not,
 	}
 	return []Instruction{result}, nil
 }

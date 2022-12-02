@@ -97,47 +97,87 @@ func (es *EngineState) SUCCESS() {
 	es.status = SUCCESS
 }
 
-func (es *EngineState) MATCHFILESTART() {
+func (es *EngineState) MATCHFILESTART(not bool) {
 	if es.currentFileOffset == 0 {
-		es.NEXT()
+		if not {
+			es.BACKTRACK()
+		} else {
+			es.NEXT()
+		}
 	} else {
-		es.BACKTRACK()
+		if not {
+			es.NEXT()
+		} else {
+			es.BACKTRACK()
+		}
 	}
 }
 
-func (es *EngineState) MATCHFILEEND() {
+func (es *EngineState) MATCHFILEEND(not bool) {
 	if es.currentFileOffset == es.reader.size {
-		es.NEXT()
+		if not {
+			es.BACKTRACK()
+		} else {
+			es.NEXT()
+		}
 	} else {
-		es.BACKTRACK()
+		if not {
+			es.NEXT()
+		} else {
+			es.BACKTRACK()
+		}
 	}
 }
 
-func (es *EngineState) MATCHLINESTART() {
+func (es *EngineState) MATCHLINESTART(not bool) {
 	if es.currentFileOffset == 0 {
-		es.NEXT()
+		if not {
+			es.BACKTRACK()
+		} else {
+			es.NEXT()
+		}
 		return
 	}
 
 	value := es.READAT(es.currentFileOffset-1, 1)
 	if value == "\n" {
-		es.NEXT()
+		if not {
+			es.BACKTRACK()
+		} else {
+			es.NEXT()
+		}
 	} else {
-		es.BACKTRACK()
+		if not {
+			es.NEXT()
+		} else {
+			es.BACKTRACK()
+		}
 	}
 }
 
-func (es *EngineState) MATCHLINEEND() {
+func (es *EngineState) MATCHLINEEND(not bool) {
 	nextChar := es.READ(1)
 	nextTwoChar := es.READ(2)
 	if nextChar == "\n" || nextTwoChar == "\r\n" || es.currentFileOffset == es.reader.size {
-		es.NEXT()
+		if not {
+			es.BACKTRACK()
+		} else {
+			es.NEXT()
+		}
 	} else {
-		es.BACKTRACK()
+		if not {
+			es.NEXT()
+		} else {
+			es.BACKTRACK()
+		}
 	}
 }
 
-func (es *EngineState) MATCHANY() {
+func (es *EngineState) MATCHANY(not bool) {
+	if not {
+		es.BACKTRACK()
+		return
+	}
 	value := es.READ(1)
 	if value == "" {
 		es.BACKTRACK()
@@ -147,7 +187,7 @@ func (es *EngineState) MATCHANY() {
 	}
 }
 
-func (es *EngineState) MATCHRANGE(from string, to string) {
+func (es *EngineState) MATCHRANGE(from string, to string, not bool) {
 	min := len(from)
 	max := len(to)
 
@@ -163,18 +203,27 @@ func (es *EngineState) MATCHRANGE(from string, to string) {
 	es.BACKTRACK()
 }
 
-func (es *EngineState) MATCHLETTER() {
+func (es *EngineState) MATCHLETTER(not bool) {
 	// TODO I would prefer if I had a generic way to do these multirange searches
 	value := es.READ(1)
 	if ("a" <= value && value <= "z") || ("A" <= value && value <= "Z") {
-		es.CONSUME(1)
-		es.NEXT()
+		if not {
+			es.BACKTRACK()
+		} else {
+			es.CONSUME(1)
+			es.NEXT()
+		}
 	} else {
-		es.BACKTRACK()
+		if not {
+			es.CONSUME(1)
+			es.NEXT()
+		} else {
+			es.BACKTRACK()
+		}
 	}
 }
 
-func (es *EngineState) MATCHOPTIONS(options []string) {
+func (es *EngineState) MATCHOPTIONS(options []string, not bool) {
 	value := es.READ(1)
 	if value == "" {
 		es.BACKTRACK()
@@ -183,16 +232,26 @@ func (es *EngineState) MATCHOPTIONS(options []string) {
 
 	for _, opt := range options {
 		if value == opt {
-			es.CONSUME(1)
-			es.NEXT()
-			return
+			if not {
+				es.BACKTRACK()
+				return
+			} else {
+				es.CONSUME(1)
+				es.NEXT()
+				return
+			}
 		}
 	}
 
-	es.BACKTRACK()
+	if not {
+		es.CONSUME(1)
+		es.NEXT()
+	} else {
+		es.BACKTRACK()
+	}
 }
 
-func (es *EngineState) MATCH(value string) {
+func (es *EngineState) MATCH(value string, not bool) {
 	comp := es.READ(len(value))
 	//fmt.Printf("is(%d) '%s' == '%s'\n", es.currentFileOffset, value, comp)
 	if value == comp {
@@ -210,7 +269,7 @@ func (es *EngineState) MATCHVAR(name string) {
 	if !found {
 		es.BACKTRACK()
 	} else {
-		es.MATCH(value)
+		es.MATCH(value, false)
 	}
 }
 
