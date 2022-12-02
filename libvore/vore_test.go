@@ -5,9 +5,10 @@ import (
 )
 
 type TestMatch struct {
-	offset    int
-	value     string
-	variables []TestVar
+	offset      int
+	value       string
+	replacement string
+	variables   []TestVar
 }
 
 type TestVar struct {
@@ -41,7 +42,7 @@ func matches(t *testing.T, results Matches, expected []TestMatch) {
 
 	for i, e := range expected {
 		actual := results[i]
-		if actual.value != e.value || actual.offset.Start != e.offset {
+		if actual.value != e.value || actual.offset.Start != e.offset || actual.replacement != e.replacement {
 			t.Fail()
 		}
 		if len(actual.variables) != len(e.variables) {
@@ -74,16 +75,16 @@ func TestFindDigit(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("please 1234567890 wow")
 	matches(t, results, []TestMatch{
-		{7, "1", []TestVar{}},
-		{8, "2", []TestVar{}},
-		{9, "3", []TestVar{}},
-		{10, "4", []TestVar{}},
-		{11, "5", []TestVar{}},
-		{12, "6", []TestVar{}},
-		{13, "7", []TestVar{}},
-		{14, "8", []TestVar{}},
-		{15, "9", []TestVar{}},
-		{16, "0", []TestVar{}},
+		{7, "1", "", []TestVar{}},
+		{8, "2", "", []TestVar{}},
+		{9, "3", "", []TestVar{}},
+		{10, "4", "", []TestVar{}},
+		{11, "5", "", []TestVar{}},
+		{12, "6", "", []TestVar{}},
+		{13, "7", "", []TestVar{}},
+		{14, "8", "", []TestVar{}},
+		{15, "9", "", []TestVar{}},
+		{16, "0", "", []TestVar{}},
 	})
 }
 
@@ -120,10 +121,10 @@ func TestFindAny(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("omg this is cool :)")
 	matches(t, results, []TestMatch{
-		{0, "omg t", []TestVar{}},
-		{5, "his i", []TestVar{}},
-		{10, "s coo", []TestVar{}},
-		{15, "l :)", []TestVar{}},
+		{0, "omg t", "", []TestVar{}},
+		{5, "his i", "", []TestVar{}},
+		{10, "s coo", "", []TestVar{}},
+		{15, "l :)", "", []TestVar{}},
 	})
 }
 
@@ -132,9 +133,9 @@ func TestFindAnyFewest(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("omg this is")
 	matches(t, results, []TestMatch{
-		{0, "omg", []TestVar{}},
-		{3, " th", []TestVar{}},
-		{6, "is ", []TestVar{}},
+		{0, "omg", "", []TestVar{}},
+		{3, " th", "", []TestVar{}},
+		{6, "is ", "", []TestVar{}},
 	})
 }
 
@@ -143,8 +144,8 @@ func TestFindFewest(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("oh wow geez nice")
 	matches(t, results, []TestMatch{
-		{3, "wow ", []TestVar{}},
-		{7, "geez ", []TestVar{}},
+		{3, "wow ", "", []TestVar{}},
+		{7, "geez ", "", []TestVar{}},
 	})
 }
 
@@ -153,8 +154,8 @@ func TestFindAtLeast3Upper(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("it SHOULD get THIS but THis")
 	matches(t, results, []TestMatch{
-		{3, "SHOULD", []TestVar{}},
-		{14, "THIS", []TestVar{}},
+		{3, "SHOULD", "", []TestVar{}},
+		{14, "THIS", "", []TestVar{}},
 	})
 }
 
@@ -163,10 +164,10 @@ func TestFindAtMost2Lower(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("IT WILL CATCH this AND it WILL GET me")
 	matches(t, results, []TestMatch{
-		{14, "th", []TestVar{}},
-		{16, "is", []TestVar{}},
-		{23, "it", []TestVar{}},
-		{35, "me", []TestVar{}},
+		{14, "th", "", []TestVar{}},
+		{16, "is", "", []TestVar{}},
+		{23, "it", "", []TestVar{}},
+		{35, "me", "", []TestVar{}},
 	})
 }
 
@@ -189,8 +190,8 @@ func TestLastTest(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("here >here< >here<")
 	matches(t, results, []TestMatch{
-		{6, "here", []TestVar{}},
-		{13, "here", []TestVar{}},
+		{6, "here", "", []TestVar{}},
+		{13, "here", "", []TestVar{}},
 	})
 }
 
@@ -220,8 +221,8 @@ func TestOrBranch(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("this and that")
 	matches(t, results, []TestMatch{
-		{0, "this", []TestVar{}},
-		{9, "that", []TestVar{}},
+		{0, "this", "", []TestVar{}},
+		{9, "that", "", []TestVar{}},
 	})
 }
 
@@ -230,9 +231,9 @@ func TestInBranch(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("abcdefghijklmnopqrstuvwxyz")
 	matches(t, results, []TestMatch{
-		{0, "a", []TestVar{}},
-		{1, "b", []TestVar{}},
-		{2, "c", []TestVar{}},
+		{0, "a", "", []TestVar{}},
+		{1, "b", "", []TestVar{}},
+		{2, "c", "", []TestVar{}},
 	})
 }
 
@@ -241,12 +242,12 @@ func TestInBranchRange(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("abcdefghijklmnopqrstuvwxyz")
 	matches(t, results, []TestMatch{
-		{0, "a", []TestVar{}},
-		{1, "b", []TestVar{}},
-		{2, "c", []TestVar{}},
-		{23, "x", []TestVar{}},
-		{24, "y", []TestVar{}},
-		{25, "z", []TestVar{}},
+		{0, "a", "", []TestVar{}},
+		{1, "b", "", []TestVar{}},
+		{2, "c", "", []TestVar{}},
+		{23, "x", "", []TestVar{}},
+		{24, "y", "", []TestVar{}},
+		{25, "z", "", []TestVar{}},
 	})
 }
 
@@ -255,10 +256,10 @@ func TestVariables(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("abcdefghijklmnopqrstuvwxyz")
 	matches(t, results, []TestMatch{
-		{0, "abc", []TestVar{
+		{0, "abc", "", []TestVar{
 			{"test", "abc"},
 		}},
-		{23, "xyz", []TestVar{
+		{23, "xyz", "", []TestVar{
 			{"test", "xyz"},
 		}},
 	})
@@ -279,13 +280,13 @@ func TestNameIdMatches(t *testing.T) {
 tx555555	martha
 FR420420	celeste`)
 	matches(t, results, []TestMatch{
-		{0, "US123456\tlilith", []TestVar{
+		{0, "US123456\tlilith", "", []TestVar{
 			{"country", "US"},
 			{"department", "123456"},
 			{"id", "US123456"},
 			{"name", "lilith"},
 		}},
-		{32, "FR420420\tceleste", []TestVar{
+		{32, "FR420420\tceleste", "", []TestVar{
 			{"country", "FR"},
 			{"department", "420420"},
 			{"id", "FR420420"},
@@ -299,7 +300,24 @@ func TestVariableMatch(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("wow wowwow")
 	matches(t, results, []TestMatch{
-		{4, "wowwow", []TestVar{
+		{4, "wowwow", "", []TestVar{
+			{"wow", "wow"},
+		}},
+	})
+}
+
+func TestReplaceStatement(t *testing.T) {
+	vore, err := Compile("replace all 'wow' = wow with '>' wow wow '<'")
+	checkNoError(t, err)
+	results := vore.Run("wow wowwow")
+	matches(t, results, []TestMatch{
+		{0, "wow", ">wowwow<", []TestVar{
+			{"wow", "wow"},
+		}},
+		{4, "wow", ">wowwow<", []TestVar{
+			{"wow", "wow"},
+		}},
+		{7, "wow", ">wowwow<", []TestVar{
 			{"wow", "wow"},
 		}},
 	})
