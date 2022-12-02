@@ -1,0 +1,79 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Vore",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#commands"
+		},
+		{
+			"include": "#amount"
+		},
+		{
+			"include": "#charClass"
+		},
+		{
+			"include": "#dubstrings"
+		},
+		{
+			"include": "#sinstrings"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.vore",
+				"match": "\\b(not|at|least|most|between|and|exactly|maybe|fewest|in|or|to)\\b"
+			}]
+		},
+		"commands": {
+			"patterns": [{
+				"name": "entity.name.function.vore",
+				"match": "\\b(find|replace|with|set)\\b"
+			}]
+		},
+		"amount": {
+			"patterns": [{
+				"name": "entity.name.method.vore",
+				"match": "\\b(skip|take|top|last)\\b"
+			}]
+		},
+		"charClass": {
+			"patterns": [{
+				"name": "entity.name.class.vore",
+				"match": "\\b(any|whitespace|digit|upper|lower|letter|line|file|start|end)\\b"
+			}]
+		},
+		"variable": {
+			"patterns": [{
+				"name": "variable.name.vore",
+				"match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
+			}]
+		},
+		"dubstrings": {
+			"name": "string.quoted.double.vore",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.vore",
+					"match": "\\\\."
+				}
+			]
+		},
+		"sinstrings": {
+			"name": "string.quoted.single.vore",
+			"begin": "'",
+			"end": "'",
+			"patterns": [
+				{
+					"name": "constant.character.escape.vore",
+					"match": "\\\\."
+				}
+			]
+		}
+	},
+	"scopeName": "source.vore"
+}

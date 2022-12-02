@@ -1,0 +1,25 @@
+{
+    "name": "libvore-syntax-highlighter",
+    "displayName": "libvore Syntax Highlighter",
+    "description": "Syntax highlighting for the vore languagee",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.73.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "vore",
+            "aliases": ["Vore", "vore"],
+            "extensions": [".v",".vore",".vre"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "vore",
+            "scopeName": "source.vore",
+            "path": "./syntaxes/vore.tmLanguage.json"
+        }]
+    }
+}
