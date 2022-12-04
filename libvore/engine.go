@@ -28,13 +28,12 @@ type CallState struct {
 	returnOffset int
 }
 
-type EngineState struct {
-	loopStack              *Stack[LoopState]
-	backtrack              *Stack[EngineState]
-	variableStack          *Stack[VariableRecord]
-	callStack              *Stack[CallState]
-	environment            map[string]string
-	previousBacktrackState *EngineState
+type SearchEngineState struct {
+	loopStack     *Stack[LoopState]
+	backtrack     *Stack[SearchEngineState]
+	variableStack *Stack[VariableRecord]
+	callStack     *Stack[CallState]
+	environment   map[string]string
 
 	status            Status
 	programCounter    int
@@ -49,25 +48,25 @@ type EngineState struct {
 	filename          string
 }
 
-func (es *EngineState) SEEK() {
+func (es *SearchEngineState) SEEK() {
 	es.reader.Seek(es.currentFileOffset)
 }
 
-func (es *EngineState) SEEKTO(offset int) {
+func (es *SearchEngineState) SEEKTO(offset int) {
 	es.reader.Seek(offset)
 }
 
-func (es *EngineState) READ(length int) string {
+func (es *SearchEngineState) READ(length int) string {
 	es.SEEK()
 	return es.reader.Read(length)
 }
 
-func (es *EngineState) READAT(offset int, length int) string {
+func (es *SearchEngineState) READAT(offset int, length int) string {
 	es.SEEKTO(offset)
 	return es.reader.Read(length)
 }
 
-func (es *EngineState) CONSUME(amount int) {
+func (es *SearchEngineState) CONSUME(amount int) {
 	value := es.READ(amount)
 	es.currentMatch += value
 	es.currentFileOffset += len(value)
@@ -80,26 +79,24 @@ func (es *EngineState) CONSUME(amount int) {
 	}
 }
 
-func (es *EngineState) BACKTRACK() {
+func (es *SearchEngineState) BACKTRACK() {
 	if es.backtrack.Size() == 0 {
 		es.FAIL()
 	} else {
-		current_state := es.Copy()
 		next_state := es.backtrack.Pop()
 		es.Set(next_state)
-		es.previousBacktrackState = current_state
 	}
 }
 
-func (es *EngineState) FAIL() {
+func (es *SearchEngineState) FAIL() {
 	es.status = FAILED
 }
 
-func (es *EngineState) SUCCESS() {
+func (es *SearchEngineState) SUCCESS() {
 	es.status = SUCCESS
 }
 
-func (es *EngineState) MATCHFILESTART(not bool) {
+func (es *SearchEngineState) MATCHFILESTART(not bool) {
 	if es.currentFileOffset == 0 {
 		if not {
 			es.BACKTRACK()
@@ -115,7 +112,7 @@ func (es *EngineState) MATCHFILESTART(not bool) {
 	}
 }
 
-func (es *EngineState) MATCHFILEEND(not bool) {
+func (es *SearchEngineState) MATCHFILEEND(not bool) {
 	if es.currentFileOffset == es.reader.size {
 		if not {
 			es.BACKTRACK()
@@ -131,7 +128,7 @@ func (es *EngineState) MATCHFILEEND(not bool) {
 	}
 }
 
-func (es *EngineState) MATCHLINESTART(not bool) {
+func (es *SearchEngineState) MATCHLINESTART(not bool) {
 	if es.currentFileOffset == 0 {
 		if not {
 			es.BACKTRACK()
@@ -157,7 +154,7 @@ func (es *EngineState) MATCHLINESTART(not bool) {
 	}
 }
 
-func (es *EngineState) MATCHLINEEND(not bool) {
+func (es *SearchEngineState) MATCHLINEEND(not bool) {
 	nextChar := es.READ(1)
 	nextTwoChar := es.READ(2)
 	if nextChar == "\n" || nextTwoChar == "\r\n" || es.currentFileOffset == es.reader.size {
@@ -175,7 +172,7 @@ func (es *EngineState) MATCHLINEEND(not bool) {
 	}
 }
 
-func (es *EngineState) MATCHANY(not bool) {
+func (es *SearchEngineState) MATCHANY(not bool) {
 	if not {
 		es.BACKTRACK()
 		return
@@ -189,7 +186,7 @@ func (es *EngineState) MATCHANY(not bool) {
 	}
 }
 
-func (es *EngineState) MATCHRANGE(from string, to string, not bool) {
+func (es *SearchEngineState) MATCHRANGE(from string, to string, not bool) {
 	min := len(from)
 	max := len(to)
 
@@ -205,7 +202,7 @@ func (es *EngineState) MATCHRANGE(from string, to string, not bool) {
 	es.BACKTRACK()
 }
 
-func (es *EngineState) MATCHLETTER(not bool) {
+func (es *SearchEngineState) MATCHLETTER(not bool) {
 	// TODO I would prefer if I had a generic way to do these multirange searches
 	value := es.READ(1)
 	if ("a" <= value && value <= "z") || ("A" <= value && value <= "Z") {
@@ -225,7 +222,7 @@ func (es *EngineState) MATCHLETTER(not bool) {
 	}
 }
 
-func (es *EngineState) MATCHOPTIONS(options []string, not bool) {
+func (es *SearchEngineState) MATCHOPTIONS(options []string, not bool) {
 	value := es.READ(1)
 	if value == "" {
 		es.BACKTRACK()
@@ -253,7 +250,7 @@ func (es *EngineState) MATCHOPTIONS(options []string, not bool) {
 	}
 }
 
-func (es *EngineState) MATCH(value string, not bool) {
+func (es *SearchEngineState) MATCH(value string, not bool) {
 	comp := es.READ(len(value))
 	//fmt.Printf("is(%d) '%s' == '%s'\n", es.currentFileOffset, value, comp)
 	if value == comp {
@@ -266,7 +263,7 @@ func (es *EngineState) MATCH(value string, not bool) {
 	}
 }
 
-func (es *EngineState) MATCHVAR(name string) {
+func (es *SearchEngineState) MATCHVAR(name string) {
 	value, found := es.environment[name]
 	if !found {
 		es.BACKTRACK()
@@ -275,19 +272,19 @@ func (es *EngineState) MATCHVAR(name string) {
 	}
 }
 
-func (es *EngineState) NEXT() {
+func (es *SearchEngineState) NEXT() {
 	es.programCounter += 1
 }
 
-func (es *EngineState) JUMP(pc int) {
+func (es *SearchEngineState) JUMP(pc int) {
 	es.programCounter = pc
 }
 
-func (es *EngineState) GETPC() int {
+func (es *SearchEngineState) GETPC() int {
 	return es.programCounter
 }
 
-func (es *EngineState) INITLOOPSTACK(loopId int) bool {
+func (es *SearchEngineState) INITLOOPSTACK(loopId int) bool {
 	top := es.loopStack.Peek()
 	if es.loopStack.IsEmpty() || top.loopId != loopId || top.callLevel != int(es.callStack.Size()) {
 		es.loopStack.Push(LoopState{
@@ -300,29 +297,29 @@ func (es *EngineState) INITLOOPSTACK(loopId int) bool {
 	return false
 }
 
-func (es *EngineState) INCLOOPSTACK() {
+func (es *SearchEngineState) INCLOOPSTACK() {
 	if es.loopStack.IsEmpty() {
 		panic("oh crap :(")
 	}
 	es.loopStack.Peek().iterationStep += 1
 }
 
-func (es *EngineState) GETITERATIONSTEP() int {
+func (es *SearchEngineState) GETITERATIONSTEP() int {
 	if es.loopStack.IsEmpty() {
 		panic("oh crap :(")
 	}
 	return es.loopStack.Peek().iterationStep
 }
 
-func (es *EngineState) POPLOOPSTACK() LoopState {
+func (es *SearchEngineState) POPLOOPSTACK() LoopState {
 	return *es.loopStack.Pop()
 }
 
-func (es *EngineState) PUSHLOOPSTACK(loopState LoopState) {
+func (es *SearchEngineState) PUSHLOOPSTACK(loopState LoopState) {
 	es.loopStack.Push(loopState)
 }
 
-func (es *EngineState) STARTVAR(name string) {
+func (es *SearchEngineState) STARTVAR(name string) {
 	record := VariableRecord{
 		name:        name,
 		startOffset: len(es.currentMatch),
@@ -331,7 +328,7 @@ func (es *EngineState) STARTVAR(name string) {
 	es.NEXT()
 }
 
-func (es *EngineState) ENDVAR(name string) {
+func (es *SearchEngineState) ENDVAR(name string) {
 	record := es.variableStack.Pop()
 	if record.name != name {
 		panic("UHOH BAD INSTRUCTIONS I TRIED RESOLVING A VARIABLE THAT I WASN'T EXPECTING")
@@ -341,14 +338,14 @@ func (es *EngineState) ENDVAR(name string) {
 	es.NEXT()
 }
 
-func (es *EngineState) VALIDATECALL(id int, returnOffset int) {
+func (es *SearchEngineState) VALIDATECALL(id int, returnOffset int) {
 	top := es.callStack.Peek()
 	if top == nil || top.id != id {
 		es.CALL(id, returnOffset)
 	}
 }
 
-func (es *EngineState) CALL(id int, returnOffset int) {
+func (es *SearchEngineState) CALL(id int, returnOffset int) {
 	es.callStack.Push(CallState{
 		id:           id,
 		returnOffset: returnOffset,
@@ -359,7 +356,7 @@ func (es *EngineState) CALL(id int, returnOffset int) {
 	//}
 }
 
-func (es *EngineState) RETURN() {
+func (es *SearchEngineState) RETURN() {
 	top := es.callStack.Pop()
 	if top == nil {
 		panic("BAD CALL STACK :(")
@@ -367,15 +364,15 @@ func (es *EngineState) RETURN() {
 	es.programCounter = top.returnOffset
 }
 
-func (es *EngineState) CHECKPOINT() {
+func (es *SearchEngineState) CHECKPOINT() {
 	checkpoint := es.Copy()
 	es.backtrack.Push(*checkpoint)
 }
 
-func CreateState(filename string, reader *VReader, fileOffset int, lineNumber int, columnNumber int) *EngineState {
-	return &EngineState{
+func CreateState(filename string, reader *VReader, fileOffset int, lineNumber int, columnNumber int) *SearchEngineState {
+	return &SearchEngineState{
 		loopStack:         NewStack[LoopState](),
-		backtrack:         NewStack[EngineState](),
+		backtrack:         NewStack[SearchEngineState](),
 		variableStack:     NewStack[VariableRecord](),
 		callStack:         NewStack[CallState](),
 		environment:       make(map[string]string),
@@ -392,13 +389,13 @@ func CreateState(filename string, reader *VReader, fileOffset int, lineNumber in
 	}
 }
 
-func (es *EngineState) Copy() *EngineState {
+func (es *SearchEngineState) Copy() *SearchEngineState {
 	envCopy := make(map[string]string)
 	for k, v := range es.environment {
 		envCopy[k] = v
 	}
 
-	return &EngineState{
+	return &SearchEngineState{
 		loopStack:         es.loopStack.Copy(),
 		backtrack:         es.backtrack.Copy(),
 		variableStack:     es.variableStack.Copy(),
@@ -418,7 +415,7 @@ func (es *EngineState) Copy() *EngineState {
 	}
 }
 
-func (es *EngineState) Set(value *EngineState) {
+func (es *SearchEngineState) Set(value *SearchEngineState) {
 	es.loopStack = value.loopStack
 	es.backtrack = value.backtrack
 	es.variableStack = value.variableStack
@@ -437,7 +434,7 @@ func (es *EngineState) Set(value *EngineState) {
 	es.filename = value.filename
 }
 
-func (es *EngineState) MakeMatch(matchNumber int) Match {
+func (es *SearchEngineState) MakeMatch(matchNumber int) Match {
 	result := Match{
 		filename:    es.filename,
 		matchNumber: matchNumber,
@@ -514,4 +511,9 @@ func (rs *ReplacerState) Set(from *ReplacerState) {
 	rs.variables = from.variables
 	rs.match = from.match
 	rs.programCounter = from.programCounter
+}
+
+type GlobalState struct {
+	subroutines map[string][]SearchInstruction
+	matches     map[string]Matches
 }

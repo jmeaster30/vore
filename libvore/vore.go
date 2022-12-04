@@ -207,14 +207,22 @@ func compile(filename string, reader io.Reader) (*Vore, error) {
 	lexer := initLexer(reader)
 
 	tokens := lexer.getTokens()
+	//for _, token := range tokens {
+	//	fmt.Printf("[%s] '%s' \tline: %d, \tstart column: %d, \tend column: %d\n", token.tokenType.pp(), token.lexeme, token.line.Start, token.column.Start, token.column.End)
+	//}
+
 	commands, parseError := parse(tokens)
 	if parseError.isError {
 		return nil, fmt.Errorf("ERROR:  %s\nToken:  '%s'\nLine:   %d - %d\nColumn: %d - %d\n", parseError.message, parseError.token.lexeme, parseError.token.line.Start, parseError.token.line.End, parseError.token.column.Start, parseError.token.column.End)
 	}
 
 	bytecode := []Command{}
+	gen_state := &GenState{
+		globalSubroutines: make(map[string][]SearchInstruction),
+		globalVariables:   make(map[string]int),
+	}
 	for _, ast_comm := range commands {
-		byte_comm, gen_error := ast_comm.generate()
+		byte_comm, gen_error := ast_comm.generate(gen_state)
 		if gen_error != nil {
 			return nil, gen_error
 		}

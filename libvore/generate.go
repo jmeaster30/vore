@@ -3,27 +3,27 @@ package libvore
 import "fmt"
 
 type GenState struct {
-	loopId    int
-	variables map[string]int
+	loopId            int
+	variables         map[string]int
+	globalSubroutines map[string][]SearchInstruction
+	globalVariables   map[string]int
 }
 
-func (f *AstFind) generate() (Command, error) {
+func (f *AstFind) generate(state *GenState) (Command, error) {
 	result := FindCommand{
 		all:  f.all,
 		skip: f.skip,
 		take: f.take,
 		last: f.last,
-		body: []Instruction{},
+		body: []SearchInstruction{},
 	}
 
-	current_state := &GenState{
-		loopId:    0,
-		variables: make(map[string]int),
-	}
+	state.loopId = 0
+	state.variables = make(map[string]int)
 
 	offset := 0
 	for _, expr := range f.body {
-		expr_insts, gen_error := expr.generate(offset, current_state)
+		expr_insts, gen_error := expr.generate(offset, state)
 		if gen_error != nil {
 			return nil, gen_error
 		}
@@ -34,24 +34,22 @@ func (f *AstFind) generate() (Command, error) {
 	return result, nil
 }
 
-func (r *AstReplace) generate() (Command, error) {
+func (r *AstReplace) generate(state *GenState) (Command, error) {
 	result := ReplaceCommand{
 		all:      r.all,
 		skip:     r.skip,
 		take:     r.take,
 		last:     r.last,
-		body:     []Instruction{},
-		replacer: []RInstruction{},
+		body:     []SearchInstruction{},
+		replacer: []ReplaceInstruction{},
 	}
 
-	current_state := &GenState{
-		loopId:    0,
-		variables: make(map[string]int),
-	}
+	state.loopId = 0
+	state.variables = make(map[string]int)
 
 	offset := 0
 	for _, expr := range r.body {
-		expr_insts, gen_error := expr.generate(offset, current_state)
+		expr_insts, gen_error := expr.generate(offset, state)
 		if gen_error != nil {
 			return nil, gen_error
 		}
@@ -61,7 +59,7 @@ func (r *AstReplace) generate() (Command, error) {
 
 	offset = 0
 	for _, expr := range r.result {
-		expr_insts, gen_error := expr.generateReplace(offset, current_state)
+		expr_insts, gen_error := expr.generateReplace(offset, state)
 		if gen_error != nil {
 			return nil, gen_error
 		}
@@ -72,15 +70,53 @@ func (r *AstReplace) generate() (Command, error) {
 	return result, nil
 }
 
-func (s *AstSet) generate() (Command, error) {
-	return SetCommand{}, nil
+func (s *AstSet) generate(state *GenState) (Command, error) {
+	state.loopId = 0
+	state.variables = make(map[string]int)
+
+	body, err := s.body.generate(state, s.id)
+	if err != nil {
+		return nil, err
+	}
+	return SetCommand{
+		body:         body,
+		isSubroutine: s.isSubroutine,
+		isMatches:    s.isMatches,
+		id:           s.id,
+	}, nil
 }
 
-func (l *AstLoop) generate(offset int, state *GenState) ([]Instruction, error) {
+func (s AstSetExpression) generate(state *GenState, id string) (SetCommandBody, error) {
+	state.loopId = 0
+	state.variables = make(map[string]int)
+
+	searchInstructions, err := s.expression.generate(0, state)
+	if err != nil {
+		return nil, err
+	}
+
+	state.globalSubroutines[id] = searchInstructions
+
+	return &SetCommandExpression{
+		instructions: searchInstructions,
+	}, nil
+}
+
+func (s AstSetMatches) generate(state *GenState, id string) (SetCommandBody, error) {
+	command, err := s.command.generate(state)
+	if err != nil {
+		return nil, err
+	}
+	return &SetCommandMatches{
+		command: command,
+	}, nil
+}
+
+func (l *AstLoop) generate(offset int, state *GenState) ([]SearchInstruction, error) {
 	state.loopId += 1
 	body, gen_error := l.body.generate(offset+1, state)
 	if gen_error != nil {
-		return []Instruction{}, gen_error
+		return []SearchInstruction{}, gen_error
 	}
 
 	start := StartLoop{
@@ -99,21 +135,21 @@ func (l *AstLoop) generate(offset int, state *GenState) ([]Instruction, error) {
 		fewest:    l.fewest,
 	}
 
-	result := []Instruction{start}
+	result := []SearchInstruction{start}
 	result = append(result, body...)
 	result = append(result, stop)
 	return result, nil
 }
 
-func (l *AstBranch) generate(offset int, state *GenState) ([]Instruction, error) {
+func (l *AstBranch) generate(offset int, state *GenState) ([]SearchInstruction, error) {
 
 	left, left_error := l.left.generate(offset+1, state)
 	if left_error != nil {
-		return []Instruction{}, left_error
+		return []SearchInstruction{}, left_error
 	}
 	right, right_error := l.right.generate(offset+2+len(left), state)
 	if right_error != nil {
-		return []Instruction{}, right_error
+		return []SearchInstruction{}, right_error
 	}
 
 	b := Branch{
@@ -123,7 +159,7 @@ func (l *AstBranch) generate(offset int, state *GenState) ([]Instruction, error)
 		},
 	}
 
-	insts := []Instruction{b}
+	insts := []SearchInstruction{b}
 	insts = append(insts, left...)
 	insts = append(insts, Jump{
 		newProgramCounter: offset + len(left) + len(right) + 3,
@@ -135,8 +171,8 @@ func (l *AstBranch) generate(offset int, state *GenState) ([]Instruction, error)
 	return insts, nil
 }
 
-func (l *AstDec) generate(offset int, state *GenState) ([]Instruction, error) {
-	insts := []Instruction{}
+func (l *AstDec) generate(offset int, state *GenState) ([]SearchInstruction, error) {
+	insts := []SearchInstruction{}
 	// offset
 	startVarDec := StartVarDec{
 		name: l.name,
@@ -144,7 +180,7 @@ func (l *AstDec) generate(offset int, state *GenState) ([]Instruction, error) {
 
 	bodyinsts, gen_error := l.body.generate(offset+1, state)
 	if gen_error != nil {
-		return []Instruction{}, gen_error
+		return []SearchInstruction{}, gen_error
 	}
 
 	endVarDec := EndVarDec{
@@ -153,7 +189,7 @@ func (l *AstDec) generate(offset int, state *GenState) ([]Instruction, error) {
 
 	_, prs := state.variables[l.name]
 	if prs {
-		return []Instruction{}, fmt.Errorf("Name clash '%s'", l.name)
+		return []SearchInstruction{}, fmt.Errorf("Name clash '%s'", l.name)
 	}
 	state.variables[l.name] = -1
 
@@ -163,21 +199,21 @@ func (l *AstDec) generate(offset int, state *GenState) ([]Instruction, error) {
 	return insts, nil
 }
 
-func (l *AstSub) generate(offset int, state *GenState) ([]Instruction, error) {
-	insts := []Instruction{}
+func (l *AstSub) generate(offset int, state *GenState) ([]SearchInstruction, error) {
+	insts := []SearchInstruction{}
 
 	_, prs := state.variables[l.name]
 	if prs {
-		return []Instruction{}, fmt.Errorf("Name clash '%s'", l.name)
+		return []SearchInstruction{}, fmt.Errorf("Name clash '%s'", l.name)
 	}
 	state.variables[l.name] = offset
 
-	bodyinsts := []Instruction{}
+	bodyinsts := []SearchInstruction{}
 	loffset := offset + 1
 	for _, expr := range l.body {
 		expr_insts, gen_error := expr.generate(loffset, state)
 		if gen_error != nil {
-			return []Instruction{}, gen_error
+			return []SearchInstruction{}, gen_error
 		}
 		loffset = loffset + len(expr_insts)
 		bodyinsts = append(bodyinsts, expr_insts...)
@@ -199,7 +235,7 @@ func (l *AstSub) generate(offset int, state *GenState) ([]Instruction, error) {
 	return insts, nil
 }
 
-func (l *AstList) generate(offset int, state *GenState) ([]Instruction, error) {
+func (l *AstList) generate(offset int, state *GenState) ([]SearchInstruction, error) {
 	if l.not {
 		return l.generate_not(offset, state)
 	} else {
@@ -207,17 +243,17 @@ func (l *AstList) generate(offset int, state *GenState) ([]Instruction, error) {
 	}
 }
 
-func (l *AstList) generate_not_not(offset int, state *GenState) ([]Instruction, error) {
+func (l *AstList) generate_not_not(offset int, state *GenState) ([]SearchInstruction, error) {
 	b := Branch{
 		branches: []int{},
 	}
 
 	pc := offset + 1
-	branches := [][]Instruction{}
+	branches := [][]SearchInstruction{}
 	for _, elem := range l.contents {
 		branch_insts, gen_error := elem.generate(pc, state)
 		if gen_error != nil {
-			return []Instruction{}, gen_error
+			return []SearchInstruction{}, gen_error
 		}
 		b.branches = append(b.branches, pc)
 		pc += len(branch_insts) + 1
@@ -229,7 +265,7 @@ func (l *AstList) generate_not_not(offset int, state *GenState) ([]Instruction, 
 		end += len(instss) + 1
 	}
 
-	insts := []Instruction{b}
+	insts := []SearchInstruction{b}
 	for _, instss := range branches {
 		insts = append(insts, instss...)
 		insts = append(insts, Jump{
@@ -240,14 +276,14 @@ func (l *AstList) generate_not_not(offset int, state *GenState) ([]Instruction, 
 	return insts, nil
 }
 
-func (l *AstList) generate_not(offset int, state *GenState) ([]Instruction, error) {
-	insts := []Instruction{}
+func (l *AstList) generate_not(offset int, state *GenState) ([]SearchInstruction, error) {
+	insts := []SearchInstruction{}
 
 	pc := offset
 	for _, item := range l.contents {
 		item_insts, err := item.generate(pc+1, state)
 		if err != nil {
-			return []Instruction{}, err
+			return []SearchInstruction{}, err
 		}
 
 		insts = append(insts, StartNotIn{
@@ -264,35 +300,35 @@ func (l *AstList) generate_not(offset int, state *GenState) ([]Instruction, erro
 	return insts, nil
 }
 
-func (l *AstPrimary) generate(offset int, state *GenState) ([]Instruction, error) {
+func (l *AstPrimary) generate(offset int, state *GenState) ([]SearchInstruction, error) {
 	return l.literal.generate(offset, state)
 }
 
-func (l *AstRange) generate(offset int, state *GenState) ([]Instruction, error) {
+func (l *AstRange) generate(offset int, state *GenState) ([]SearchInstruction, error) {
 	result := MatchRange{
 		from: l.from.value,
 		to:   l.to.value,
 		not:  false,
 	}
-	return []Instruction{result}, nil
+	return []SearchInstruction{result}, nil
 }
 
-func (l *AstString) generate(offset int, state *GenState) ([]Instruction, error) {
+func (l *AstString) generate(offset int, state *GenState) ([]SearchInstruction, error) {
 	result := MatchLiteral{
 		toFind: l.value,
 		not:    l.not,
 	}
-	return []Instruction{result}, nil
+	return []SearchInstruction{result}, nil
 }
 
-func (l *AstSubExpr) generate(offset int, state *GenState) ([]Instruction, error) {
-	result := []Instruction{}
+func (l *AstSubExpr) generate(offset int, state *GenState) ([]SearchInstruction, error) {
+	result := []SearchInstruction{}
 
 	loffset := offset
 	for _, expr := range l.body {
 		expr_insts, gen_error := expr.generate(loffset, state)
 		if gen_error != nil {
-			return []Instruction{}, gen_error
+			return []SearchInstruction{}, gen_error
 		}
 		loffset = loffset + len(expr_insts)
 		result = append(result, expr_insts...)
@@ -301,12 +337,47 @@ func (l *AstSubExpr) generate(offset int, state *GenState) ([]Instruction, error
 	return result, nil
 }
 
-func (l *AstVariable) generate(offset int, state *GenState) ([]Instruction, error) {
+func (l *AstVariable) generate(offset int, state *GenState) ([]SearchInstruction, error) {
 	val, prs := state.variables[l.name]
 	if !prs {
-		return []Instruction{}, fmt.Errorf("Variable '%s' is not defined", l.name)
+		globalInsts, globalPrs := state.globalSubroutines[l.name]
+		if !globalPrs {
+			return []SearchInstruction{}, fmt.Errorf("Identifier '%s' is not defined", l.name)
+		}
+
+		state.variables[l.name] = offset
+
+		bodyinsts := []SearchInstruction{}
+		loffset := offset + 1
+		newLoopId := state.loopId
+		for _, expr := range globalInsts {
+			inst, lid := expr.adjust(offset+1, state)
+			loffset += 1
+			if newLoopId < lid {
+				newLoopId = lid
+			}
+			bodyinsts = append(bodyinsts, inst)
+		}
+
+		state.loopId = newLoopId
+
+		startVarDec := StartSubroutine{
+			id:        offset,
+			name:      l.name,
+			endOffset: loffset,
+		}
+
+		endVarDec := EndSubroutine{
+			name: l.name,
+		}
+
+		insts := []SearchInstruction{}
+		insts = append(insts, startVarDec)
+		insts = append(insts, bodyinsts...)
+		insts = append(insts, endVarDec)
+		return insts, nil
 	}
-	var result Instruction
+	var result SearchInstruction
 	if val == -1 {
 		result = MatchVariable{
 			name: l.name,
@@ -317,27 +388,27 @@ func (l *AstVariable) generate(offset int, state *GenState) ([]Instruction, erro
 			toPC: val,
 		}
 	}
-	return []Instruction{result}, nil
+	return []SearchInstruction{result}, nil
 }
 
-func (l *AstCharacterClass) generate(offset int, state *GenState) ([]Instruction, error) {
+func (l *AstCharacterClass) generate(offset int, state *GenState) ([]SearchInstruction, error) {
 	result := MatchCharClass{
 		class: l.classType,
 		not:   l.not,
 	}
-	return []Instruction{result}, nil
+	return []SearchInstruction{result}, nil
 }
 
-func (l *AstString) generateReplace(offset int, state *GenState) ([]RInstruction, error) {
+func (l *AstString) generateReplace(offset int, state *GenState) ([]ReplaceInstruction, error) {
 	result := ReplaceString{
 		value: l.value,
 	}
-	return []RInstruction{result}, nil
+	return []ReplaceInstruction{result}, nil
 }
 
-func (l *AstVariable) generateReplace(offset int, state *GenState) ([]RInstruction, error) {
+func (l *AstVariable) generateReplace(offset int, state *GenState) ([]ReplaceInstruction, error) {
 	result := ReplaceVariable{
 		name: l.name,
 	}
-	return []RInstruction{result}, nil
+	return []ReplaceInstruction{result}, nil
 }

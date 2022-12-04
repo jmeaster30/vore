@@ -3,6 +3,9 @@
 	"name": "Vore",
 	"patterns": [
 		{
+			"include": "#comment"
+		},
+		{
 			"include": "#keywords"
 		},
 		{
@@ -10,6 +13,9 @@
 		},
 		{
 			"include": "#amount"
+		},
+		{
+			"include": "#numbers"
 		},
 		{
 			"include": "#charClass"
@@ -22,6 +28,18 @@
 		}
 	],
 	"repository": {
+		"number": {
+			"patterns": [{
+				"name": "constant.numeric.vore",
+				"match": "[0-9]+"
+			}]
+		},
+		"comment": {
+			"patterns": [{
+				"name": "comment.line.double-dash.vore",
+				"match": "--.*$"
+			}]
+		},
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.vore",

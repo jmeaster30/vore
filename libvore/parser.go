@@ -152,17 +152,49 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, ParseError) {
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
-	expr, new_index, err := parse_expression(tokens, current_index)
-	if err.isError {
-		return nil, new_index, err
+	current_token = tokens[current_index]
+	var body AstSetBody
+	if current_token.tokenType == SUBROUTINE {
+		expr, next_index, err := parse_set_expression(tokens, current_index)
+		if err.isError {
+			return nil, next_index, err
+		}
+		body = expr
+		current_index = next_index
+	} else if current_token.tokenType == MATCHES {
+		expr, next_index, err := parse_set_matches(tokens, current_index)
+		if err.isError {
+			return nil, next_index, err
+		}
+		body = expr
+		current_index = next_index
+	} else {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'subroutine' or 'matches'")
 	}
-	current_index = new_index
 
 	setCommand := AstSet{
 		id:   name,
-		expr: expr,
+		body: body,
 	}
 	return &setCommand, current_index, NoError()
+}
+
+func parse_set_expression(tokens []*Token, token_index int) (AstSetBody, int, ParseError) {
+	current_index := consumeIgnoreableTokens(tokens, token_index+1)
+	expr, next_index, err := parse_expression(tokens, current_index)
+	if err.isError {
+		return nil, next_index, err
+	}
+	return &AstSetExpression{expr}, next_index, err
+}
+
+func parse_set_matches(tokens []*Token, token_index int) (AstSetBody, int, ParseError) {
+	current_index := consumeIgnoreableTokens(tokens, token_index+1)
+	command, next_index, err := parse_command(tokens, current_index)
+	if err.isError {
+		return nil, next_index, err
+	}
+	return &AstSetMatches{command}, next_index, err
 }
 
 func parse_amount(tokens []*Token, token_index int) (bool, int, int, int, int, ParseError) {
@@ -457,7 +489,6 @@ func parse_in(tokens []*Token, token_index int, not bool) (*AstList, int, ParseE
 		return nil, next_index, err
 	}
 	contents = append(contents, listable)
-
 	current_index := consumeIgnoreableTokens(tokens, next_index)
 	current_token := tokens[current_index]
 	for current_token.tokenType == COMMA {
@@ -470,7 +501,6 @@ func parse_in(tokens []*Token, token_index int, not bool) (*AstList, int, ParseE
 		current_index = next_index
 		current_token = tokens[current_index]
 	}
-
 	inList := AstList{contents: contents, not: not}
 	return &inList, current_index, NoError()
 }

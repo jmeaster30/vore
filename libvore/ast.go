@@ -5,33 +5,33 @@ import "fmt"
 type AstCommand interface {
 	isCmd()
 	print()
-	generate() (Command, error)
+	generate(state *GenState) (Command, error)
 }
 
 type AstExpression interface {
 	isExpr()
 	print()
-	generate(offset int, state *GenState) ([]Instruction, error)
+	generate(offset int, state *GenState) ([]SearchInstruction, error)
 }
 
 type AstLiteral interface {
 	isLiteral()
 	print()
-	generate(offset int, state *GenState) ([]Instruction, error)
+	generate(offset int, state *GenState) ([]SearchInstruction, error)
 }
 
 type AstListable interface {
 	isListable()
 	print()
-	generate(offset int, state *GenState) ([]Instruction, error)
+	generate(offset int, state *GenState) ([]SearchInstruction, error)
 	getMaxSize() int
 }
 
 type AstAtom interface {
 	isAtom()
 	print()
-	generate(offset int, state *GenState) ([]Instruction, error)
-	generateReplace(offset int, state *GenState) ([]RInstruction, error)
+	generate(offset int, state *GenState) ([]SearchInstruction, error)
+	generateReplace(offset int, state *GenState) ([]ReplaceInstruction, error)
 }
 
 type AstFind struct {
@@ -87,15 +87,28 @@ func (r AstReplace) print() {
 }
 
 type AstSet struct {
-	id   string
-	expr AstExpression
+	id           string
+	isSubroutine bool
+	isMatches    bool
+	body         AstSetBody
 }
 
 func (s AstSet) isCmd() {}
 func (s AstSet) print() {
-	fmt.Printf("(set %s ", s.id)
-	s.expr.print()
+	fmt.Printf("(set %s", s.id)
 	fmt.Print(")")
+}
+
+type AstSetBody interface {
+	generate(state *GenState, id string) (SetCommandBody, error)
+}
+
+type AstSetExpression struct {
+	expression AstExpression
+}
+
+type AstSetMatches struct {
+	command AstCommand
 }
 
 type AstLoop struct {

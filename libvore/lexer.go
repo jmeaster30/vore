@@ -39,6 +39,8 @@ const (
 	WITH
 	SET
 	TO
+	SUBROUTINE
+	MATCHES
 
 	// result length
 	ALL
@@ -113,6 +115,10 @@ func (t TokenType) pp() string {
 		return "SET"
 	case TO:
 		return "TO"
+	case SUBROUTINE:
+		return "SUBROUTINE"
+	case MATCHES:
+		return "MATCHES"
 	case ALL:
 		return "ALL"
 	case SKIP:
@@ -397,6 +403,10 @@ func (s *Lexer) getNextToken() *Token {
 			token.tokenType = SET
 		case "to":
 			token.tokenType = TO
+		case "subroutine":
+			token.tokenType = SUBROUTINE
+		case "matches":
+			token.tokenType = MATCHES
 		case "all":
 			token.tokenType = ALL
 		case "skip":

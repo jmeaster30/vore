@@ -9,21 +9,26 @@ type FindCommand struct {
 	skip int
 	take int
 	last int
-	body []Instruction
+	body []SearchInstruction
 }
 
-func findMatches(insts []Instruction, all bool, skip int, take int, last int, filename string, reader *VReader) Matches {
+func findMatches(insts []SearchInstruction, all bool, skip int, take int, last int, filename string, reader *VReader) Matches {
 	matches := NewQueue[Match]()
 	matchNumber := 0
 	fileOffset := 0
 	lineNumber := 1
 	columnNumber := 1
 
+	//for i, inst := range insts {
+	//	fmt.Printf("[%d] %v\n", i, inst)
+	//}
+
 	for all || matchNumber < skip+take {
 		currentState := CreateState(filename, reader, fileOffset, lineNumber, columnNumber)
 		for currentState.status == INPROCESS {
 			inst := insts[currentState.programCounter]
 			currentState = inst.execute(currentState)
+			//fmt.Printf("pc: %d inst: %v\n", currentState.programCounter, inst)
 
 			if currentState.status == INPROCESS && currentState.programCounter >= len(insts) {
 				currentState.SUCCESS()
@@ -31,6 +36,7 @@ func findMatches(insts []Instruction, all bool, skip int, take int, last int, fi
 		}
 
 		if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 && matchNumber >= skip {
+			//fmt.Println("====== SUCCESS ======")
 			foundMatch := currentState.MakeMatch(matchNumber + 1)
 			matches.PushBack(foundMatch)
 			if last != 0 {
@@ -41,6 +47,7 @@ func findMatches(insts []Instruction, all bool, skip int, take int, last int, fi
 			columnNumber = currentState.currentColumnNum
 			matchNumber += 1
 		} else {
+			//fmt.Println("====== FAILED  ======")
 			if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 {
 				matchNumber += 1
 			}
@@ -73,8 +80,8 @@ type ReplaceCommand struct {
 	skip     int
 	take     int
 	last     int
-	body     []Instruction
-	replacer []RInstruction
+	body     []SearchInstruction
+	replacer []ReplaceInstruction
 }
 
 func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
@@ -120,17 +127,43 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 }
 
 type SetCommand struct {
+	body         SetCommandBody
+	isSubroutine bool
+	isMatches    bool
+	id           string
 }
 
 func (c SetCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
 	return Matches{}
 }
 
-type Instruction interface {
-	execute(*EngineState) *EngineState
+type SetCommandBody interface {
+	execute(state *GlobalState, id string) *GlobalState
 }
 
-type RInstruction interface {
+type SetCommandExpression struct {
+	instructions []SearchInstruction
+}
+
+func (s SetCommandExpression) execute(state *GlobalState, id string) *GlobalState {
+	return state
+}
+
+type SetCommandMatches struct {
+	command Command
+}
+
+func (s SetCommandMatches) execute(state *GlobalState, id string) *GlobalState {
+	// run through the command we have and store the matches in variables
+	return state
+}
+
+type SearchInstruction interface {
+	execute(*SearchEngineState) *SearchEngineState
+	adjust(offset int, state *GenState) (SearchInstruction, int)
+}
+
+type ReplaceInstruction interface {
 	execute(*ReplacerState) *ReplacerState
 }
 
@@ -139,7 +172,10 @@ type MatchLiteral struct {
 	toFind string
 }
 
-func (i MatchLiteral) execute(current_state *EngineState) *EngineState {
+func (i MatchLiteral) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	return i, state.loopId
+}
+func (i MatchLiteral) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.MATCH(i.toFind, i.not)
 	return next_state
@@ -150,7 +186,10 @@ type MatchCharClass struct {
 	class AstCharacterClassType
 }
 
-func (i MatchCharClass) execute(current_state *EngineState) *EngineState {
+func (i MatchCharClass) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	return i, state.loopId
+}
+func (i MatchCharClass) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	switch i.class {
 	case ClassAny:
@@ -183,7 +222,10 @@ type MatchVariable struct {
 	name string
 }
 
-func (i MatchVariable) execute(current_state *EngineState) *EngineState {
+func (i MatchVariable) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	return i, state.loopId
+}
+func (i MatchVariable) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.MATCHVAR(i.name)
 	return next_state
@@ -195,7 +237,10 @@ type MatchRange struct {
 	to   string
 }
 
-func (i MatchRange) execute(current_state *EngineState) *EngineState {
+func (i MatchRange) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	return i, state.loopId
+}
+func (i MatchRange) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.MATCHRANGE(i.from, i.to, i.not)
 	return next_state
@@ -206,7 +251,11 @@ type CallSubroutine struct {
 	toPC int
 }
 
-func (i CallSubroutine) execute(current_state *EngineState) *EngineState {
+func (i CallSubroutine) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	i.toPC += offset
+	return i, state.loopId
+}
+func (i CallSubroutine) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.CALL(i.toPC, next_state.programCounter+1)
 	next_state.JUMP(i.toPC)
@@ -217,7 +266,13 @@ type Branch struct {
 	branches []int
 }
 
-func (i Branch) execute(current_state *EngineState) *EngineState {
+func (i Branch) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	for idx := range i.branches {
+		i.branches[idx] += offset
+	}
+	return i, state.loopId
+}
+func (i Branch) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	flipped := []int{}
 	for k := range i.branches {
@@ -237,7 +292,11 @@ type StartNotIn struct {
 	nextCheckpointPC int
 }
 
-func (i StartNotIn) execute(current_state *EngineState) *EngineState {
+func (i StartNotIn) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	i.nextCheckpointPC += offset
+	return i, state.loopId
+}
+func (i StartNotIn) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.JUMP(i.nextCheckpointPC)
 	next_state.CHECKPOINT()
@@ -247,7 +306,10 @@ func (i StartNotIn) execute(current_state *EngineState) *EngineState {
 
 type FailNotIn struct{}
 
-func (i FailNotIn) execute(current_state *EngineState) *EngineState {
+func (i FailNotIn) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	return i, state.loopId
+}
+func (i FailNotIn) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.BACKTRACK()
 	next_state.BACKTRACK()
@@ -258,7 +320,10 @@ type EndNotIn struct {
 	maxSize int
 }
 
-func (i EndNotIn) execute(current_state *EngineState) *EngineState {
+func (i EndNotIn) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	return i, state.loopId
+}
+func (i EndNotIn) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	// TODO this should actually let the rest of the expression backtrack from max size to min size (could just be to 1 since things less than the min are not in)
 	cfo := next_state.currentFileOffset
@@ -281,7 +346,12 @@ type StartLoop struct {
 	exitLoop int
 }
 
-func (i StartLoop) execute(current_state *EngineState) *EngineState {
+func (i StartLoop) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	i.exitLoop += offset
+	i.id += state.loopId
+	return i, state.loopId
+}
+func (i StartLoop) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 
 	inited := next_state.INITLOOPSTACK(i.id)
@@ -323,7 +393,12 @@ type StopLoop struct {
 	startLoop int
 }
 
-func (i StopLoop) execute(current_state *EngineState) *EngineState {
+func (i StopLoop) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	i.id += state.loopId
+	i.startLoop += offset
+	return i, state.loopId
+}
+func (i StopLoop) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.JUMP(i.startLoop)
 	return next_state
@@ -333,7 +408,10 @@ type StartVarDec struct {
 	name string
 }
 
-func (i StartVarDec) execute(current_state *EngineState) *EngineState {
+func (i StartVarDec) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	return i, state.loopId
+}
+func (i StartVarDec) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.STARTVAR(i.name)
 	return next_state
@@ -343,7 +421,10 @@ type EndVarDec struct {
 	name string
 }
 
-func (i EndVarDec) execute(current_state *EngineState) *EngineState {
+func (i EndVarDec) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	return i, state.loopId
+}
+func (i EndVarDec) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.ENDVAR(i.name)
 	return next_state
@@ -355,7 +436,11 @@ type StartSubroutine struct {
 	endOffset int
 }
 
-func (i StartSubroutine) execute(current_state *EngineState) *EngineState {
+func (i StartSubroutine) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	i.endOffset += offset
+	return i, state.loopId
+}
+func (i StartSubroutine) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.VALIDATECALL(i.id, i.endOffset+1)
 	next_state.NEXT()
@@ -366,7 +451,10 @@ type EndSubroutine struct {
 	name string
 }
 
-func (i EndSubroutine) execute(current_state *EngineState) *EngineState {
+func (i EndSubroutine) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	return i, state.loopId
+}
+func (i EndSubroutine) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.RETURN()
 	return next_state
@@ -376,7 +464,11 @@ type Jump struct {
 	newProgramCounter int
 }
 
-func (i Jump) execute(current_state *EngineState) *EngineState {
+func (i Jump) adjust(offset int, state *GenState) (SearchInstruction, int) {
+	i.newProgramCounter += offset
+	return i, state.loopId
+}
+func (i Jump) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.JUMP(i.newProgramCounter)
 	return next_state
