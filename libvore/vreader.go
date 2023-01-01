@@ -12,6 +12,19 @@ type VReader struct {
 	size     int
 }
 
+func VReaderFromFileToMemory(filename string) *VReader {
+	contents, err := os.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+
+	return &VReader{
+		contents: strings.NewReader(string(contents)),
+		offset:   0,
+		size:     len(contents),
+	}
+}
+
 func VReaderFromFile(filename string) *VReader {
 	file, err := os.Open(filename)
 	if err != nil {

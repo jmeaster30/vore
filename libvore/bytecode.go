@@ -1,5 +1,7 @@
 package libvore
 
+import "fmt"
+
 type Command interface {
 	execute(string, *VReader, ReplaceMode) Matches
 }
@@ -98,9 +100,14 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 	}
 
 	var writer *VWriter
+	replaceReader := reader
 	if mode == NEW {
 		writer = NewVWriter(filename + ".vored")
 	} else if mode == OVERWRITE {
+		// If we are overwriting the file we have to load the original
+		// into memory since we will be writing over areas of text that
+		// we need to read from
+		replaceReader = VReaderFromFileToMemory(filename)
 		writer = NewVWriter(filename)
 	} else if mode == NOTHING {
 		writer = DummyVWriter()
@@ -109,17 +116,21 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 	lastReaderOffset := 0
 	currentWriterOffset := 0
 	for i := 0; i < len(replacedMatches); i++ {
+		// read from where we left off to the next replacedMatch
 		currentReaderLength := replacedMatches[i].offset.Start - lastReaderOffset
-		orig := reader.ReadAt(currentReaderLength, lastReaderOffset)
+		orig := replaceReader.ReadAt(currentReaderLength, lastReaderOffset)
+		fmt.Printf("reader off: %d len: %d value '%s' (%d)\n", lastReaderOffset, currentReaderLength, orig, currentWriterOffset)
 		writer.WriteAt(currentWriterOffset, orig)
 		currentWriterOffset += currentReaderLength
 		lastReaderOffset += currentReaderLength
+
+		// write the replacement. We have to update the lastReaderOffset with the part of the string that was matched
 		writer.WriteAt(currentWriterOffset, replacedMatches[i].replacement)
 		currentWriterOffset += len(replacedMatches[i].replacement)
 		lastReaderOffset += len(replacedMatches[i].value)
 	}
-	if lastReaderOffset < reader.size {
-		outputValue := reader.ReadAt(reader.size-lastReaderOffset, lastReaderOffset)
+	if lastReaderOffset < replaceReader.size {
+		outputValue := replaceReader.ReadAt(reader.size-lastReaderOffset, lastReaderOffset)
 		writer.WriteAt(currentWriterOffset, outputValue)
 	}
 
