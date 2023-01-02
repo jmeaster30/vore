@@ -1,7 +1,5 @@
 package libvore
 
-import "fmt"
-
 type Command interface {
 	execute(string, *VReader, ReplaceMode) Matches
 }
@@ -119,7 +117,6 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 		// read from where we left off to the next replacedMatch
 		currentReaderLength := replacedMatches[i].offset.Start - lastReaderOffset
 		orig := replaceReader.ReadAt(currentReaderLength, lastReaderOffset)
-		fmt.Printf("reader off: %d len: %d value '%s' (%d)\n", lastReaderOffset, currentReaderLength, orig, currentWriterOffset)
 		writer.WriteAt(currentWriterOffset, orig)
 		currentWriterOffset += currentReaderLength
 		lastReaderOffset += currentReaderLength
