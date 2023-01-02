@@ -154,8 +154,8 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, ParseError) {
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
 	current_token = tokens[current_index]
 	var body AstSetBody
-	if current_token.tokenType == SUBROUTINE {
-		expr, next_index, err := parse_set_expression(tokens, current_index)
+	if current_token.tokenType == PATTERN {
+		expr, next_index, err := parse_set_pattern(tokens, current_index)
 		if err.isError {
 			return nil, next_index, err
 		}
@@ -169,7 +169,7 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, ParseError) {
 		body = expr
 		current_index = next_index
 	} else {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'subroutine' or 'matches'")
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'pattern' or 'matches'")
 	}
 
 	setCommand := AstSet{
@@ -179,13 +179,28 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, ParseError) {
 	return &setCommand, current_index, NoError()
 }
 
-func parse_set_expression(tokens []*Token, token_index int) (AstSetBody, int, ParseError) {
+func parse_set_pattern(tokens []*Token, token_index int) (AstSetBody, int, ParseError) {
 	current_index := consumeIgnoreableTokens(tokens, token_index+1)
 	expr, next_index, err := parse_expression(tokens, current_index)
 	if err.isError {
 		return nil, next_index, err
 	}
-	return &AstSetExpression{expr}, next_index, err
+
+	current_index = consumeIgnoreableTokens(tokens, next_index)
+	if tokens[current_index].tokenType != BEGIN {
+		return &AstSetPattern{expr, []AstProcessStatement{}}, current_index, err
+	}
+
+	statements, next_index, err := parse_process_statements(tokens, current_index+1)
+	if err.isError {
+		return nil, next_index, err
+	}
+
+	if tokens[next_index].tokenType != END {
+		return nil, next_index, NewParseError(*tokens[next_index], "Unexpected token. Expected 'end'.")
+	}
+
+	return &AstSetPattern{expr, statements}, next_index + 1, err
 }
 
 func parse_set_matches(tokens []*Token, token_index int) (AstSetBody, int, ParseError) {
@@ -763,6 +778,252 @@ func parse_character_class(tokens []*Token, token_index int, not bool) (*AstChar
 		return nil, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'start' or 'end'")
 	}
 	return nil, token_index, NewParseError(*tokens[token_index], "Unexpected token. Expected a character class: 'any', 'whitespace', 'digit', 'upper', 'lower', 'letter', 'line start', 'line end', 'file start', or 'file end'.")
+}
+
+func parse_process_statements(tokens []*Token, index int) ([]AstProcessStatement, int, ParseError) {
+	statements := []AstProcessStatement{}
+	token_index := index
+	for token_index < len(tokens)-1 {
+		ws_index := consumeIgnoreableTokens(tokens, token_index)
+		command, new_index, e := parse_process_statement(tokens, ws_index)
+		if e.isError {
+			return nil, new_index, e
+		}
+		token_index = new_index
+		if command != nil {
+			statements = append(statements, command)
+		} else {
+			break
+		}
+	}
+
+	return statements, token_index, NoError()
+}
+
+func parse_process_statement(tokens []*Token, index int) (AstProcessStatement, int, ParseError) {
+	if tokens[index].tokenType == SET {
+		return parse_process_set(tokens, index)
+	} else if tokens[index].tokenType == IF {
+		return parse_process_if(tokens, index)
+	} else if tokens[index].tokenType == RETURN {
+		return parse_process_return(tokens, index)
+	} else if tokens[index].tokenType == DEBUG {
+		return parse_process_debug(tokens, index)
+	} else if tokens[index].tokenType == LOOP {
+		return parse_process_loop(tokens, index)
+	} else if tokens[index].tokenType == BREAK {
+		return AstProcessBreak{}, index + 1, NoError()
+	} else if tokens[index].tokenType == CONTINUE {
+		return AstProcessContinue{}, index + 1, NoError()
+	} else if tokens[index].tokenType == END {
+		return nil, index, NoError()
+	} else if tokens[index].tokenType == ELSE {
+		return nil, index, NoError()
+	} else {
+		return nil, index, NewParseError(*tokens[index], "Unexpected token. Expected 'set', 'if', 'return', 'debug', 'loop', 'else', or 'end'.")
+	}
+}
+
+func parse_process_set(tokens []*Token, index int) (AstProcessStatement, int, ParseError) {
+	var current_index = consumeIgnoreableTokens(tokens, index+1)
+	var current_token = tokens[current_index]
+
+	if current_token.tokenType != IDENTIFIER {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected identifier")
+	}
+
+	name := current_token.lexeme
+
+	current_index = consumeIgnoreableTokens(tokens, current_index+1)
+	current_token = tokens[current_index]
+
+	if current_token.tokenType != TO {
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'to'")
+	}
+
+	current_index = consumeIgnoreableTokens(tokens, current_index+1)
+	expr, next_index, err := parse_process_expression(tokens, current_index)
+	if err.isError {
+		return nil, next_index, err
+	}
+
+	setStatement := AstProcessSet{
+		name: name,
+		expr: expr,
+	}
+	return &setStatement, next_index, NoError()
+}
+
+func parse_process_if(tokens []*Token, index int) (AstProcessStatement, int, ParseError) {
+	current_index := consumeIgnoreableTokens(tokens, index+1)
+	expr, next_index, err := parse_process_expression(tokens, current_index)
+	if err.isError {
+		return nil, next_index, err
+	}
+
+	next_index = consumeIgnoreableTokens(tokens, next_index)
+	if tokens[next_index].tokenType != THEN {
+		return nil, next_index, NewParseError(*tokens[next_index], "Unexpected token. Expected 'then'.")
+	}
+
+	next_index = consumeIgnoreableTokens(tokens, next_index+1)
+	trueBody, follow_index, err := parse_process_statements(tokens, next_index)
+	if err.isError {
+		return nil, follow_index, err
+	}
+
+	falseBody := []AstProcessStatement{}
+	if tokens[follow_index].tokenType == ELSE {
+		falseBody, follow_index, err = parse_process_statements(tokens, follow_index+1)
+		if err.isError {
+			return nil, follow_index, err
+		}
+	}
+
+	follow_index = consumeIgnoreableTokens(tokens, follow_index)
+	if tokens[follow_index].tokenType != END {
+		return nil, follow_index, NewParseError(*tokens[follow_index], "Unexpected token. Expected 'end'.")
+	}
+
+	return &AstProcessIf{expr, trueBody, falseBody}, follow_index + 1, NoError()
+}
+
+func parse_process_return(tokens []*Token, index int) (AstProcessStatement, int, ParseError) {
+	current_index := consumeIgnoreableTokens(tokens, index+1)
+	expr, next_index, err := parse_process_expression(tokens, current_index)
+	if err.isError {
+		return nil, next_index, err
+	}
+
+	return &AstProcessReturn{expr}, next_index, err
+}
+
+func parse_process_debug(tokens []*Token, index int) (AstProcessStatement, int, ParseError) {
+	current_index := consumeIgnoreableTokens(tokens, index+1)
+	expr, next_index, err := parse_process_expression(tokens, current_index)
+	if err.isError {
+		return nil, next_index, err
+	}
+
+	return &AstProcessDebug{expr}, next_index, err
+}
+
+func parse_process_loop(tokens []*Token, index int) (AstProcessStatement, int, ParseError) {
+	current_index := consumeIgnoreableTokens(tokens, index+1)
+
+	body, next_index, err := parse_process_statements(tokens, current_index)
+	if err.isError {
+		return nil, next_index, err
+	}
+
+	next_index = consumeIgnoreableTokens(tokens, next_index)
+	if tokens[next_index].tokenType != END {
+		return nil, next_index, NewParseError(*tokens[next_index], "Unexpected token. Expected 'end'.")
+	}
+
+	return &AstProcessLoop{body}, next_index + 1, NoError()
+}
+
+func parse_process_expression(tokens []*Token, index int) (AstProcessExpression, int, ParseError) {
+	exprTokens, next_index := getProcessExpressionTokens(tokens, index)
+	expr, fail_index, err := parse_expr_pratt(exprTokens, 0, 0)
+	if err.isError {
+		return nil, index + fail_index, err
+	}
+	return expr, next_index, NoError()
+}
+
+func parse_expr_pratt(tokens []*Token, index int, minPrecedence int) (AstProcessExpression, int, ParseError) {
+	token_index := index + 1
+	var lhs AstProcessExpression
+	if tokens[index].tokenType == STRING {
+		lhs = AstProcessString{tokens[index].lexeme}
+	} else if tokens[index].tokenType == NUMBER {
+		lhs = AstProcessNumber{tokens[index].lexeme}
+	} else if tokens[index].tokenType == IDENTIFIER {
+		lhs = AstProcessVariable{tokens[index].lexeme}
+	} else if isPrefixOp(tokens[index].tokenType) {
+		rprec := prefixPrecedence(tokens[index].tokenType)
+		rhs, next_index, err := parse_expr_pratt(tokens, index+1, rprec)
+		if err.isError {
+			return nil, next_index, err
+		}
+		lhs = AstProcessUnaryExpression{tokens[index].tokenType, rhs}
+		token_index = next_index
+	} else {
+		return nil, index, NewParseError(*tokens[index], "Unexpected token. Expected string, number, variable, or unary operator")
+	}
+
+	for token_index < len(tokens) {
+		if !isBinaryOp(tokens[token_index].tokenType) {
+			return nil, token_index, NewParseError(*tokens[token_index], "Unexpected token. Expected binary operator.")
+		}
+		op := tokens[token_index].tokenType
+		lprec, rprec := infixPrecedence(tokens[token_index].tokenType)
+		if lprec < minPrecedence {
+			break
+		}
+		rhs, next_index, err := parse_expr_pratt(tokens, token_index+1, rprec)
+		if err.isError {
+			return nil, next_index, err
+		}
+		token_index = next_index
+		lhs = AstProcessBinaryExpression{op, lhs, rhs}
+	}
+
+	return lhs, token_index, NoError()
+}
+
+func getProcessExpressionTokens(tokens []*Token, index int) ([]*Token, int) {
+	exprTokens := []*Token{}
+	token_index := index
+	for token_index < len(tokens) {
+		if isProcessExprEnd(tokens[token_index].tokenType) {
+			break
+		} else if tokens[token_index].tokenType == WS {
+			token_index += 1
+		} else {
+			exprTokens = append(exprTokens, tokens[token_index])
+			token_index += 1
+		}
+	}
+	return exprTokens, token_index
+}
+
+func isProcessExprEnd(tokenType TokenType) bool {
+	return tokenType == SET || tokenType == THEN || tokenType == IF || tokenType == ELSE || tokenType == END || tokenType == DEBUG || tokenType == RETURN || tokenType == LOOP
+}
+
+func isPrefixOp(tokenType TokenType) bool {
+	return tokenType == NOT || tokenType == HEAD || tokenType == TAIL
+}
+
+func prefixPrecedence(tokenType TokenType) int {
+	if tokenType == NOT {
+		return 11
+	} else if tokenType == HEAD || tokenType == TAIL {
+		return 12
+	}
+	return -1
+}
+
+func isBinaryOp(tokenType TokenType) bool {
+	return tokenType == AND || tokenType == OR || tokenType == PLUS || tokenType == MINUS || tokenType == MOD || tokenType == MULT || tokenType == DIV || tokenType == LESS || tokenType == GREATER || tokenType == LESSEQ || tokenType == GREATEREQ || tokenType == DEQUAL || tokenType == NEQUAL
+}
+
+func infixPrecedence(tokenType TokenType) (int, int) {
+	if tokenType == AND || tokenType == OR {
+		return 1, 2
+	} else if tokenType == DEQUAL || tokenType == NEQUAL {
+		return 3, 4
+	} else if tokenType == LESS || tokenType == GREATER || tokenType == LESSEQ || tokenType == GREATEREQ {
+		return 5, 6
+	} else if tokenType == PLUS || tokenType == MINUS {
+		return 7, 8
+	} else if tokenType == MULT || tokenType == DIV || tokenType == MOD {
+		return 9, 10
+	}
+	return -1, -1
 }
 
 func consumeIgnoreableTokens(tokens []*Token, index int) int {

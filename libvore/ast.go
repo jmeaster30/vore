@@ -34,6 +34,16 @@ type AstAtom interface {
 	generateReplace(offset int, state *GenState) ([]ReplaceInstruction, error)
 }
 
+type AstProcessStatement interface {
+	isProcessStatement()
+	print()
+}
+
+type AstProcessExpression interface {
+	isProcessExpr()
+	print()
+}
+
 type AstFind struct {
 	all  bool
 	skip int
@@ -95,20 +105,40 @@ type AstSet struct {
 
 func (s AstSet) isCmd() {}
 func (s AstSet) print() {
-	fmt.Printf("(set %s", s.id)
+	fmt.Printf("(set %s ", s.id)
+	s.body.print()
 	fmt.Print(")")
 }
 
 type AstSetBody interface {
 	generate(state *GenState, id string) (SetCommandBody, error)
+	print()
 }
 
-type AstSetExpression struct {
-	expression AstExpression
+type AstSetPattern struct {
+	pattern AstExpression
+	body    []AstProcessStatement
+}
+
+func (b AstSetPattern) print() {
+	fmt.Print("(pattern ")
+	b.pattern.print()
+	fmt.Print(") (predicate")
+	for _, stmt := range b.body {
+		fmt.Print(" ")
+		stmt.print()
+	}
+	fmt.Print(")")
 }
 
 type AstSetMatches struct {
 	command AstCommand
+}
+
+func (b AstSetMatches) print() {
+	fmt.Print("(matches ")
+	b.command.print()
+	fmt.Print(")")
 }
 
 type AstLoop struct {
@@ -331,4 +361,143 @@ func (c AstCharacterClass) print() {
 		fmt.Print("file end")
 	}
 	fmt.Printf(")")
+}
+
+type AstProcessSet struct {
+	name string
+	expr AstProcessExpression
+}
+
+func (s AstProcessSet) isProcessStatement() {}
+func (s AstProcessSet) print() {
+	fmt.Printf("(pset '%s' ", s.name)
+	s.expr.print()
+	fmt.Print(")")
+}
+
+type AstProcessReturn struct {
+	expr AstProcessExpression
+}
+
+func (s AstProcessReturn) isProcessStatement() {}
+func (s AstProcessReturn) print() {
+	fmt.Print("(return ")
+	s.expr.print()
+	fmt.Print(")")
+}
+
+type AstProcessIf struct {
+	condition AstProcessExpression
+	trueBody  []AstProcessStatement
+	falseBody []AstProcessStatement
+}
+
+func (s AstProcessIf) isProcessStatement() {}
+func (s AstProcessIf) print() {
+	fmt.Print("(if ")
+	s.condition.print()
+	fmt.Print(" (true")
+	for _, expr := range s.trueBody {
+		fmt.Print(" ")
+		expr.print()
+	}
+	fmt.Print(") (false")
+	for _, expr := range s.falseBody {
+		fmt.Print(" ")
+		expr.print()
+	}
+	fmt.Print("))")
+}
+
+type AstProcessDebug struct {
+	expr AstProcessExpression
+}
+
+func (s AstProcessDebug) isProcessStatement() {}
+func (s AstProcessDebug) print() {
+	fmt.Print("(debug ")
+	s.expr.print()
+	fmt.Print(")")
+}
+
+type AstProcessLoop struct {
+	body []AstProcessStatement
+}
+
+func (s AstProcessLoop) isProcessStatement() {}
+func (s AstProcessLoop) print() {
+	fmt.Print("(loop")
+	for _, expr := range s.body {
+		fmt.Print(" ")
+		expr.print()
+	}
+	fmt.Print(")")
+}
+
+type AstProcessContinue struct{}
+
+func (s AstProcessContinue) isProcessStatement() {}
+func (s AstProcessContinue) print() {
+	fmt.Print("(continue)")
+}
+
+type AstProcessBreak struct{}
+
+func (s AstProcessBreak) isProcessStatement() {}
+func (s AstProcessBreak) print() {
+	fmt.Print("(break)")
+}
+
+type AstProcessUnaryExpression struct {
+	op   TokenType
+	expr AstProcessExpression
+}
+
+func (e AstProcessUnaryExpression) isProcessExpr() {}
+func (e AstProcessUnaryExpression) print() {
+	fmt.Printf("(unary %s ", e.op.pp())
+	e.expr.print()
+	fmt.Print(")")
+}
+
+type AstProcessBinaryExpression struct {
+	op  TokenType
+	lhs AstProcessExpression
+	rhs AstProcessExpression
+}
+
+func (e AstProcessBinaryExpression) isProcessExpr() {}
+func (e AstProcessBinaryExpression) print() {
+	fmt.Printf("(binary %s ", e.op.pp())
+	e.lhs.print()
+	fmt.Print(" ")
+	e.rhs.print()
+	fmt.Print(")")
+}
+
+type AstProcessString struct {
+	value string
+}
+
+func (e AstProcessString) isProcessExpr() {}
+func (e AstProcessString) print() {
+	fmt.Printf("(string %s)", e.value)
+}
+
+type AstProcessNumber struct {
+	value string
+}
+
+func (e AstProcessNumber) isProcessExpr() {}
+func (e AstProcessNumber) print() {
+	fmt.Printf("(number %s)", e.value)
+}
+
+type AstProcessVariable struct {
+	name string
+}
+
+func (e AstProcessVariable) isProcessExpr() {}
+func (e AstProcessVariable) print() {
+	fmt.Printf("(var %s)", e.name)
 }

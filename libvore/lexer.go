@@ -32,6 +32,17 @@ const (
 	CLOSEPAREN
 	OPENCURLY
 	CLOSECURLY
+	PLUS
+	MINUS
+	MULT
+	DIV
+	LESS
+	GREATER
+	LESSEQ
+	GREATEREQ
+	DEQUAL
+	NEQUAL
+	MOD
 
 	// commands
 	FIND
@@ -39,7 +50,7 @@ const (
 	WITH
 	SET
 	TO
-	SUBROUTINE
+	PATTERN
 	MATCHES
 
 	// result length
@@ -60,6 +71,7 @@ const (
 	FILE
 	START
 	END
+	BEGIN
 
 	// keywords
 	NOT
@@ -73,6 +85,16 @@ const (
 	FEWEST
 	IN
 	OR
+	IF
+	THEN
+	ELSE
+	DEBUG
+	RETURN
+	HEAD
+	TAIL
+	LOOP
+	BREAK
+	CONTINUE
 )
 
 func (t TokenType) pp() string {
@@ -115,8 +137,8 @@ func (t TokenType) pp() string {
 		return "SET"
 	case TO:
 		return "TO"
-	case SUBROUTINE:
-		return "SUBROUTINE"
+	case PATTERN:
+		return "PATTERN"
 	case MATCHES:
 		return "MATCHES"
 	case ALL:
@@ -149,6 +171,8 @@ func (t TokenType) pp() string {
 		return "FILE"
 	case END:
 		return "END"
+	case BEGIN:
+		return "BEGIN"
 	case NOT:
 		return "NOT"
 	case AT:
@@ -171,6 +195,48 @@ func (t TokenType) pp() string {
 		return "IN"
 	case OR:
 		return "OR"
+	case IF:
+		return "IF"
+	case THEN:
+		return "THEN"
+	case ELSE:
+		return "ELSE"
+	case DEBUG:
+		return "DEBUG"
+	case RETURN:
+		return "RETURN"
+	case HEAD:
+		return "HEAD"
+	case TAIL:
+		return "TAIL"
+	case LOOP:
+		return "LOOP"
+	case PLUS:
+		return "PLUS"
+	case MINUS:
+		return "MINUS"
+	case MULT:
+		return "MULT"
+	case DIV:
+		return "DIV"
+	case MOD:
+		return "MOD"
+	case LESS:
+		return "LESS"
+	case GREATER:
+		return "GREATER"
+	case LESSEQ:
+		return "LESSEQ"
+	case GREATEREQ:
+		return "GREATEREQ"
+	case DEQUAL:
+		return "DEQUAL"
+	case NEQUAL:
+		return "NEQUAL"
+	case CONTINUE:
+		return "CONTINUE"
+	case BREAK:
+		return "BREAK"
 	default:
 		panic("UNKNOWN TOKEN TYPE")
 	}
@@ -182,6 +248,10 @@ type Token struct {
 	line      *Range
 	column    *Range
 	lexeme    string
+}
+
+func (token Token) print() {
+	fmt.Printf("[%s] '%s' \tline: %d, \tstart column: %d, \tend column: %d\n", token.tokenType.pp(), token.lexeme, token.line.Start, token.column.Start, token.column.End)
 }
 
 type PositionInfo struct {
@@ -233,7 +303,10 @@ func (s *Lexer) getNextToken() *Token {
 		SSTRING_D_ESCAPE
 		SSTRING_S_ESCAPE
 		SNUMBER
-		SEQUAL
+		SEQUAL_1
+		SDEQUAL
+		SEXCL
+		SNEQUAL
 		SCOLON
 		SCOLONEQ
 		SIDENTIFIER
@@ -244,6 +317,8 @@ func (s *Lexer) getNextToken() *Token {
 		SCLOSECURLY
 		SCOMMENT
 		SDASH
+		SOPERATOR
+		SOPERATORSTART
 		SERROR
 		SEND
 	)
@@ -302,13 +377,27 @@ func (s *Lexer) getNextToken() *Token {
 			buf.WriteRune(ch)
 			current_state = SCOMMA
 			break
+		} else if ch == '!' && current_state == SSTART {
+			buf.WriteRune(ch)
+			current_state = SEXCL
+		} else if ch == '=' && current_state == SEXCL {
+			buf.WriteRune(ch)
+			current_state = SNEQUAL
+			break
 		} else if ch == '=' && current_state == SSTART {
 			buf.WriteRune(ch)
-			current_state = SEQUAL
+			current_state = SEQUAL_1
+		} else if ch == '=' && current_state == SEQUAL_1 {
+			buf.WriteRune(ch)
+			current_state = SDEQUAL
 			break
 		} else if ch == '=' && current_state == SCOLON {
 			buf.WriteRune(ch)
 			current_state = SCOLONEQ
+			break
+		} else if ch == '=' && current_state == SOPERATORSTART {
+			buf.WriteRune(ch)
+			current_state = SOPERATOR
 			break
 		} else if ch == ':' && current_state == SSTART {
 			buf.WriteRune(ch)
@@ -320,6 +409,13 @@ func (s *Lexer) getNextToken() *Token {
 			} else if current_state == SDASH {
 				current_state = SCOMMENT
 			}
+		} else if current_state == SSTART && (ch == '+' || ch == '%' || ch == '*' || ch == '/') {
+			buf.WriteRune(ch)
+			current_state = SOPERATOR
+			break
+		} else if current_state == SSTART && (ch == '>' || ch == '<') {
+			buf.WriteRune(ch)
+			current_state = SOPERATORSTART
 		} else if unicode.IsSpace(ch) {
 			if current_state == SSTART || current_state == SWHITESPACE {
 				current_state = SWHITESPACE
@@ -370,7 +466,7 @@ func (s *Lexer) getNextToken() *Token {
 			}
 			current_state = SSTRING_SINGLE
 		} else {
-			if current_state != SSTART || unicode.IsDigit(ch) || unicode.IsLetter(ch) || unicode.IsSpace(ch) || ch == '(' || ch == ')' || ch == '{' || ch == '}' || ch == ',' || ch == ':' || ch == '=' || ch == '"' || ch == '\'' || ch == '-' {
+			if current_state != SSTART || unicode.IsDigit(ch) || unicode.IsLetter(ch) || unicode.IsSpace(ch) || ch == '(' || ch == ')' || ch == '{' || ch == '}' || ch == ',' || ch == ':' || ch == '=' || ch == '"' || ch == '\'' || ch == '-' || ch == '+' || ch == '<' || ch == '>' || ch == '*' || ch == '/' || ch == '%' {
 				s.unread_last()
 			} else {
 				buf.WriteRune(ch)
@@ -403,8 +499,8 @@ func (s *Lexer) getNextToken() *Token {
 			token.tokenType = SET
 		case "to":
 			token.tokenType = TO
-		case "subroutine":
-			token.tokenType = SUBROUTINE
+		case "pattern":
+			token.tokenType = PATTERN
 		case "matches":
 			token.tokenType = MATCHES
 		case "all":
@@ -437,6 +533,8 @@ func (s *Lexer) getNextToken() *Token {
 			token.tokenType = START
 		case "end":
 			token.tokenType = END
+		case "begin":
+			token.tokenType = BEGIN
 		case "not":
 			token.tokenType = NOT
 		case "at":
@@ -459,6 +557,26 @@ func (s *Lexer) getNextToken() *Token {
 			token.tokenType = IN
 		case "or":
 			token.tokenType = OR
+		case "if":
+			token.tokenType = IF
+		case "then":
+			token.tokenType = THEN
+		case "else":
+			token.tokenType = ELSE
+		case "debug":
+			token.tokenType = DEBUG
+		case "return":
+			token.tokenType = RETURN
+		case "head":
+			token.tokenType = HEAD
+		case "tail":
+			token.tokenType = TAIL
+		case "loop":
+			token.tokenType = LOOP
+		case "continue":
+			token.tokenType = CONTINUE
+		case "break":
+			token.tokenType = BREAK
 		}
 	case SWHITESPACE:
 		token.tokenType = WS
@@ -472,16 +590,42 @@ func (s *Lexer) getNextToken() *Token {
 		token.tokenType = CLOSECURLY
 	case SCOMMA:
 		token.tokenType = COMMA
-	case SEQUAL:
+	case SEQUAL_1:
 		token.tokenType = EQUAL
+	case SDEQUAL:
+		token.tokenType = DEQUAL
+	case SNEQUAL:
+		token.tokenType = NEQUAL
 	case SCOLON:
 		token.tokenType = ERROR
 	case SCOMMENT:
 		token.tokenType = COMMENT
 	case SDASH:
-		token.tokenType = ERROR
+		token.tokenType = MINUS
 	case SCOLONEQ:
 		token.tokenType = COLONEQ
+	case SOPERATORSTART:
+	case SOPERATOR:
+		token.tokenType = ERROR
+		lexeme := buf.String()
+		switch lexeme {
+		case "+":
+			token.tokenType = PLUS
+		case "*":
+			token.tokenType = MULT
+		case "/":
+			token.tokenType = DIV
+		case "%":
+			token.tokenType = MOD
+		case "<":
+			token.tokenType = LESS
+		case ">":
+			token.tokenType = GREATER
+		case "<=":
+			token.tokenType = LESSEQ
+		case ">=":
+			token.tokenType = GREATEREQ
+		}
 	case SEND:
 		token.tokenType = EOF
 	default:

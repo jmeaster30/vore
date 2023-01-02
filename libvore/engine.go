@@ -24,8 +24,24 @@ type VariableRecord struct {
 }
 
 type CallState struct {
-	id           int
-	returnOffset int
+	id               int
+	returnOffset     int
+	startMatchOffset int
+}
+
+type ProcessStatus int
+
+const (
+	NEXT Status = iota
+	BREAKLOOP
+	CONTINUELOOP
+)
+
+// need some processing state/environment
+type ProcessState struct {
+	environment map[string]string
+	loopStack   *Stack[int]
+	status      ProcessStatus
 }
 
 type SearchEngineState struct {

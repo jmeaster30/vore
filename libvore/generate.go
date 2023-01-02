@@ -2,10 +2,15 @@ package libvore
 
 import "fmt"
 
+type GeneratedPattern struct {
+	search   []SearchInstruction
+	validate []AstProcessStatement
+}
+
 type GenState struct {
 	loopId            int
 	variables         map[string]int
-	globalSubroutines map[string][]SearchInstruction
+	globalSubroutines map[string]GeneratedPattern
 	globalVariables   map[string]int
 }
 
@@ -86,19 +91,20 @@ func (s *AstSet) generate(state *GenState) (Command, error) {
 	}, nil
 }
 
-func (s AstSetExpression) generate(state *GenState, id string) (SetCommandBody, error) {
+func (s AstSetPattern) generate(state *GenState, id string) (SetCommandBody, error) {
 	state.loopId = 0
 	state.variables = make(map[string]int)
 
-	searchInstructions, err := s.expression.generate(0, state)
+	searchInstructions, err := s.pattern.generate(0, state)
 	if err != nil {
 		return nil, err
 	}
 
-	state.globalSubroutines[id] = searchInstructions
+	state.globalSubroutines[id] = GeneratedPattern{searchInstructions, s.body}
 
 	return &SetCommandExpression{
 		instructions: searchInstructions,
+		validate:     s.body,
 	}, nil
 }
 
@@ -227,6 +233,7 @@ func (l *AstSub) generate(offset int, state *GenState) ([]SearchInstruction, err
 
 	endVarDec := EndSubroutine{
 		name: l.name,
+		//! here we enter and empty array since we don't need to verify anything
 	}
 
 	insts = append(insts, startVarDec)
@@ -340,7 +347,8 @@ func (l *AstSubExpr) generate(offset int, state *GenState) ([]SearchInstruction,
 func (l *AstVariable) generate(offset int, state *GenState) ([]SearchInstruction, error) {
 	val, prs := state.variables[l.name]
 	if !prs {
-		globalInsts, globalPrs := state.globalSubroutines[l.name]
+		// we don't have a variable check the subroutines
+		globalSub, globalPrs := state.globalSubroutines[l.name]
 		if !globalPrs {
 			return []SearchInstruction{}, fmt.Errorf("Identifier '%s' is not defined", l.name)
 		}
@@ -350,7 +358,7 @@ func (l *AstVariable) generate(offset int, state *GenState) ([]SearchInstruction
 		bodyinsts := []SearchInstruction{}
 		loffset := offset + 1
 		newLoopId := state.loopId
-		for _, expr := range globalInsts {
+		for _, expr := range globalSub.search {
 			inst, lid := expr.adjust(offset+1, state)
 			loffset += 1
 			if newLoopId < lid {
@@ -361,20 +369,22 @@ func (l *AstVariable) generate(offset int, state *GenState) ([]SearchInstruction
 
 		state.loopId = newLoopId
 
-		startVarDec := StartSubroutine{
+		jumpToSubroutine := StartSubroutine{
 			id:        offset,
 			name:      l.name,
 			endOffset: loffset,
 		}
 
-		endVarDec := EndSubroutine{
-			name: l.name,
+		returnFromSubroutine := EndSubroutine{
+			name:     l.name,
+			validate: globalSub.validate,
+			//! I think add the verify steps and in the end subroutine we check it and backtrack if we don't succeed :)
 		}
 
 		insts := []SearchInstruction{}
-		insts = append(insts, startVarDec)
+		insts = append(insts, jumpToSubroutine)
 		insts = append(insts, bodyinsts...)
-		insts = append(insts, endVarDec)
+		insts = append(insts, returnFromSubroutine)
 		return insts, nil
 	}
 	var result SearchInstruction

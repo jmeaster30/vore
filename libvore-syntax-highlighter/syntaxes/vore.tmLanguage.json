@@ -43,13 +43,13 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.vore",
-				"match": "\\b(not|at|least|most|between|and|exactly|maybe|fewest|in|or|to)\\b"
+				"match": "\\b(not|at|least|most|between|and|exactly|maybe|fewest|in|or|to|break|continue)\\b"
 			}]
 		},
 		"commands": {
 			"patterns": [{
 				"name": "entity.name.function.vore",
-				"match": "\\b(find|replace|with|set)\\b"
+				"match": "\\b(find|replace|with|set|matches|pattern)\\b"
 			}]
 		},
 		"amount": {
@@ -61,7 +61,7 @@
 		"charClass": {
 			"patterns": [{
 				"name": "entity.name.class.vore",
-				"match": "\\b(any|whitespace|digit|upper|lower|letter|line|file|start|end)\\b"
+				"match": "\\b(any|whitespace|digit|upper|lower|letter|line|file|start|end|begin|if|then|else|loop)\\b"
 			}]
 		},
 		"variable": {

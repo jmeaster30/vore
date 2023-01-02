@@ -154,6 +154,7 @@ type SetCommandBody interface {
 
 type SetCommandExpression struct {
 	instructions []SearchInstruction
+	validate     []AstProcessStatement
 }
 
 func (s SetCommandExpression) execute(state *GlobalState, id string) *GlobalState {
@@ -372,16 +373,13 @@ func (i StartLoop) execute(current_state *SearchEngineState) *SearchEngineState 
 	currentIteration := next_state.GETITERATIONSTEP()
 
 	if currentIteration < i.minLoops {
-		//fmt.Println("Less than min")
 		next_state.NEXT()
 	} else if (i.maxLoops == -1 || currentIteration <= i.maxLoops) && i.fewest {
-		//fmt.Println("All or less than max FEWEST")
 		next_state.NEXT()
 		next_state.CHECKPOINT()
 		next_state.POPLOOPSTACK()
 		next_state.JUMP(i.exitLoop + 1)
 	} else if (i.maxLoops == -1 || currentIteration <= i.maxLoops) && !i.fewest {
-		//fmt.Println("All or less than max")
 		loop_state := next_state.POPLOOPSTACK()
 		pc := next_state.GETPC()
 		next_state.JUMP(i.exitLoop + 1)
@@ -389,7 +387,6 @@ func (i StartLoop) execute(current_state *SearchEngineState) *SearchEngineState 
 		next_state.PUSHLOOPSTACK(loop_state)
 		next_state.JUMP(pc + 1)
 	} else {
-		//fmt.Printf("FAIL! current: %d min: %d max: %d\n", currentIteration, i.minLoops, i.maxLoops)
 		next_state.BACKTRACK()
 	}
 
@@ -459,7 +456,8 @@ func (i StartSubroutine) execute(current_state *SearchEngineState) *SearchEngine
 }
 
 type EndSubroutine struct {
-	name string
+	name     string
+	validate []AstProcessStatement
 }
 
 func (i EndSubroutine) adjust(offset int, state *GenState) (SearchInstruction, int) {

@@ -218,7 +218,7 @@ func compile(filename string, reader io.Reader) (*Vore, error) {
 
 	bytecode := []Command{}
 	gen_state := &GenState{
-		globalSubroutines: make(map[string][]SearchInstruction),
+		globalSubroutines: make(map[string]GeneratedPattern),
 		globalVariables:   make(map[string]int),
 	}
 	for _, ast_comm := range commands {
