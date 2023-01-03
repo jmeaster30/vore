@@ -946,6 +946,16 @@ func parse_expr_pratt(tokens []*Token, index int, minPrecedence int) (AstProcess
 		lhs = AstProcessNumber{intval}
 	} else if tokens[index].tokenType == IDENTIFIER {
 		lhs = AstProcessVariable{tokens[index].lexeme}
+	} else if tokens[index].tokenType == OPENPAREN {
+		subexpr, next_index, err := parse_expr_pratt(tokens, index+1, 0)
+		if err.isError {
+			return nil, next_index, err
+		}
+		if tokens[next_index].tokenType != CLOSEPAREN {
+			return nil, next_index, err
+		}
+		token_index = next_index + 1
+		lhs = subexpr
 	} else if isPrefixOp(tokens[index].tokenType) {
 		rprec := prefixPrecedence(tokens[index].tokenType)
 		rhs, next_index, err := parse_expr_pratt(tokens, index+1, rprec)
@@ -959,6 +969,9 @@ func parse_expr_pratt(tokens []*Token, index int, minPrecedence int) (AstProcess
 	}
 
 	for token_index < len(tokens) {
+		if tokens[token_index].tokenType == CLOSEPAREN {
+			break
+		}
 		if !isBinaryOp(tokens[token_index].tokenType) {
 			return nil, token_index, NewParseError(*tokens[token_index], "Unexpected token. Expected binary operator.")
 		}

@@ -43,7 +43,7 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.vore",
-				"match": "\\b(not|at|least|most|between|and|exactly|maybe|fewest|in|or|to|break|continue)\\b"
+				"match": "\\b(not|at|least|most|between|and|exactly|maybe|fewest|in|or|to|break|continue|return|debug)\\b"
 			}]
 		},
 		"commands": {
