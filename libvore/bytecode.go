@@ -462,7 +462,36 @@ func (i EndSubroutine) adjust(offset int, state *GenState) (SearchInstruction, i
 }
 func (i EndSubroutine) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
-	next_state.RETURN()
+
+	if len(i.validate) == 0 {
+		next_state.RETURN()
+	} else {
+		env := make(map[string]ProcessValue)
+		subMatch := current_state.currentMatch[current_state.callStack.Peek().startMatchOffset:]
+		env["match"] = ProcessValueString{subMatch}
+		env["matchLength"] = ProcessValueNumber{len(subMatch)}
+		// TODO add more variables here!
+
+		pstate := ProcessState{
+			currentValue: ProcessValueString{""},
+			environment:  env,
+			status:       NEXT,
+		}
+		var final_value ProcessValue = ProcessValueBoolean{true}
+		for _, stmt := range i.validate {
+			pstate = stmt.execute(pstate)
+			if pstate.status == RETURNING {
+				final_value = pstate.currentValue
+			}
+		}
+
+		if final_value.getBoolean() {
+			next_state.RETURN()
+		} else {
+			next_state.BACKTRACK()
+		}
+	}
+
 	return next_state
 }
 

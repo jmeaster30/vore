@@ -939,7 +939,11 @@ func parse_expr_pratt(tokens []*Token, index int, minPrecedence int) (AstProcess
 	if tokens[index].tokenType == STRING {
 		lhs = AstProcessString{tokens[index].lexeme}
 	} else if tokens[index].tokenType == NUMBER {
-		lhs = AstProcessNumber{tokens[index].lexeme}
+		intval, err := strconv.Atoi(tokens[index].lexeme)
+		if err != nil {
+			intval = 0
+		}
+		lhs = AstProcessNumber{intval}
 	} else if tokens[index].tokenType == IDENTIFIER {
 		lhs = AstProcessVariable{tokens[index].lexeme}
 	} else if isPrefixOp(tokens[index].tokenType) {

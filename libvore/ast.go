@@ -37,11 +37,15 @@ type AstAtom interface {
 type AstProcessStatement interface {
 	isProcessStatement()
 	print()
+	check(info ProcessTypeInfo) ProcessTypeInfo
+	execute(state ProcessState) ProcessState
 }
 
 type AstProcessExpression interface {
 	isProcessExpr()
 	print()
+	check(info ProcessTypeInfo) ProcessTypeInfo
+	execute(state ProcessState) ProcessState
 }
 
 type AstFind struct {
@@ -485,12 +489,12 @@ func (e AstProcessString) print() {
 }
 
 type AstProcessNumber struct {
-	value string
+	value int
 }
 
 func (e AstProcessNumber) isProcessExpr() {}
 func (e AstProcessNumber) print() {
-	fmt.Printf("(number %s)", e.value)
+	fmt.Printf("(number %d)", e.value)
 }
 
 type AstProcessVariable struct {

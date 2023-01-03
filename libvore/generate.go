@@ -102,6 +102,26 @@ func (s AstSetPattern) generate(state *GenState, id string) (SetCommandBody, err
 
 	state.globalSubroutines[id] = GeneratedPattern{searchInstructions, s.body}
 
+	// semantic check
+	env := make(map[string]ProcessType)
+	env["match"] = PTSTRING
+	env["matchLength"] = PTNUMBER
+	// TODO pull variables from search pattern and add them here
+
+	info := ProcessTypeInfo{
+		currentType:  PTOK,
+		errorMessage: "",
+		context:      PREDICATE,
+		environment:  env,
+		inLoop:       false,
+	}
+	for _, stmt := range s.body {
+		info = stmt.check(info)
+		if info.currentType == PTERROR {
+			return nil, fmt.Errorf("%s", info.errorMessage)
+		}
+	}
+
 	return &SetCommandExpression{
 		instructions: searchInstructions,
 		validate:     s.body,
@@ -378,7 +398,6 @@ func (l *AstVariable) generate(offset int, state *GenState) ([]SearchInstruction
 		returnFromSubroutine := EndSubroutine{
 			name:     l.name,
 			validate: globalSub.validate,
-			//! I think add the verify steps and in the end subroutine we check it and backtrack if we don't succeed :)
 		}
 
 		insts := []SearchInstruction{}

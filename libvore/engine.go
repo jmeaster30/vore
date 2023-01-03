@@ -29,21 +29,6 @@ type CallState struct {
 	startMatchOffset int
 }
 
-type ProcessStatus int
-
-const (
-	NEXT Status = iota
-	BREAKLOOP
-	CONTINUELOOP
-)
-
-// need some processing state/environment
-type ProcessState struct {
-	environment map[string]string
-	loopStack   *Stack[int]
-	status      ProcessStatus
-}
-
 type SearchEngineState struct {
 	loopStack     *Stack[LoopState]
 	backtrack     *Stack[SearchEngineState]
