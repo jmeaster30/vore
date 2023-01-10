@@ -168,6 +168,13 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, ParseError) {
 		}
 		body = expr
 		current_index = next_index
+	} else if current_token.tokenType == TRANSFORM {
+		expr, next_index, err := parse_set_transform(tokens, current_index)
+		if err.isError {
+			return nil, next_index, err
+		}
+		body = expr
+		current_index = next_index
 	} else {
 		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'pattern' or 'matches'")
 	}
@@ -177,6 +184,20 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, ParseError) {
 		body: body,
 	}
 	return &setCommand, current_index, NoError()
+}
+
+func parse_set_transform(tokens []*Token, token_index int) (AstSetBody, int, ParseError) {
+	current_index := consumeIgnoreableTokens(tokens, token_index+1)
+	statements, next_index, err := parse_process_statements(tokens, current_index)
+	if err.isError {
+		return nil, next_index, err
+	}
+
+	if tokens[next_index].tokenType != END {
+		return nil, next_index, NewParseError(*tokens[next_index], "Unexpected token. Expected 'end'.")
+	}
+
+	return &AstSetTransform{statements}, next_index + 1, err
 }
 
 func parse_set_pattern(tokens []*Token, token_index int) (AstSetBody, int, ParseError) {

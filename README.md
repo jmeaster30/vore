@@ -20,11 +20,11 @@ Here are some examples of the language...
 
 >This example replaces all instances of "test - error" or "test - fail" with "test - success"
 >
->``` replace all "test - " = prefix "error" or "fail" with prefix "success"```
+>```replace all "test - " = prefix "error" or "fail" with prefix "success"```
 
 In the above example you can see the functionality of replacing text but it also is an example of using variables in regular expressions. Original regular expressions had the ability to use numeric references and named capture groups but I feel this syntax is significantly easier.
 
->Vore find statement: 
+>Vore find statement:
 >
 >```find all line start (at least zero any) = myLine line end```
 >
@@ -50,7 +50,7 @@ When coming up with the syntax for this language I basically translated every sy
 
 Regex Syntax | VORE Syntax
 -------------|-------------
-**Anchors** | 
+**Anchors** |
 ```^``` (beginning)| ```file start``` (start of file)
 ```$``` (end)      | ```file end``` (end of file)
 N/A          | ```line start``` (start of line)*
@@ -117,15 +117,19 @@ all of them :) | There are a lot of things that would be useful but my plans for
 ## Language TODOs
 
 ### Lookaround
+
 - If there is a lookaround operator any where in the regex string it ignores the position and works how a look around would sensibly
+
 > ```/(?<=s\w{1,7})t/g```
 
 matches any letter 't' as long as it is preceded by an 's' followed by 1 to 7 instances of any word character:
 
 > ```[A-Za-z0-9_]```
+
 - Even though exisiting implementations allow you to put the lookaround operators everywhere, I would probably want the compiler to enforce that they be put first or last (depending on if it is lookahead or lookbehind)
 
 ## Notes on the RegEx modifiers
+
 I do not like the idea of these modifiers in regular expressions. They are just kinda weird and personally I rarely used them (besides global and multiline), so I figured I wouldn't add them or add language contructs to replace them. Here is a table of the regex modifiers and their equivalents in VORE
 
 Modifier | Name | Behavior | VORE Equivalent

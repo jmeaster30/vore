@@ -52,6 +52,7 @@ const (
 	TO
 	PATTERN
 	MATCHES
+	TRANSFORM
 
 	// result length
 	ALL
@@ -141,6 +142,8 @@ func (t TokenType) pp() string {
 		return "PATTERN"
 	case MATCHES:
 		return "MATCHES"
+	case TRANSFORM:
+		return "TRANSFORM"
 	case ALL:
 		return "ALL"
 	case SKIP:
@@ -503,6 +506,8 @@ func (s *Lexer) getNextToken() *Token {
 			token.tokenType = PATTERN
 		case "matches":
 			token.tokenType = MATCHES
+		case "transform":
+			token.tokenType = TRANSFORM
 		case "all":
 			token.tokenType = ALL
 		case "skip":

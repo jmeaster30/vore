@@ -7,11 +7,14 @@ type GeneratedPattern struct {
 	validate []AstProcessStatement
 }
 
+type AstProcessProgram []AstProcessStatement
+
 type GenState struct {
-	loopId            int
-	variables         map[string]int
-	globalSubroutines map[string]GeneratedPattern
-	globalVariables   map[string]int
+	loopId                int
+	variables             map[string]int
+	globalSubroutines     map[string]GeneratedPattern
+	globalVariables       map[string]int
+	globalTransformations map[string]AstProcessProgram
 }
 
 func (f *AstFind) generate(state *GenState) (Command, error) {
@@ -84,11 +87,35 @@ func (s *AstSet) generate(state *GenState) (Command, error) {
 		return nil, err
 	}
 	return SetCommand{
-		body:         body,
-		isSubroutine: s.isSubroutine,
-		isMatches:    s.isMatches,
-		id:           s.id,
+		body: body,
+		id:   s.id,
 	}, nil
+}
+
+func (s AstSetTransform) generate(state *GenState, id string) (SetCommandBody, error) {
+	state.globalTransformations[id] = s.statements
+
+	// semantic check
+	env := make(map[string]ProcessType)
+	env["match"] = PTSTRING
+	env["matchLength"] = PTNUMBER
+	// TODO pull variables from search pattern and add them here
+
+	info := ProcessTypeInfo{
+		currentType:  PTOK,
+		errorMessage: "",
+		context:      TRANSFORMATION,
+		environment:  env,
+		inLoop:       false,
+	}
+	for _, stmt := range s.statements {
+		info = stmt.check(info)
+		if info.currentType == PTERROR {
+			return nil, fmt.Errorf("%s", info.errorMessage)
+		}
+	}
+
+	return SetCommandTransform{s.statements}, nil
 }
 
 func (s AstSetPattern) generate(state *GenState, id string) (SetCommandBody, error) {
@@ -253,7 +280,6 @@ func (l *AstSub) generate(offset int, state *GenState) ([]SearchInstruction, err
 
 	endVarDec := EndSubroutine{
 		name: l.name,
-		//! here we enter and empty array since we don't need to verify anything
 	}
 
 	insts = append(insts, startVarDec)
@@ -436,8 +462,16 @@ func (l *AstString) generateReplace(offset int, state *GenState) ([]ReplaceInstr
 }
 
 func (l *AstVariable) generateReplace(offset int, state *GenState) ([]ReplaceInstruction, error) {
-	result := ReplaceVariable{
-		name: l.name,
+	transform, prs := state.globalTransformations[l.name]
+	var result ReplaceInstruction
+	if prs {
+		result = ReplaceProcess{
+			process: transform,
+		}
+	} else {
+		result = ReplaceVariable{
+			name: l.name,
+		}
 	}
 	return []ReplaceInstruction{result}, nil
 }

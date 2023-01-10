@@ -9,7 +9,7 @@ import (
 	"github.com/jmeaster30/vore/libvore"
 )
 
-var replaceModeArg libvore.ReplaceMode
+var replaceModeArg libvore.ReplaceMode = libvore.NEW
 
 func replaceMode(value string) error {
 	switch value {
@@ -36,7 +36,7 @@ func main() {
 	json_file_arg := flag.String("json-file", "", "JSON output file")
 	fjson_file_arg := flag.String("formatted-json-file", "", "Formatted JSON output file")
 	ide_arg := flag.Bool("ide", false, "Open source and files in vore ide")
-	flag.Func("replace-mode", "File mode for replace statements [OVERWRITE, NEW] (default: NEW)", replaceMode)
+	flag.Func("replace-mode", "File mode for replace statements [NEW, NOTHING, OVERWRITE] (default: NEW)", replaceMode)
 	flag.Parse()
 
 	source := *source_arg

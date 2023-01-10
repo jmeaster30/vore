@@ -15,7 +15,7 @@ type ProcessContext int
 
 const (
 	PREDICATE ProcessContext = iota
-	TRANSFORM
+	TRANSFORMATION
 )
 
 type ProcessTypeInfo struct {
@@ -45,7 +45,7 @@ func (s AstProcessReturn) check(info ProcessTypeInfo) ProcessTypeInfo {
 	if valueInfo.context == PREDICATE && valueInfo.currentType != PTBOOLEAN {
 		valueInfo.currentType = PTERROR
 		valueInfo.errorMessage = "Since we are in the predicate of a pattern, return values must be a boolean"
-	} else if valueInfo.context == TRANSFORM && valueInfo.currentType != PTSTRING && valueInfo.currentType != PTNUMBER {
+	} else if valueInfo.context == TRANSFORMATION && valueInfo.currentType != PTSTRING && valueInfo.currentType != PTNUMBER {
 		valueInfo.currentType = PTERROR
 		valueInfo.errorMessage = "Since we are in a transform function, return values must be a string or a number"
 	} else {

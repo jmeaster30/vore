@@ -138,6 +138,7 @@ type SetCommand struct {
 	body         SetCommandBody
 	isSubroutine bool
 	isMatches    bool
+	isTransform  bool
 	id           string
 }
 
@@ -163,7 +164,16 @@ type SetCommandMatches struct {
 }
 
 func (s SetCommandMatches) execute(state *GlobalState, id string) *GlobalState {
-	// run through the command we have and store the matches in variables
+	// TODO run through the command we have and store the matches in variables
+	// TODO or do the matches in the generate function
+	return state
+}
+
+type SetCommandTransform struct {
+	statements []AstProcessStatement
+}
+
+func (s SetCommandTransform) execute(state *GlobalState, id string) *GlobalState {
 	return state
 }
 
@@ -527,6 +537,42 @@ type ReplaceVariable struct {
 func (i ReplaceVariable) execute(current_state *ReplacerState) *ReplacerState {
 	next_state := current_state.Copy()
 	next_state.WRITEVAR(i.name)
+	next_state.NEXT()
+	return next_state
+}
+
+type ReplaceProcess struct {
+	process []AstProcessStatement
+}
+
+func (i ReplaceProcess) execute(current_state *ReplacerState) *ReplacerState {
+	next_state := current_state.Copy()
+
+	// execute AST
+	env := make(map[string]ProcessValue)
+
+	for varname, varvalue := range current_state.match.variables {
+		env[varname] = ProcessValueString{varvalue}
+	}
+	env["match"] = ProcessValueString{next_state.match.value}
+	env["matchLength"] = ProcessValueNumber{len(next_state.match.value)}
+	env["matchNumber"] = ProcessValueNumber{next_state.match.matchNumber}
+
+	pstate := ProcessState{
+		currentValue: ProcessValueString{""},
+		environment:  env,
+		status:       NEXT,
+	}
+	var final_value ProcessValue = ProcessValueBoolean{true}
+	for _, stmt := range i.process {
+		pstate = stmt.execute(pstate)
+		if pstate.status == RETURNING {
+			final_value = pstate.currentValue
+		}
+	}
+
+	next_state.WRITESTRING(final_value.getString())
+
 	next_state.NEXT()
 	return next_state
 }

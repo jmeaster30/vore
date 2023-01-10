@@ -218,8 +218,9 @@ func compile(filename string, reader io.Reader) (*Vore, error) {
 
 	bytecode := []Command{}
 	gen_state := &GenState{
-		globalSubroutines: make(map[string]GeneratedPattern),
-		globalVariables:   make(map[string]int),
+		globalSubroutines:     make(map[string]GeneratedPattern),
+		globalVariables:       make(map[string]int),
+		globalTransformations: make(map[string]AstProcessProgram),
 	}
 	for _, ast_comm := range commands {
 		byte_comm, gen_error := ast_comm.generate(gen_state)

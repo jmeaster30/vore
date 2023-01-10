@@ -101,10 +101,8 @@ func (r AstReplace) print() {
 }
 
 type AstSet struct {
-	id           string
-	isSubroutine bool
-	isMatches    bool
-	body         AstSetBody
+	id   string
+	body AstSetBody
 }
 
 func (s AstSet) isCmd() {}
@@ -142,6 +140,19 @@ type AstSetMatches struct {
 func (b AstSetMatches) print() {
 	fmt.Print("(matches ")
 	b.command.print()
+	fmt.Print(")")
+}
+
+type AstSetTransform struct {
+	statements []AstProcessStatement
+}
+
+func (b AstSetTransform) print() {
+	fmt.Print("(transform ")
+	for _, stmt := range b.statements {
+		fmt.Print(" ")
+		stmt.print()
+	}
 	fmt.Print(")")
 }
 
