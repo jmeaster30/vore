@@ -1,8 +1,9 @@
 {
     "name": "libvore-syntax-highlighter",
-    "displayName": "libvore Syntax Highlighter",
-    "description": "Syntax highlighting for the vore languagee",
+    "displayName": "Vore Language Support",
+    "description": "Syntax highlighting for the vore language",
     "version": "0.0.1",
+    "repository": "https://github.com/jmeaster30/vore",
     "engines": {
         "vscode": "^1.73.0"
     },

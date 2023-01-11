@@ -213,7 +213,7 @@ func compile(filename string, reader io.Reader) (*Vore, error) {
 
 	commands, parseError := parse(tokens)
 	if parseError.isError {
-		return nil, fmt.Errorf("ERROR:  %s\nToken:  '%s'\nLine:   %d - %d\nColumn: %d - %d\n", parseError.message, parseError.token.lexeme, parseError.token.line.Start, parseError.token.line.End, parseError.token.column.Start, parseError.token.column.End)
+		return nil, fmt.Errorf("ERROR:  %s\nToken:  '%s'\nTokenType: %d\nLine:   %d - %d\nColumn: %d - %d\n", parseError.message, parseError.token.lexeme, parseError.token.tokenType, parseError.token.line.Start, parseError.token.line.End, parseError.token.column.Start, parseError.token.column.End)
 	}
 
 	bytecode := []Command{}

@@ -3,6 +3,9 @@
 	"name": "Vore",
 	"patterns": [
 		{
+			"include": "#block_comment"
+		},
+		{
 			"include": "#comment"
 		},
 		{
@@ -33,6 +36,11 @@
 				"name": "constant.numeric.vore",
 				"match": "[0-9]+"
 			}]
+		},
+		"block_comment": {
+			"name": "comment.block.vore",
+			"begin": "--\\(",
+			"end": "\\)"
 		},
 		"comment": {
 			"patterns": [{

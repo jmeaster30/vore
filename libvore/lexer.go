@@ -319,6 +319,8 @@ func (s *Lexer) getNextToken() *Token {
 		SOPENCURLY
 		SCLOSECURLY
 		SCOMMENT
+		SCOMMENTSTART
+		SBLOCKCOMMENT
 		SDASH
 		SOPERATOR
 		SOPERATORSTART
@@ -346,6 +348,11 @@ func (s *Lexer) getNextToken() *Token {
 				break
 			}
 			buf.WriteRune(ch)
+		} else if current_state == SBLOCKCOMMENT {
+			buf.WriteRune(ch)
+			if ch == ')' {
+				break
+			}
 		} else if ch == '\\' && current_state == SSTRING_DOUBLE {
 			current_state = SSTRING_D_ESCAPE
 		} else if current_state == SSTRING_DOUBLE {
@@ -360,9 +367,15 @@ func (s *Lexer) getNextToken() *Token {
 				break
 			}
 			buf.WriteRune(ch)
+		} else if ch == '(' && current_state == SCOMMENTSTART {
+			buf.WriteRune(ch)
+			current_state = SBLOCKCOMMENT
 		} else if ch == '(' && current_state == SSTART {
 			buf.WriteRune(ch)
 			current_state = SOPENPAREN
+			break
+		} else if ch == ')' && current_state == SBLOCKCOMMENT {
+			buf.WriteRune(ch)
 			break
 		} else if ch == ')' && current_state == SSTART {
 			buf.WriteRune(ch)
@@ -410,7 +423,7 @@ func (s *Lexer) getNextToken() *Token {
 			if current_state == SSTART {
 				current_state = SDASH
 			} else if current_state == SDASH {
-				current_state = SCOMMENT
+				current_state = SCOMMENTSTART
 			}
 		} else if current_state == SSTART && (ch == '+' || ch == '%' || ch == '*' || ch == '/') {
 			buf.WriteRune(ch)
@@ -468,6 +481,9 @@ func (s *Lexer) getNextToken() *Token {
 				buf.WriteRune(getEscapedRune(ch))
 			}
 			current_state = SSTRING_SINGLE
+		} else if current_state == SCOMMENTSTART {
+			s.unread_last()
+			current_state = SCOMMENT
 		} else {
 			if current_state != SSTART || unicode.IsDigit(ch) || unicode.IsLetter(ch) || unicode.IsSpace(ch) || ch == '(' || ch == ')' || ch == '{' || ch == '}' || ch == ',' || ch == ':' || ch == '=' || ch == '"' || ch == '\'' || ch == '-' || ch == '+' || ch == '<' || ch == '>' || ch == '*' || ch == '/' || ch == '%' {
 				s.unread_last()
@@ -603,6 +619,8 @@ func (s *Lexer) getNextToken() *Token {
 		token.tokenType = NEQUAL
 	case SCOLON:
 		token.tokenType = ERROR
+	case SBLOCKCOMMENT:
+		fallthrough
 	case SCOMMENT:
 		token.tokenType = COMMENT
 	case SDASH:
@@ -610,6 +628,7 @@ func (s *Lexer) getNextToken() *Token {
 	case SCOLONEQ:
 		token.tokenType = COLONEQ
 	case SOPERATORSTART:
+		fallthrough
 	case SOPERATOR:
 		token.tokenType = ERROR
 		lexeme := buf.String()
