@@ -33,24 +33,25 @@ func singleMatch(t *testing.T, results Matches, startOffset int, value string) {
 
 func matches(t *testing.T, results Matches, expected []TestMatch) {
 	t.Helper()
-	if len(results) < len(expected) {
+	if len(results) != len(expected) {
+		t.Errorf("Expected %d results, got %d results\n", len(expected), len(results))
 		t.FailNow()
-	}
-	if len(results) > len(expected) {
-		t.Fail()
 	}
 
 	for i, e := range expected {
 		actual := results[i]
 		if actual.value != e.value || actual.offset.Start != e.offset || actual.replacement != e.replacement {
-			t.Fail()
+			t.Logf("Expected value %s, got %s\nExpected offset %d, got %d\nExpected replacement %s, got %s\n",
+				e.value, actual.value,
+				e.offset, actual.offset.Start,
+				e.replacement, actual.replacement)
 		}
 		if len(actual.variables) != len(e.variables) {
-			t.Fail()
+			t.Errorf("Expected %d variables, got %d variables\n", len(e.variables), len(actual.variables))
 		} else {
 			for _, exVar := range e.variables {
 				if actual.variables[exVar.key] != exVar.value {
-					t.Fail()
+					t.Errorf("Expected %s, got %s\n", exVar.value, actual.variables[exVar.key])
 				}
 			}
 		}
@@ -59,7 +60,7 @@ func matches(t *testing.T, results Matches, expected []TestMatch) {
 
 func checkNoError(t *testing.T, err error) {
 	if err != nil {
-		t.Fail()
+		t.Error(err)
 	}
 }
 
@@ -356,5 +357,46 @@ func TestNotInInLoop(t *testing.T) {
 	matches(t, results, []TestMatch{
 		{3, "def", "", []TestVar{}},
 		{9, "ghi", "", []TestVar{}},
+	})
+}
+
+func TestEmail(t *testing.T) {
+	vore, err := Compile(`
+set localPart to pattern
+  in letter, digit, "!", "#", "$", "%", 
+    "&", "'", "*", "+", "/", "=", "?", 
+    "^", "_", "{", "|", "}", "~", "-"  -- it is a little long to write but "verbose" is in the name
+
+set hexPart1 to pattern
+  in "\x01" to "\x08", "\x0b", "\x0C", 
+    "\x0e" to "\x1f", "\x21",
+    "\x23" to "\x5b", "\x5d" to "\x7f"
+
+set hexPart2 to pattern
+  in "\x01" to "\x09", "\x0b", "\x0C", 
+    "\x0e" to "\x7f"
+
+set ld to pattern
+  in letter, digit
+
+set ldd to pattern
+  in letter, digit, "-"
+
+find all 
+  (at least 1 localPart at least 0 ("." at least 1 localPart))
+  or
+  ('"' at least 0 (hexPart1 or ('\\' hexPart2)) '"')
+  "@"
+  (at least 1 (ld maybe (at least 0 ldd ld)) ld maybe (at least 0 ldd ld)) 
+  or
+  ("["
+    exactly 3 (("25" in "0" to "5") or (("2" in "0" to "4" digit) or (maybe ("0" or "1") digit maybe digit)) ".") 
+    (("25" in "0" to "5") or (("2" in "0" to "4" digit) or (maybe ("0" or "1") digit maybe digit))) 
+      or (maybe (at least 0 ldd ld) ":" at least 1 (hexPart1 or ("\\" hexPart2)))
+  "]")`)
+	checkNoError(t, err)
+	results := vore.Run("jhneasterday09@gmail.com")
+	matches(t, results, []TestMatch{
+		{0, "jhneasterday09@gmail.com", "", []TestVar{}},
 	})
 }

@@ -1,0 +1,31 @@
+--( 
+  
+  Grabbing HTML Tags
+
+  Regex: <div\b[^>]*>(.*?)</div>
+The above regex matches an opening and closing pair of a div tag.
+
+  Regex: <([A-Z][A-Z0-9]*)\b[^>]*>(.*?)</\1>
+This regex matches an opening and closing pair of any html tag.
+
+)--
+
+--( 
+  this will match an opening and closing pair of a div tag.
+  the contents of the tag are able to be accessed by the variable name "divContents" 
+  instead of with a back reference number
+)--
+find all 
+  "<div"
+  maybe (not in letter, digit) -- we don't have a zero matching boundary feature probably need to add that tbh
+  at least 0 not ">"
+  ">" (at least 0 any fewest) = divContents "</div>"
+
+--(
+  this will match an opening and closing pair of any html tag
+  Note again we don't use back reference numbers and references are referenced by name
+)--
+find all
+  "<" (letter at least 0 (in letter, digit)) = tagName maybe (not in letter, digit) at least 0 not ">" ">"
+  (at least 0 any fewest) = divContents
+  "</" tagName ">"

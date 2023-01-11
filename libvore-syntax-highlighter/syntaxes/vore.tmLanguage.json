@@ -40,7 +40,7 @@
 		"block_comment": {
 			"name": "comment.block.vore",
 			"begin": "--\\(",
-			"end": "\\)"
+			"end": "\\)--"
 		},
 		"comment": {
 			"patterns": [{

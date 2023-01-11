@@ -321,6 +321,9 @@ func (s *Lexer) getNextToken() *Token {
 		SCOMMENT
 		SCOMMENTSTART
 		SBLOCKCOMMENT
+		SBLOCKCOMMENTSTARTEND
+		SBLOCKCOMMENTENDEND
+		SBLOCKCOMMENTFINAL
 		SDASH
 		SOPERATOR
 		SOPERATORSTART
@@ -351,8 +354,18 @@ func (s *Lexer) getNextToken() *Token {
 		} else if current_state == SBLOCKCOMMENT {
 			buf.WriteRune(ch)
 			if ch == ')' {
-				break
+				current_state = SBLOCKCOMMENTSTARTEND
 			}
+		} else if current_state == SBLOCKCOMMENTSTARTEND && ch == '-' {
+			buf.WriteRune(ch)
+			current_state = SBLOCKCOMMENTENDEND
+		} else if current_state == SBLOCKCOMMENTENDEND && ch == '-' {
+			buf.WriteRune(ch)
+			current_state = SBLOCKCOMMENTFINAL
+			break
+		} else if current_state == SBLOCKCOMMENTENDEND || current_state == SBLOCKCOMMENTSTARTEND {
+			buf.WriteRune(ch)
+			current_state = SBLOCKCOMMENT
 		} else if ch == '\\' && current_state == SSTRING_DOUBLE {
 			current_state = SSTRING_D_ESCAPE
 		} else if current_state == SSTRING_DOUBLE {
@@ -370,6 +383,9 @@ func (s *Lexer) getNextToken() *Token {
 		} else if ch == '(' && current_state == SCOMMENTSTART {
 			buf.WriteRune(ch)
 			current_state = SBLOCKCOMMENT
+		} else if current_state == SCOMMENTSTART {
+			buf.WriteRune(ch)
+			current_state = SCOMMENT
 		} else if ch == '(' && current_state == SSTART {
 			buf.WriteRune(ch)
 			current_state = SOPENPAREN
@@ -418,12 +434,14 @@ func (s *Lexer) getNextToken() *Token {
 		} else if ch == ':' && current_state == SSTART {
 			buf.WriteRune(ch)
 			current_state = SCOLON
-		} else if ch == '-' && (current_state == SSTART || current_state == SDASH) {
+		} else if ch == '-' && (current_state == SSTART || current_state == SDASH || current_state == SCOMMENTSTART) {
 			buf.WriteRune(ch)
 			if current_state == SSTART {
 				current_state = SDASH
 			} else if current_state == SDASH {
 				current_state = SCOMMENTSTART
+			} else if current_state == SCOMMENTSTART {
+				current_state = SCOMMENT
 			}
 		} else if current_state == SSTART && (ch == '+' || ch == '%' || ch == '*' || ch == '/') {
 			buf.WriteRune(ch)
@@ -494,6 +512,8 @@ func (s *Lexer) getNextToken() *Token {
 			break
 		}
 	}
+
+	token.tokenType = ERROR
 
 	switch current_state {
 	case SERROR:
@@ -619,7 +639,13 @@ func (s *Lexer) getNextToken() *Token {
 		token.tokenType = NEQUAL
 	case SCOLON:
 		token.tokenType = ERROR
+	case SBLOCKCOMMENTSTARTEND:
+		fallthrough
+	case SBLOCKCOMMENTENDEND:
+		fallthrough
 	case SBLOCKCOMMENT:
+		token.tokenType = ERROR
+	case SBLOCKCOMMENTFINAL:
 		fallthrough
 	case SCOMMENT:
 		token.tokenType = COMMENT
@@ -654,6 +680,11 @@ func (s *Lexer) getNextToken() *Token {
 		token.tokenType = EOF
 	default:
 		fmt.Println(current_state)
+		fmt.Println(startPosInfo.line)
+		fmt.Println(startPosInfo.column)
+		endPosInfo := s.get_position()
+		fmt.Println(endPosInfo.line)
+		fmt.Println(endPosInfo.column)
 		panic("Unknown final state")
 	}
 
