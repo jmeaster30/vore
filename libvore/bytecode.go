@@ -28,7 +28,7 @@ func findMatches(insts []SearchInstruction, all bool, skip int, take int, last i
 		for currentState.status == INPROCESS {
 			inst := insts[currentState.programCounter]
 			currentState = inst.execute(currentState)
-			//fmt.Printf("pc: %d inst: %v\n", currentState.programCounter, inst)
+			//fmt.Printf("pc: %d inst: %v currentMatch: %s\n", currentState.programCounter, inst, currentState.currentMatch)
 
 			if currentState.status == INPROCESS && currentState.programCounter >= len(insts) {
 				currentState.SUCCESS()
@@ -135,11 +135,8 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 }
 
 type SetCommand struct {
-	body         SetCommandBody
-	isSubroutine bool
-	isMatches    bool
-	isTransform  bool
-	id           string
+	body SetCommandBody
+	id   string
 }
 
 func (c SetCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {

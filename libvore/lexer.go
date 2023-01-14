@@ -253,9 +253,11 @@ type Token struct {
 	lexeme    string
 }
 
+/*
 func (token Token) print() {
 	fmt.Printf("[%s] '%s' \tline: %d, \tstart column: %d, \tend column: %d\n", token.tokenType.pp(), token.lexeme, token.line.Start, token.column.Start, token.column.End)
 }
+*/
 
 type PositionInfo struct {
 	offset   int
@@ -769,10 +771,4 @@ func HexToAscii(ch1 rune, ch2 rune) rune {
 	}
 	//fmt.Printf("FOUND HEX RUNE (%s): %s\n", input, string(rune(value)))
 	return rune(value)
-}
-
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
 }

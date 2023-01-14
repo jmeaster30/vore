@@ -17,7 +17,7 @@ This regex matches an opening and closing pair of any html tag.
 )--
 find all 
   "<div"
-  maybe (not in letter, digit) -- we don't have a zero matching boundary feature probably need to add that tbh
+  maybe not in letter, digit -- we don't have a zero matching boundary feature probably need to add that tbh
   at least 0 not ">"
   ">" (at least 0 any fewest) = divContents "</div>"
 
@@ -26,6 +26,6 @@ find all
   Note again we don't use back reference numbers and references are referenced by name
 )--
 find all
-  "<" (letter at least 0 (in letter, digit)) = tagName maybe (not in letter, digit) at least 0 not ">" ">"
+  "<" (letter at least 0 in letter, digit) = tagName maybe not in letter, digit at least 0 not ">" ">"
   (at least 0 any fewest) = divContents
   "</" tagName ">"

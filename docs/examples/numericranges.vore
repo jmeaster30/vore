@@ -1,0 +1,20 @@
+--(
+
+  Numeric Ranges: [0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]
+This is from https://www.regular-expressions.info/numericranges.html
+
+This matches numbers between 0 and 255
+)--
+
+set oneToNine to pattern in "1", "2", "3", "4", "5", "6", "7", "8", "9"
+
+set zeroToFour to pattern in "0", "1", "2", "3", "4"
+
+set zeroToFive to pattern in "0", "1", "2", "3", "4", "5"
+
+find all
+  ("25" zeroToFive) or
+  ("2" zeroToFour digit) or 
+  ("1" digit digit) or
+  (oneToNine digit) or
+  digit

@@ -341,7 +341,7 @@ func parse_at(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
-	literal, next_index, parseError := parse_literal(tokens, current_index)
+	expr, next_index, parseError := parse_expression(tokens, current_index)
 	if parseError.isError {
 		return nil, next_index, parseError
 	}
@@ -367,7 +367,7 @@ func parse_at(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
 		min:    min,
 		max:    max,
 		fewest: fewest,
-		body:   literal,
+		body:   expr,
 	}
 
 	return &atLoop, current_index, NoError()
@@ -402,8 +402,7 @@ func parse_between(tokens []*Token, token_index int) (*AstLoop, int, ParseError)
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
-	current_token = tokens[current_index]
-	literal, next_index, parseError := parse_literal(tokens, current_index)
+	expr, next_index, parseError := parse_expression(tokens, current_index)
 	if parseError.isError {
 		return nil, next_index, parseError
 	}
@@ -419,7 +418,7 @@ func parse_between(tokens []*Token, token_index int) (*AstLoop, int, ParseError)
 		min:    minValue,
 		max:    maxValue,
 		fewest: fewest,
-		body:   literal,
+		body:   expr,
 	}
 
 	return &between, current_index, NoError()
@@ -438,7 +437,7 @@ func parse_exactly(tokens []*Token, token_index int) (*AstLoop, int, ParseError)
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
-	literal, next_index, parseError := parse_literal(tokens, current_index)
+	expr, next_index, parseError := parse_expression(tokens, current_index)
 	if parseError.isError {
 		return nil, next_index, parseError
 	}
@@ -447,7 +446,7 @@ func parse_exactly(tokens []*Token, token_index int) (*AstLoop, int, ParseError)
 		min:    value,
 		max:    value,
 		fewest: false,
-		body:   literal,
+		body:   expr,
 	}
 
 	return &exactly, next_index, NoError()
@@ -455,7 +454,7 @@ func parse_exactly(tokens []*Token, token_index int) (*AstLoop, int, ParseError)
 
 func parse_maybe(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
 	new_index := consumeIgnoreableTokens(tokens, token_index+1)
-	literal, next_index, err := parse_literal(tokens, new_index)
+	expr, next_index, err := parse_expression(tokens, new_index)
 	if err.isError {
 		return nil, next_index, err
 	}
@@ -467,7 +466,7 @@ func parse_maybe(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
 		current_index += 1
 	}
 
-	maybe := AstLoop{0, 1, fewest, literal}
+	maybe := AstLoop{0, 1, fewest, expr}
 
 	return &maybe, current_index, NoError()
 }
@@ -622,14 +621,14 @@ func parse_primary_or_dec(tokens []*Token, token_index int) (AstExpression, int,
 
 	if current_token.tokenType == OR {
 		current_index = consumeIgnoreableTokens(tokens, current_index+1)
-		right_literal, final_index, err := parse_literal(tokens, current_index)
+		right_expression, final_index, err := parse_primary_or_or(tokens, current_index)
 		if err.isError {
 			return nil, final_index, err
 		}
 
 		branch := AstBranch{
 			left:  literal,
-			right: right_literal,
+			right: right_expression,
 		}
 		return &branch, final_index, NoError()
 	}
@@ -640,13 +639,29 @@ func parse_primary_or_dec(tokens []*Token, token_index int) (AstExpression, int,
 	return &prim, new_index, NoError()
 }
 
-func parse_primary(tokens []*Token, token_index int) (*AstPrimary, int, ParseError) {
-	prim := AstPrimary{}
-
+func parse_primary_or_or(tokens []*Token, token_index int) (AstExpression, int, ParseError) {
 	literal, new_index, err := parse_literal(tokens, token_index)
 	if err.isError {
 		return nil, new_index, err
 	}
+
+	current_index := consumeIgnoreableTokens(tokens, new_index)
+	current_token := tokens[current_index]
+	if current_token.tokenType == OR {
+		current_index = consumeIgnoreableTokens(tokens, current_index+1)
+		right_expression, final_index, err := parse_primary_or_or(tokens, current_index)
+		if err.isError {
+			return nil, final_index, err
+		}
+
+		branch := AstBranch{
+			left:  literal,
+			right: right_expression,
+		}
+		return &branch, final_index, NoError()
+	}
+
+	prim := AstPrimary{}
 	prim.literal = literal
 
 	return &prim, new_index, NoError()

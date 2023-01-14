@@ -30,7 +30,7 @@ func DummyVWriter() *VWriter {
 }
 
 func (vw *VWriter) WriteAt(offset int, data string) {
-	_, serr := vw.contents.Seek(int64(offset), os.SEEK_SET)
+	_, serr := vw.contents.Seek(int64(offset), io.SeekStart)
 	if serr != nil {
 		panic(serr)
 	}

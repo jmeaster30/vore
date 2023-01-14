@@ -253,7 +253,7 @@ func TestInBranchRange(t *testing.T) {
 }
 
 func TestVariables(t *testing.T) {
-	vore, err := Compile("find all (at least 1 (in 'a' to 'c', 'x' to 'z')) = test")
+	vore, err := Compile("find all (at least 1 in 'a' to 'c', 'x' to 'z') = test")
 	checkNoError(t, err)
 	results := vore.Run("abcdefghijklmnopqrstuvwxyz")
 	matches(t, results, []TestMatch{

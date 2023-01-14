@@ -160,7 +160,7 @@ type AstLoop struct {
 	min    int
 	max    int
 	fewest bool
-	body   AstLiteral
+	body   AstExpression
 }
 
 func (l AstLoop) isExpr() {}
@@ -172,7 +172,7 @@ func (l AstLoop) print() {
 
 type AstBranch struct {
 	left  AstLiteral
-	right AstLiteral
+	right AstExpression
 }
 
 func (b AstBranch) isExpr() {}

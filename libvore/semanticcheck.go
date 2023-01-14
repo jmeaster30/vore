@@ -105,7 +105,7 @@ func (s AstProcessLoop) check(info ProcessTypeInfo) ProcessTypeInfo {
 }
 
 func (s AstProcessContinue) check(info ProcessTypeInfo) ProcessTypeInfo {
-	if info.inLoop == false {
+	if !info.inLoop {
 		info.currentType = PTERROR
 		info.errorMessage = "Cannot use 'continue' outside of a loop."
 	}
@@ -113,7 +113,7 @@ func (s AstProcessContinue) check(info ProcessTypeInfo) ProcessTypeInfo {
 }
 
 func (s AstProcessBreak) check(info ProcessTypeInfo) ProcessTypeInfo {
-	if info.inLoop == false {
+	if !info.inLoop {
 		info.currentType = PTERROR
 		info.errorMessage = "Cannot use 'continue' outside of a loop."
 	}

@@ -515,6 +515,6 @@ func (rs *ReplacerState) Set(from *ReplacerState) {
 }
 
 type GlobalState struct {
-	subroutines map[string][]SearchInstruction
-	matches     map[string]Matches
+	//subroutines map[string][]SearchInstruction
+	//matches     map[string]Matches
 }

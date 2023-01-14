@@ -1,0 +1,15 @@
+--(
+
+  Floating Point Numbers
+
+  Basic Regex: [-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?
+This is from https://www.regular-expressions.info/floatingpoint.html
+
+)--
+
+find all
+  maybe in "-", "+"
+  at least 0 digit
+  maybe "."
+  at least 1 digit
+  maybe (in "e", "E" maybe in "-", "+" at least 1 digit)

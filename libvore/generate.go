@@ -242,7 +242,7 @@ func (l *AstDec) generate(offset int, state *GenState) ([]SearchInstruction, err
 
 	_, prs := state.variables[l.name]
 	if prs {
-		return []SearchInstruction{}, fmt.Errorf("Name clash '%s'", l.name)
+		return []SearchInstruction{}, fmt.Errorf("name clash '%s'", l.name)
 	}
 	state.variables[l.name] = -1
 
@@ -257,7 +257,7 @@ func (l *AstSub) generate(offset int, state *GenState) ([]SearchInstruction, err
 
 	_, prs := state.variables[l.name]
 	if prs {
-		return []SearchInstruction{}, fmt.Errorf("Name clash '%s'", l.name)
+		return []SearchInstruction{}, fmt.Errorf("name clash '%s'", l.name)
 	}
 	state.variables[l.name] = offset
 
@@ -396,7 +396,7 @@ func (l *AstVariable) generate(offset int, state *GenState) ([]SearchInstruction
 		// we don't have a variable check the subroutines
 		globalSub, globalPrs := state.globalSubroutines[l.name]
 		if !globalPrs {
-			return []SearchInstruction{}, fmt.Errorf("Identifier '%s' is not defined", l.name)
+			return []SearchInstruction{}, fmt.Errorf("identifier '%s' is not defined", l.name)
 		}
 
 		state.variables[l.name] = offset

@@ -13,13 +13,9 @@ try out the official RFC 5322 email regular expression next.
 -- I am not going to worry about the boundary anchors here
 
 -- find all
---   at least 1 (
---     in letter, digit, ".", "_", "%", "+", "-"
---   )
+--   at least 1 in letter, digit, ".", "_", "%", "+", "-"
 --   "@"
---   at least 1 (
---     in letter, digit, ".", "-"
---   )
+--   at least 1 in letter, digit, ".", "-"
 --   "."
 --   at least 2 letter
 
@@ -68,10 +64,18 @@ find all
   or
   ('"' at least 0 (hexPart1 or ('\\' hexPart2)) '"')
   "@"
-  (at least 1 (ld maybe (at least 0 ldd ld)) ld maybe (at least 0 ldd ld)) 
+  ((at least 1 (ld (maybe ((at least 0 ldd) ld)) ".")) ld (maybe ((at least 0 ldd) ld))) 
   or
   ("["
-    exactly 3 (("25" in "0" to "5") or (("2" in "0" to "4" digit) or (maybe ("0" or "1") digit maybe digit)) ".") 
-    (("25" in "0" to "5") or (("2" in "0" to "4" digit) or (maybe ("0" or "1") digit maybe digit))) 
-      or (maybe (at least 0 ldd ld) ":" at least 1 (hexPart1 or ("\\" hexPart2)))
+    exactly 3 (
+      ("25" in "0" to "5") or 
+      ("2" in "0" to "4" digit) or 
+      (maybe ("0" or "1") digit maybe digit)
+      "."
+    ) (
+      ("25" in "0" to "5") or 
+      ("2" in "0" to "4" digit) or 
+      (maybe ("0" or "1") digit maybe digit) or 
+      (maybe (at least 0 ldd ld) ":" at least 1 (hexPart1 or ("\\" hexPart2)))
+    )
   "]")
