@@ -406,7 +406,6 @@ type StopLoop struct {
 }
 
 func (i StopLoop) adjust(offset int, state *GenState) SearchInstruction {
-	i.id += state.loopId
 	return i
 }
 func (i StopLoop) execute(current_state *SearchEngineState) *SearchEngineState {

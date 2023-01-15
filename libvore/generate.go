@@ -13,7 +13,6 @@ type GeneratedPattern struct {
 type AstProcessProgram []AstProcessStatement
 
 type GenState struct {
-	loopId                int64
 	variables             map[string]int
 	globalSubroutines     map[string]GeneratedPattern
 	globalVariables       map[string]int
@@ -29,7 +28,6 @@ func (f *AstFind) generate(state *GenState) (Command, error) {
 		body: []SearchInstruction{},
 	}
 
-	state.loopId = 0
 	state.variables = make(map[string]int)
 
 	offset := 0
@@ -55,7 +53,6 @@ func (r *AstReplace) generate(state *GenState) (Command, error) {
 		replacer: []ReplaceInstruction{},
 	}
 
-	state.loopId = 0
 	state.variables = make(map[string]int)
 
 	offset := 0
@@ -82,7 +79,6 @@ func (r *AstReplace) generate(state *GenState) (Command, error) {
 }
 
 func (s *AstSet) generate(state *GenState) (Command, error) {
-	state.loopId = 0
 	state.variables = make(map[string]int)
 
 	body, err := s.body.generate(state, s.id)
@@ -122,7 +118,6 @@ func (s AstSetTransform) generate(state *GenState, id string) (SetCommandBody, e
 }
 
 func (s AstSetPattern) generate(state *GenState, id string) (SetCommandBody, error) {
-	state.loopId = 0
 	state.variables = make(map[string]int)
 
 	searchInstructions, err := s.pattern.generate(0, state)
