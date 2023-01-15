@@ -19,6 +19,7 @@ func findMatches(insts []SearchInstruction, all bool, skip int, take int, last i
 	lineNumber := 1
 	columnNumber := 1
 
+	//fmt.Println("Find Commnad Instructions")
 	//for i, inst := range insts {
 	//	fmt.Printf("[%d] %v\n", i, inst)
 	//}
@@ -176,7 +177,7 @@ func (s SetCommandTransform) execute(state *GlobalState, id string) *GlobalState
 
 type SearchInstruction interface {
 	execute(*SearchEngineState) *SearchEngineState
-	adjust(offset int, state *GenState) (SearchInstruction, int)
+	adjust(offset int, state *GenState) SearchInstruction
 }
 
 type ReplaceInstruction interface {
@@ -188,8 +189,8 @@ type MatchLiteral struct {
 	toFind string
 }
 
-func (i MatchLiteral) adjust(offset int, state *GenState) (SearchInstruction, int) {
-	return i, state.loopId
+func (i MatchLiteral) adjust(offset int, state *GenState) SearchInstruction {
+	return i
 }
 func (i MatchLiteral) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -202,8 +203,8 @@ type MatchCharClass struct {
 	class AstCharacterClassType
 }
 
-func (i MatchCharClass) adjust(offset int, state *GenState) (SearchInstruction, int) {
-	return i, state.loopId
+func (i MatchCharClass) adjust(offset int, state *GenState) SearchInstruction {
+	return i
 }
 func (i MatchCharClass) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -238,8 +239,8 @@ type MatchVariable struct {
 	name string
 }
 
-func (i MatchVariable) adjust(offset int, state *GenState) (SearchInstruction, int) {
-	return i, state.loopId
+func (i MatchVariable) adjust(offset int, state *GenState) SearchInstruction {
+	return i
 }
 func (i MatchVariable) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -253,8 +254,8 @@ type MatchRange struct {
 	to   string
 }
 
-func (i MatchRange) adjust(offset int, state *GenState) (SearchInstruction, int) {
-	return i, state.loopId
+func (i MatchRange) adjust(offset int, state *GenState) SearchInstruction {
+	return i
 }
 func (i MatchRange) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -267,9 +268,9 @@ type CallSubroutine struct {
 	toPC int
 }
 
-func (i CallSubroutine) adjust(offset int, state *GenState) (SearchInstruction, int) {
+func (i CallSubroutine) adjust(offset int, state *GenState) SearchInstruction {
 	i.toPC += offset
-	return i, state.loopId
+	return i
 }
 func (i CallSubroutine) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -282,11 +283,11 @@ type Branch struct {
 	branches []int
 }
 
-func (i Branch) adjust(offset int, state *GenState) (SearchInstruction, int) {
+func (i Branch) adjust(offset int, state *GenState) SearchInstruction {
 	for idx := range i.branches {
 		i.branches[idx] += offset
 	}
-	return i, state.loopId
+	return i
 }
 func (i Branch) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -308,9 +309,9 @@ type StartNotIn struct {
 	nextCheckpointPC int
 }
 
-func (i StartNotIn) adjust(offset int, state *GenState) (SearchInstruction, int) {
+func (i StartNotIn) adjust(offset int, state *GenState) SearchInstruction {
 	i.nextCheckpointPC += offset
-	return i, state.loopId
+	return i
 }
 func (i StartNotIn) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -322,8 +323,8 @@ func (i StartNotIn) execute(current_state *SearchEngineState) *SearchEngineState
 
 type FailNotIn struct{}
 
-func (i FailNotIn) adjust(offset int, state *GenState) (SearchInstruction, int) {
-	return i, state.loopId
+func (i FailNotIn) adjust(offset int, state *GenState) SearchInstruction {
+	return i
 }
 func (i FailNotIn) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -336,8 +337,8 @@ type EndNotIn struct {
 	maxSize int
 }
 
-func (i EndNotIn) adjust(offset int, state *GenState) (SearchInstruction, int) {
-	return i, state.loopId
+func (i EndNotIn) adjust(offset int, state *GenState) SearchInstruction {
+	return i
 }
 func (i EndNotIn) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -355,17 +356,16 @@ func (i EndNotIn) execute(current_state *SearchEngineState) *SearchEngineState {
 }
 
 type StartLoop struct {
-	id       int
+	id       int64
 	minLoops int
 	maxLoops int
 	fewest   bool
 	exitLoop int
 }
 
-func (i StartLoop) adjust(offset int, state *GenState) (SearchInstruction, int) {
+func (i StartLoop) adjust(offset int, state *GenState) SearchInstruction {
 	i.exitLoop += offset
-	i.id += state.loopId
-	return i, state.loopId
+	return i
 }
 func (i StartLoop) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -398,17 +398,16 @@ func (i StartLoop) execute(current_state *SearchEngineState) *SearchEngineState 
 }
 
 type StopLoop struct {
-	id        int
+	id        int64
 	minLoops  int
 	maxLoops  int
 	fewest    bool
 	startLoop int
 }
 
-func (i StopLoop) adjust(offset int, state *GenState) (SearchInstruction, int) {
+func (i StopLoop) adjust(offset int, state *GenState) SearchInstruction {
 	i.id += state.loopId
-	i.startLoop += offset
-	return i, state.loopId
+	return i
 }
 func (i StopLoop) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -420,8 +419,8 @@ type StartVarDec struct {
 	name string
 }
 
-func (i StartVarDec) adjust(offset int, state *GenState) (SearchInstruction, int) {
-	return i, state.loopId
+func (i StartVarDec) adjust(offset int, state *GenState) SearchInstruction {
+	return i
 }
 func (i StartVarDec) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -433,8 +432,8 @@ type EndVarDec struct {
 	name string
 }
 
-func (i EndVarDec) adjust(offset int, state *GenState) (SearchInstruction, int) {
-	return i, state.loopId
+func (i EndVarDec) adjust(offset int, state *GenState) SearchInstruction {
+	return i
 }
 func (i EndVarDec) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -448,9 +447,9 @@ type StartSubroutine struct {
 	endOffset int
 }
 
-func (i StartSubroutine) adjust(offset int, state *GenState) (SearchInstruction, int) {
+func (i StartSubroutine) adjust(offset int, state *GenState) SearchInstruction {
 	i.endOffset += offset
-	return i, state.loopId
+	return i
 }
 func (i StartSubroutine) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -464,8 +463,8 @@ type EndSubroutine struct {
 	validate []AstProcessStatement
 }
 
-func (i EndSubroutine) adjust(offset int, state *GenState) (SearchInstruction, int) {
-	return i, state.loopId
+func (i EndSubroutine) adjust(offset int, state *GenState) SearchInstruction {
+	return i
 }
 func (i EndSubroutine) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
@@ -506,9 +505,9 @@ type Jump struct {
 	newProgramCounter int
 }
 
-func (i Jump) adjust(offset int, state *GenState) (SearchInstruction, int) {
+func (i Jump) adjust(offset int, state *GenState) SearchInstruction {
 	i.newProgramCounter += offset
-	return i, state.loopId
+	return i
 }
 func (i Jump) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()

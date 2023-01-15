@@ -13,7 +13,7 @@ const (
 )
 
 type LoopState struct {
-	loopId        int
+	loopId        int64
 	callLevel     int
 	iterationStep int
 }
@@ -285,7 +285,7 @@ func (es *SearchEngineState) GETPC() int {
 	return es.programCounter
 }
 
-func (es *SearchEngineState) INITLOOPSTACK(loopId int) bool {
+func (es *SearchEngineState) INITLOOPSTACK(loopId int64) bool {
 	top := es.loopStack.Peek()
 	if es.loopStack.IsEmpty() || top.loopId != loopId || top.callLevel != int(es.callStack.Size()) {
 		es.loopStack.Push(LoopState{

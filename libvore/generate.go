@@ -1,6 +1,9 @@
 package libvore
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+)
 
 type GeneratedPattern struct {
 	search   []SearchInstruction
@@ -10,7 +13,7 @@ type GeneratedPattern struct {
 type AstProcessProgram []AstProcessStatement
 
 type GenState struct {
-	loopId                int
+	loopId                int64
 	variables             map[string]int
 	globalSubroutines     map[string]GeneratedPattern
 	globalVariables       map[string]int
@@ -166,14 +169,15 @@ func (s AstSetMatches) generate(state *GenState, id string) (SetCommandBody, err
 }
 
 func (l *AstLoop) generate(offset int, state *GenState) ([]SearchInstruction, error) {
-	state.loopId += 1
 	body, gen_error := l.body.generate(offset+1, state)
 	if gen_error != nil {
 		return []SearchInstruction{}, gen_error
 	}
 
+	id := rand.Int63()
+
 	start := StartLoop{
-		id:       state.loopId,
+		id:       id,
 		minLoops: l.min,
 		maxLoops: l.max,
 		exitLoop: offset + len(body) + 1,
@@ -181,7 +185,7 @@ func (l *AstLoop) generate(offset int, state *GenState) ([]SearchInstruction, er
 	}
 
 	stop := StopLoop{
-		id:        state.loopId,
+		id:        id,
 		minLoops:  l.min,
 		maxLoops:  l.max,
 		startLoop: offset,
@@ -403,17 +407,11 @@ func (l *AstVariable) generate(offset int, state *GenState) ([]SearchInstruction
 
 		bodyinsts := []SearchInstruction{}
 		loffset := offset + 1
-		newLoopId := state.loopId
 		for _, expr := range globalSub.search {
-			inst, lid := expr.adjust(offset+1, state)
+			inst := expr.adjust(offset+1, state)
 			loffset += 1
-			if newLoopId < lid {
-				newLoopId = lid
-			}
 			bodyinsts = append(bodyinsts, inst)
 		}
-
-		state.loopId = newLoopId
 
 		jumpToSubroutine := StartSubroutine{
 			id:        offset,

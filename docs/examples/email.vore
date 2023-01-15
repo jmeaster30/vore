@@ -12,12 +12,12 @@ try out the official RFC 5322 email regular expression next.
 
 -- I am not going to worry about the boundary anchors here
 
--- find all
---   at least 1 in letter, digit, ".", "_", "%", "+", "-"
---   "@"
---   at least 1 in letter, digit, ".", "-"
---   "."
---   at least 2 letter
+find all
+  at least 1 in letter, digit, ".", "_", "%", "+", "-"
+  "@"
+  at least 1 in letter, digit, ".", "-"
+  "."
+  at least 2 letter
 
 --(
 
