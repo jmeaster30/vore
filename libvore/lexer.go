@@ -364,6 +364,9 @@ func (s *Lexer) getNextToken() *Token {
 		} else if current_state == SBLOCKCOMMENTSTARTEND && ch == '-' {
 			buf.WriteRune(ch)
 			current_state = SBLOCKCOMMENTENDEND
+		} else if current_state == SBLOCKCOMMENTSTARTEND && ch == ')' {
+			buf.WriteRune(ch)
+			current_state = SBLOCKCOMMENTSTARTEND
 		} else if current_state == SBLOCKCOMMENTENDEND && ch == '-' {
 			buf.WriteRune(ch)
 			current_state = SBLOCKCOMMENTFINAL
@@ -394,9 +397,6 @@ func (s *Lexer) getNextToken() *Token {
 		} else if ch == '(' && current_state == SSTART {
 			buf.WriteRune(ch)
 			current_state = SOPENPAREN
-			break
-		} else if ch == ')' && current_state == SBLOCKCOMMENT {
-			buf.WriteRune(ch)
 			break
 		} else if ch == ')' && current_state == SSTART {
 			buf.WriteRune(ch)
@@ -649,9 +649,9 @@ func (s *Lexer) getNextToken() *Token {
 	case SBLOCKCOMMENTSTARTEND:
 		fallthrough
 	case SBLOCKCOMMENTENDEND:
-		fallthrough
-	case SBLOCKCOMMENT:
 		token.tokenType = ERROR
+	case SBLOCKCOMMENT:
+		fallthrough
 	case SBLOCKCOMMENTFINAL:
 		fallthrough
 	case SCOMMENT:

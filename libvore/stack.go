@@ -37,12 +37,6 @@ func (s *Stack[T]) Pop() *T {
 	return &result
 }
 
-// replace
-func (s *Stack[T]) Replace(value T) {
-	s.Pop()
-	s.Push(value)
-}
-
 // isEmpty
 func (s *Stack[T]) IsEmpty() bool {
 	return len(s.store) == 0

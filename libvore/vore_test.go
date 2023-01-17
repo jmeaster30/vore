@@ -360,6 +360,13 @@ func TestNotInInLoop(t *testing.T) {
 	})
 }
 
+func TestBlockComment(t *testing.T) {
+	vore, err := Compile("--(find all at least))- 1 (not in 'a' to 'c', 'x' to 'z'))--")
+	checkNoError(t, err)
+	results := vore.Run("oh wow a test!")
+	matches(t, results, []TestMatch{})
+}
+
 func TestEmail(t *testing.T) {
 	vore, err := Compile(`
 set localPart to pattern
@@ -387,7 +394,7 @@ find all
   or
   ('"' at least 0 (hexPart1 or ('\\' hexPart2)) '"')
   "@"
-  (at least 1 (ld maybe (at least 0 ldd ld)) ld maybe (at least 0 ldd ld)) 
+  (at least 1 (ld maybe (at least 0 ldd ld) '.') ld maybe (at least 0 ldd ld)) 
   or
   ("["
     exactly 3 (("25" in "0" to "5") or (("2" in "0" to "4" digit) or (maybe ("0" or "1") digit maybe digit)) ".") 

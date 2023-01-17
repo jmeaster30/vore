@@ -8,12 +8,6 @@ func NewQueue[T any]() *Queue[T] {
 	return &Queue[T]{}
 }
 
-func (s *Queue[T]) Copy() *Queue[T] {
-	return &Queue[T]{
-		store: s.store,
-	}
-}
-
 // peek
 func (s *Queue[T]) Peek() *T {
 	if s.IsEmpty() {
