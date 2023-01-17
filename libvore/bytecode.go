@@ -229,6 +229,10 @@ func (i MatchCharClass) execute(current_state *SearchEngineState) *SearchEngineS
 		next_state.MATCHLINESTART(i.not)
 	case ClassLineEnd:
 		next_state.MATCHLINEEND(i.not)
+	case ClassWordStart:
+		next_state.MATCHWORDSTART(i.not)
+	case ClassWordEnd:
+		next_state.MATCHWORDEND(i.not)
 	default:
 		panic("Unexpected character class type")
 	}

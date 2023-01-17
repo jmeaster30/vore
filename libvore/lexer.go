@@ -70,6 +70,7 @@ const (
 	LETTER
 	LINE
 	FILE
+	WORD
 	START
 	END
 	BEGIN
@@ -172,6 +173,8 @@ func (t TokenType) pp() string {
 		return "START"
 	case FILE:
 		return "FILE"
+	case WORD:
+		return "WORD"
 	case END:
 		return "END"
 	case BEGIN:
@@ -572,6 +575,8 @@ func (s *Lexer) getNextToken() *Token {
 			token.tokenType = LINE
 		case "file":
 			token.tokenType = FILE
+		case "word":
+			token.tokenType = WORD
 		case "start":
 			token.tokenType = START
 		case "end":

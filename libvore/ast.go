@@ -315,8 +315,10 @@ const (
 	ClassLetter
 	ClassLineStart
 	ClassFileStart
+	ClassWordStart
 	ClassLineEnd
 	ClassFileEnd
+	ClassWordEnd
 )
 
 type AstCharacterClass struct {

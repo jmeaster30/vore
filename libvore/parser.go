@@ -314,7 +314,7 @@ func parse_expression(tokens []*Token, token_index int) (AstExpression, int, Par
 		current_token.tokenType == WHITESPACE || current_token.tokenType == DIGIT ||
 		current_token.tokenType == UPPER || current_token.tokenType == LOWER ||
 		current_token.tokenType == LETTER || current_token.tokenType == LINE ||
-		current_token.tokenType == FILE {
+		current_token.tokenType == FILE || current_token.tokenType == WORD {
 		return parse_primary_or_dec(tokens, token_index)
 	}
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected 'at', 'between', 'exactly', 'maybe', 'in', '<string>', '<identifier>', or a character class ")
@@ -487,7 +487,7 @@ func parse_not_expression(tokens []*Token, token_index int) (AstExpression, int,
 		current_token.tokenType == WHITESPACE || current_token.tokenType == DIGIT ||
 		current_token.tokenType == UPPER || current_token.tokenType == LOWER ||
 		current_token.tokenType == LETTER || current_token.tokenType == LINE ||
-		current_token.tokenType == FILE {
+		current_token.tokenType == FILE || current_token.tokenType == WORD {
 		ast_chclass, idx, err := parse_character_class(tokens, new_index, true)
 		if err.isError {
 			return nil, idx, err
@@ -508,7 +508,7 @@ func parse_not_literal(tokens []*Token, token_index int) (AstLiteral, int, Parse
 		current_token.tokenType == WHITESPACE || current_token.tokenType == DIGIT ||
 		current_token.tokenType == UPPER || current_token.tokenType == LOWER ||
 		current_token.tokenType == LETTER || current_token.tokenType == LINE ||
-		current_token.tokenType == FILE {
+		current_token.tokenType == FILE || current_token.tokenType == WORD {
 		return parse_character_class(tokens, new_index, true)
 	} else {
 		return nil, new_index, NewParseError(*current_token, "Unexpected token. Expected 'in', <string>, <character class>")
@@ -590,7 +590,7 @@ func parse_literal(tokens []*Token, token_index int) (AstLiteral, int, ParseErro
 		current_token.tokenType == WHITESPACE || current_token.tokenType == DIGIT ||
 		current_token.tokenType == UPPER || current_token.tokenType == LOWER ||
 		current_token.tokenType == LETTER || current_token.tokenType == LINE ||
-		current_token.tokenType == FILE {
+		current_token.tokenType == FILE || current_token.tokenType == WORD {
 		return parse_character_class(tokens, token_index, false)
 	}
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected '(', '<string>', '<identifier>', or a character class.")
@@ -809,6 +809,16 @@ func parse_character_class(tokens []*Token, token_index int, not bool) (*AstChar
 			return &charClass, new_index + 1, NoError()
 		} else if tokens[new_index].tokenType == END {
 			charClass.classType = ClassFileEnd
+			return &charClass, new_index + 1, NoError()
+		}
+		return nil, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'start' or 'end'")
+	} else if current_token.tokenType == WORD {
+		new_index := consumeIgnoreableTokens(tokens, token_index+1)
+		if tokens[new_index].tokenType == START {
+			charClass.classType = ClassWordStart
+			return &charClass, new_index + 1, NoError()
+		} else if tokens[new_index].tokenType == END {
+			charClass.classType = ClassWordEnd
 			return &charClass, new_index + 1, NoError()
 		}
 		return nil, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'start' or 'end'")

@@ -173,6 +173,64 @@ func (es *SearchEngineState) MATCHLINEEND(not bool) {
 	}
 }
 
+func IsLetter(value string) bool {
+	return ("a" <= value && value <= "z") || ("A" <= value && value <= "Z") || ("0" <= value && value <= "9") || value == "_"
+}
+
+func (es *SearchEngineState) MATCHWORDSTART(not bool) {
+	if es.currentFileOffset == 0 {
+		if not {
+			es.BACKTRACK()
+		} else {
+			es.NEXT()
+		}
+		return
+	}
+
+	previous := es.READAT(es.currentFileOffset-1, 1)
+	current := es.READ(1)
+	if IsLetter(current) && !IsLetter(previous) {
+		if not {
+			es.BACKTRACK()
+		} else {
+			es.NEXT()
+		}
+	} else {
+		if not {
+			es.NEXT()
+		} else {
+			es.BACKTRACK()
+		}
+	}
+}
+
+func (es *SearchEngineState) MATCHWORDEND(not bool) {
+	if es.currentFileOffset == es.reader.size {
+		if not {
+			es.BACKTRACK()
+		} else {
+			es.NEXT()
+		}
+		return
+	}
+
+	previous := es.READAT(es.currentFileOffset-1, 1)
+	current := es.READ(1)
+	if !IsLetter(current) && IsLetter(previous) {
+		if not {
+			es.BACKTRACK()
+		} else {
+			es.NEXT()
+		}
+	} else {
+		if not {
+			es.NEXT()
+		} else {
+			es.BACKTRACK()
+		}
+	}
+}
+
 func (es *SearchEngineState) MATCHANY(not bool) {
 	if not {
 		es.BACKTRACK()
