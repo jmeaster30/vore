@@ -353,6 +353,20 @@ func parse_at(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
 		current_index += 1
 	}
 
+	loopName := ""
+	current_index = consumeIgnoreableTokens(tokens, current_index)
+	current_token = tokens[current_index]
+	if current_token.tokenType == NAMED {
+		current_index = consumeIgnoreableTokens(tokens, current_index+1)
+		nameToken := tokens[current_index]
+		if nameToken.tokenType == IDENTIFIER || nameToken.tokenType == STRING {
+			loopName = nameToken.lexeme
+			current_index += 1
+		} else {
+			return nil, current_index, parseError
+		}
+	}
+
 	var min int
 	var max int
 	if isLeast {
@@ -368,6 +382,7 @@ func parse_at(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
 		max:    max,
 		fewest: fewest,
 		body:   expr,
+		name:   loopName,
 	}
 
 	return &atLoop, current_index, NoError()
@@ -414,11 +429,26 @@ func parse_between(tokens []*Token, token_index int) (*AstLoop, int, ParseError)
 		current_index += 1
 	}
 
+	loopName := ""
+	current_index = consumeIgnoreableTokens(tokens, current_index)
+	current_token = tokens[current_index]
+	if current_token.tokenType == NAMED {
+		current_index = consumeIgnoreableTokens(tokens, current_index+1)
+		nameToken := tokens[current_index]
+		if nameToken.tokenType == IDENTIFIER || nameToken.tokenType == STRING {
+			loopName = nameToken.lexeme
+			current_index += 1
+		} else {
+			return nil, current_index, parseError
+		}
+	}
+
 	between := AstLoop{
 		min:    minValue,
 		max:    maxValue,
 		fewest: fewest,
 		body:   expr,
+		name:   loopName,
 	}
 
 	return &between, current_index, NoError()
@@ -442,11 +472,26 @@ func parse_exactly(tokens []*Token, token_index int) (*AstLoop, int, ParseError)
 		return nil, next_index, parseError
 	}
 
+	loopName := ""
+	current_index = consumeIgnoreableTokens(tokens, current_index)
+	current_token = tokens[current_index]
+	if current_token.tokenType == NAMED {
+		current_index = consumeIgnoreableTokens(tokens, current_index+1)
+		nameToken := tokens[current_index]
+		if nameToken.tokenType == IDENTIFIER || nameToken.tokenType == STRING {
+			loopName = nameToken.lexeme
+			current_index += 1
+		} else {
+			return nil, current_index, parseError
+		}
+	}
+
 	exactly := AstLoop{
 		min:    value,
 		max:    value,
 		fewest: false,
 		body:   expr,
+		name:   loopName,
 	}
 
 	return &exactly, next_index, NoError()
@@ -466,7 +511,7 @@ func parse_maybe(tokens []*Token, token_index int) (*AstLoop, int, ParseError) {
 		current_index += 1
 	}
 
-	maybe := AstLoop{0, 1, fewest, expr}
+	maybe := AstLoop{0, 1, fewest, expr, ""}
 
 	return &maybe, current_index, NoError()
 }

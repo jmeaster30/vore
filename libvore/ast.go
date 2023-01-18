@@ -161,6 +161,7 @@ type AstLoop struct {
 	max    int
 	fewest bool
 	body   AstExpression
+	name   string
 }
 
 func (l AstLoop) isExpr() {}

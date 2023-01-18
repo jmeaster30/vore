@@ -1,0 +1,15 @@
+--(
+  Parses out CSV files by matching every line and extracting the values from each element
+
+  Does not handle quoting properly so that will need to be improved but I also want to add other functionality to this first
+)--
+
+set separator to pattern ","
+
+find all
+    line start
+    at least 0 (
+        maybe separator
+        at least 0 (not in separator) = element
+    )
+    line end

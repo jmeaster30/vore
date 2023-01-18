@@ -85,6 +85,7 @@ const (
 	EXACTLY
 	MAYBE
 	FEWEST
+	NAMED
 	IN
 	OR
 	IF
@@ -243,6 +244,8 @@ func (t TokenType) pp() string {
 		return "CONTINUE"
 	case BREAK:
 		return "BREAK"
+	case NAMED:
+		return "NAMED"
 	default:
 		panic("UNKNOWN TOKEN TYPE")
 	}
@@ -601,6 +604,8 @@ func (s *Lexer) getNextToken() *Token {
 			token.tokenType = MAYBE
 		case "fewest":
 			token.tokenType = FEWEST
+		case "named":
+			token.tokenType = NAMED
 		case "in":
 			token.tokenType = IN
 		case "or":

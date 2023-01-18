@@ -93,6 +93,7 @@ func TestTokenTypePP(t *testing.T) {
 	ppMatch(t, EXACTLY, "EXACTLY")
 	ppMatch(t, MAYBE, "MAYBE")
 	ppMatch(t, FEWEST, "FEWEST")
+	ppMatch(t, NAMED, "NAMED")
 	ppMatch(t, IN, "IN")
 	ppMatch(t, OR, "OR")
 	ppMatch(t, IF, "IF")
