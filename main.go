@@ -31,8 +31,9 @@ func main() {
 	source_arg := flag.String("src", "", "Vore source file to run on search files")
 	command_arg := flag.String("com", "", "Vore command to run on search files")
 	files_arg := flag.String("files", "", "Files to search")
-	out_json_arg := flag.Bool("json", false, "JSON output file")
-	out_fjson_arg := flag.Bool("formatted-json", false, "Formatted JSON output file")
+	filenames_arg := flag.Bool("filenames", false, "Process filenames instead of file contents")
+	out_json_arg := flag.Bool("json", false, "Output JSON to STDOUT")
+	out_fjson_arg := flag.Bool("formatted-json", false, "Output formatted JSON to STDOUT")
 	json_file_arg := flag.String("json-file", "", "JSON output file")
 	fjson_file_arg := flag.String("formatted-json-file", "", "Formatted JSON output file")
 	ide_arg := flag.Bool("ide", false, "Open source and files in vore ide")
@@ -41,6 +42,7 @@ func main() {
 
 	source := *source_arg
 	files := *files_arg
+	process_filenames := *filenames_arg
 	json_file := *json_file_arg
 	fjson_file := *fjson_file_arg
 	out_json := *out_json_arg
@@ -92,7 +94,7 @@ func main() {
 
 	//vore.PrintTokens()
 	//vore.PrintAST()
-	results := vore.RunFiles([]string{*files_arg}, replaceModeArg)
+	results := vore.RunFiles([]string{*files_arg}, replaceModeArg, process_filenames)
 	if len(results) == 0 {
 		fmt.Println("There were no matches :(")
 	} else {

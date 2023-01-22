@@ -365,6 +365,7 @@ type StartLoop struct {
 	maxLoops int
 	fewest   bool
 	exitLoop int
+	name     string
 }
 
 func (i StartLoop) adjust(offset int, state *GenState) SearchInstruction {
@@ -374,7 +375,7 @@ func (i StartLoop) adjust(offset int, state *GenState) SearchInstruction {
 func (i StartLoop) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 
-	inited := next_state.INITLOOPSTACK(i.id)
+	inited := next_state.INITLOOPSTACK(i.id, i.name)
 	if !inited {
 		next_state.INCLOOPSTACK()
 	}
@@ -407,6 +408,7 @@ type StopLoop struct {
 	maxLoops  int
 	fewest    bool
 	startLoop int
+	name      string
 }
 
 func (i StopLoop) adjust(offset int, state *GenState) SearchInstruction {

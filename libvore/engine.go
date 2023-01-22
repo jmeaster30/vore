@@ -1,6 +1,7 @@
 package libvore
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -16,6 +17,7 @@ type LoopState struct {
 	loopId        int64
 	callLevel     int
 	iterationStep int
+	name          string
 }
 
 type VariableRecord struct {
@@ -343,11 +345,12 @@ func (es *SearchEngineState) GETPC() int {
 	return es.programCounter
 }
 
-func (es *SearchEngineState) INITLOOPSTACK(loopId int64) bool {
+func (es *SearchEngineState) INITLOOPSTACK(loopId int64, name string) bool {
 	top := es.loopStack.Peek()
 	if es.loopStack.IsEmpty() || top.loopId != loopId || top.callLevel != int(es.callStack.Size()) {
 		es.loopStack.Push(LoopState{
 			loopId:        loopId,
+			name:          name,
 			callLevel:     int(es.callStack.Size()),
 			iterationStep: 0,
 		})
@@ -383,16 +386,20 @@ func (es *SearchEngineState) STARTVAR(name string) {
 		name:        name,
 		startOffset: len(es.currentMatch),
 	}
+	fmt.Printf("Pushing %s\n", record.name)
 	es.variableStack.Push(record)
 	es.NEXT()
 }
 
 func (es *SearchEngineState) ENDVAR(name string) {
 	record := es.variableStack.Pop()
+	fmt.Printf("END VAR %s\n", record.name)
 	if record.name != name {
+		fmt.Printf("%s -- %s\n", record.name, name)
 		panic("UHOH BAD INSTRUCTIONS I TRIED RESOLVING A VARIABLE THAT I WASN'T EXPECTING")
 	}
 	value := es.currentMatch[record.startOffset:]
+	fmt.Printf("VALUE %s\n", value)
 	es.environment[name] = value
 	es.NEXT()
 }

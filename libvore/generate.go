@@ -173,6 +173,7 @@ func (l *AstLoop) generate(offset int, state *GenState) ([]SearchInstruction, er
 
 	start := StartLoop{
 		id:       id,
+		name:     l.name,
 		minLoops: l.min,
 		maxLoops: l.max,
 		exitLoop: offset + len(body) + 1,
@@ -181,6 +182,7 @@ func (l *AstLoop) generate(offset int, state *GenState) ([]SearchInstruction, er
 
 	stop := StopLoop{
 		id:        id,
+		name:      l.name,
 		minLoops:  l.min,
 		maxLoops:  l.max,
 		startLoop: offset,
