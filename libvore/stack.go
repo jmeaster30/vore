@@ -9,9 +9,13 @@ func NewStack[T any]() *Stack[T] {
 }
 
 func (s *Stack[T]) Copy() *Stack[T] {
-	return &Stack[T]{
-		store: s.store,
+	result := NewStack[T]()
+
+	for _, value := range s.store {
+		result.Push(value)
 	}
+
+	return result
 }
 
 // peek

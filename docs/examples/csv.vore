@@ -13,3 +13,4 @@ find all
         at least 0 (not in separator) = element
     )
     line end
+    "\n"

@@ -1,7 +1,6 @@
 package libvore
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -313,13 +312,10 @@ func (es *SearchEngineState) MATCHOPTIONS(options []string, not bool) {
 
 func (es *SearchEngineState) MATCH(value string, not bool) {
 	comp := es.READ(len(value))
-	//fmt.Printf("is(%d) '%s' == '%s'\n", es.currentFileOffset, value, comp)
 	if value == comp {
-		//fmt.Println("YEAH!!")
 		es.CONSUME(len(value))
 		es.NEXT()
 	} else {
-		//fmt.Println("no :(")
 		es.BACKTRACK()
 	}
 }
@@ -386,20 +382,16 @@ func (es *SearchEngineState) STARTVAR(name string) {
 		name:        name,
 		startOffset: len(es.currentMatch),
 	}
-	fmt.Printf("Pushing %s\n", record.name)
 	es.variableStack.Push(record)
 	es.NEXT()
 }
 
 func (es *SearchEngineState) ENDVAR(name string) {
 	record := es.variableStack.Pop()
-	fmt.Printf("END VAR %s\n", record.name)
 	if record.name != name {
-		fmt.Printf("%s -- %s\n", record.name, name)
 		panic("UHOH BAD INSTRUCTIONS I TRIED RESOLVING A VARIABLE THAT I WASN'T EXPECTING")
 	}
 	value := es.currentMatch[record.startOffset:]
-	fmt.Printf("VALUE %s\n", value)
 	es.environment[name] = value
 	es.NEXT()
 }
@@ -416,10 +408,6 @@ func (es *SearchEngineState) CALL(id int, returnOffset int) {
 		id:           id,
 		returnOffset: returnOffset,
 	})
-	//fmt.Println("CALLSTACK")
-	//for i, s := range es.callStack.store {
-	//	fmt.Printf("(%d) %d - %d\n", i, s.id, s.returnOffset)
-	//}
 }
 
 func (es *SearchEngineState) RETURN() {

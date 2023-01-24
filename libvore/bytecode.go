@@ -19,17 +19,16 @@ func findMatches(insts []SearchInstruction, all bool, skip int, take int, last i
 	lineNumber := 1
 	columnNumber := 1
 
-	//fmt.Println("Find Commnad Instructions")
-	//for i, inst := range insts {
-	//	fmt.Printf("[%d] %v\n", i, inst)
-	//}
+	// fmt.Println("Find Commnad Instructions")
+	// for i, inst := range insts {
+	// 	fmt.Printf("[%d] %v\n", i, inst)
+	// }
 
 	for all || matchNumber < skip+take {
 		currentState := CreateState(filename, reader, fileOffset, lineNumber, columnNumber)
 		for currentState.status == INPROCESS {
 			inst := insts[currentState.programCounter]
 			currentState = inst.execute(currentState)
-			//fmt.Printf("pc: %d inst: %v currentMatch: %s\n", currentState.programCounter, inst, currentState.currentMatch)
 
 			if currentState.status == INPROCESS && currentState.programCounter >= len(insts) {
 				currentState.SUCCESS()
