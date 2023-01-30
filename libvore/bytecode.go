@@ -1,7 +1,5 @@
 package libvore
 
-import "fmt"
-
 type Command interface {
 	execute(string, *VReader, ReplaceMode) Matches
 }
@@ -379,16 +377,10 @@ func (i StartLoop) execute(current_state *SearchEngineState) *SearchEngineState 
 	inited := next_state.INITLOOPSTACK(i.id, i.name)
 	if !inited {
 		if next_state.CHECKZEROMATCHLOOP() {
-			fmt.Printf("FOUND ZERO LENGTH MATCH LOOP :(\n")
 			next_state.BACKTRACK()
 			return next_state
 		}
 		next_state.INCLOOPSTACK()
-		fmt.Printf("loop id: %d iteration: %d lastmatch: %s\n",
-			next_state.loopStack.Peek().loopId,
-			next_state.loopStack.Peek().iterationStep,
-			next_state.currentMatch,
-		)
 	}
 	currentIteration := next_state.GETITERATIONSTEP()
 
