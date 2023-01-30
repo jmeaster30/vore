@@ -4,13 +4,11 @@
   Does not handle quoting properly so that will need to be improved but I also want to add other functionality to this first
 )--
 
-set separator to pattern ","
-
 find all
-    line start
-    at least 0 (
-        maybe separator
-        at least 0 (not in separator) = element
-    )
-    line end
-    "\n"
+  line start
+  at least 0 (
+    maybe ","
+    at least 0 (not in ",") = element
+  )
+  line end
+  "\n"

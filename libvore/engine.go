@@ -13,10 +13,11 @@ const (
 )
 
 type LoopState struct {
-	loopId        int64
-	callLevel     int
-	iterationStep int
-	name          string
+	loopId              int64
+	callLevel           int
+	iterationStep       int
+	name                string
+	loopMatchIndexStart int
 }
 
 type VariableRecord struct {
@@ -345,10 +346,11 @@ func (es *SearchEngineState) INITLOOPSTACK(loopId int64, name string) bool {
 	top := es.loopStack.Peek()
 	if es.loopStack.IsEmpty() || top.loopId != loopId || top.callLevel != int(es.callStack.Size()) {
 		es.loopStack.Push(LoopState{
-			loopId:        loopId,
-			name:          name,
-			callLevel:     int(es.callStack.Size()),
-			iterationStep: 0,
+			loopId:              loopId,
+			name:                name,
+			callLevel:           int(es.callStack.Size()),
+			iterationStep:       0,
+			loopMatchIndexStart: len(es.currentMatch),
 		})
 		return true
 	}
@@ -360,6 +362,7 @@ func (es *SearchEngineState) INCLOOPSTACK() {
 		panic("oh crap :(")
 	}
 	es.loopStack.Peek().iterationStep += 1
+	es.loopStack.Peek().loopMatchIndexStart = len(es.currentMatch)
 }
 
 func (es *SearchEngineState) GETITERATIONSTEP() int {
@@ -367,6 +370,13 @@ func (es *SearchEngineState) GETITERATIONSTEP() int {
 		panic("oh crap :(")
 	}
 	return es.loopStack.Peek().iterationStep
+}
+
+func (es *SearchEngineState) CHECKZEROMATCHLOOP() bool {
+	if es.loopStack.IsEmpty() {
+		panic("Loop stack is empty :(")
+	}
+	return es.loopStack.Peek().loopMatchIndexStart == len(es.currentMatch)
 }
 
 func (es *SearchEngineState) POPLOOPSTACK() LoopState {
