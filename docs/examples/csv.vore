@@ -4,13 +4,16 @@
   Does not handle quoting properly so that will need to be improved but I also want to add other functionality to this first
 )--
 
+-- THIS IS WHAT I IDEALLY WANT BUT CAN'T PRODUCE RIGHT NOW DUE TO RESTRICTIONS ON WHAT IS LISTABLE
+-- currently an ast node is "listable" if it's size is determined while generating the bytecode
+-- I believe this can be tracked just fine while the bytecode is being executed
 set separator to pattern ","
 
 find all
     line start
     at least 0 (
-        maybe separator
-        at least 0 (not in separator) = element
+        maybe ","
+        at least 0 (not in separator, line end) = element
     )
     line end
     "\n"

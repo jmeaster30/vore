@@ -562,7 +562,7 @@ func parse_not_literal(tokens []*Token, token_index int) (AstLiteral, int, Parse
 
 func parse_in(tokens []*Token, token_index int, not bool) (*AstList, int, ParseError) {
 	new_index := consumeIgnoreableTokens(tokens, token_index+1)
-	contents := []AstListable{}
+	contents := []AstLiteral{}
 
 	listable, next_index, err := parse_listable(tokens, new_index)
 	if err.isError {
@@ -589,7 +589,7 @@ func isListableClass(t TokenType) bool {
 	return t == ANY || t == WHITESPACE || t == DIGIT || t == UPPER || t == LOWER || t == LETTER
 }
 
-func parse_listable(tokens []*Token, token_index int) (AstListable, int, ParseError) {
+func parse_listable(tokens []*Token, token_index int) (AstLiteral, int, ParseError) {
 	current_token := tokens[token_index]
 	if current_token.tokenType == STRING {
 		from, next_index, err := parse_string(tokens, token_index, false)
@@ -614,11 +614,16 @@ func parse_listable(tokens []*Token, token_index int) (AstListable, int, ParseEr
 			to:   to,
 		}
 		return &r, new_index, NoError()
-
-	} else if isListableClass(current_token.tokenType) {
+	} else if current_token.tokenType == ANY ||
+		current_token.tokenType == WHITESPACE || current_token.tokenType == DIGIT ||
+		current_token.tokenType == UPPER || current_token.tokenType == LOWER ||
+		current_token.tokenType == LETTER || current_token.tokenType == LINE ||
+		current_token.tokenType == FILE || current_token.tokenType == WORD {
 		return parse_character_class(tokens, token_index, false)
+	} else if current_token.tokenType == IDENTIFIER {
+		return parse_variable(tokens, token_index)
 	}
-	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected listable literal")
+	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected string, range, character class, or variable name")
 }
 
 func parse_literal(tokens []*Token, token_index int) (AstLiteral, int, ParseError) {

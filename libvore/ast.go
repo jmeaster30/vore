@@ -20,12 +20,12 @@ type AstLiteral interface {
 	generate(offset int, state *GenState) ([]SearchInstruction, error)
 }
 
-type AstListable interface {
-	isListable()
-	print()
-	generate(offset int, state *GenState) ([]SearchInstruction, error)
-	getMaxSize() int
-}
+//type AstListable interface {
+//	isListable()
+//	print()
+//	generate(offset int, state *GenState) ([]SearchInstruction, error)
+//	getMaxSize() int
+//}
 
 type AstAtom interface {
 	isAtom()
@@ -214,11 +214,12 @@ func (d AstSub) print() {
 
 type AstList struct {
 	not      bool
-	contents []AstListable
+	contents []AstLiteral
 }
 
 func (l AstList) isExpr() {}
-func (l AstList) getMaxSize() int {
+
+/*func (l AstList) getMaxSize() int {
 	max := -1
 	for _, c := range l.contents {
 		s := c.getMaxSize()
@@ -227,7 +228,7 @@ func (l AstList) getMaxSize() int {
 		}
 	}
 	return max
-}
+}*/
 func (l AstList) print() {
 	fmt.Print("(in ")
 	for _, expr := range l.contents {
@@ -253,11 +254,12 @@ type AstRange struct {
 	to   *AstString
 }
 
-func (r AstRange) isListable() {}
-func (r AstRange) getMaxSize() int {
-	//? Can we guarantee that "from" is going to be greater than "to"??
-	return len(r.to.value)
-}
+func (s AstRange) isLiteral() {}
+
+//func (r AstRange) getMaxSize() int {
+//? Can we guarantee that "from" is going to be greater than "to"??
+//	return len(r.to.value)
+//}
 func (r AstRange) print() {
 	fmt.Print("(range ")
 	r.from.print()
@@ -271,11 +273,11 @@ type AstString struct {
 	value string
 }
 
-func (s AstString) isLiteral()  {}
-func (s AstString) isListable() {}
-func (s AstString) getMaxSize() int {
-	return len(s.value)
-}
+func (s AstString) isLiteral() {}
+
+//func (s AstString) getMaxSize() int {
+//	return len(s.value)
+//}
 func (s AstString) isAtom() {}
 func (s AstString) print() {
 	fmt.Printf("(string '%s')", s.value)
@@ -327,9 +329,11 @@ type AstCharacterClass struct {
 	classType AstCharacterClassType
 }
 
-func (c AstCharacterClass) isLiteral()  {}
-func (c AstCharacterClass) isListable() {}
-func (c AstCharacterClass) getMaxSize() int {
+func (c AstCharacterClass) isLiteral() {}
+
+//func (c AstCharacterClass) isListable() {}
+
+/*func (c AstCharacterClass) getMaxSize() int {
 	switch c.classType {
 	case ClassAny:
 		return 1
@@ -353,7 +357,7 @@ func (c AstCharacterClass) getMaxSize() int {
 		return 0
 	}
 	panic("shouldn't get here")
-}
+}*/
 func (c AstCharacterClass) print() {
 	fmt.Printf("(class ")
 	switch c.classType {

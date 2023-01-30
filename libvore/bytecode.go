@@ -1,5 +1,7 @@
 package libvore
 
+import "fmt"
+
 type Command interface {
 	execute(string, *VReader, ReplaceMode) Matches
 }
@@ -29,6 +31,7 @@ func findMatches(insts []SearchInstruction, all bool, skip int, take int, last i
 		for currentState.status == INPROCESS {
 			inst := insts[currentState.programCounter]
 			currentState = inst.execute(currentState)
+			fmt.Printf("pc: %d\tvalue: '%s'\n", currentState.programCounter, cleanControlCharacters(currentState.currentMatch))
 
 			if currentState.status == INPROCESS && currentState.programCounter >= len(insts) {
 				currentState.SUCCESS()
