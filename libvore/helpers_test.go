@@ -38,11 +38,14 @@ func matches(t *testing.T, results Matches, expected []TestMatch) {
 
 	for i, e := range expected {
 		actual := results[i]
-		if actual.value != e.value || actual.offset.Start != e.offset || actual.replacement != e.replacement {
-			t.Logf("Expected value %s, got %s\nExpected offset %d, got %d\nExpected replacement %s, got %s\n",
-				e.value, actual.value,
-				e.offset, actual.offset.Start,
-				e.replacement, actual.replacement)
+		if actual.value != e.value {
+			t.Logf("Expected value %s, got %s\n", e.value, actual.value)
+		}
+		if actual.offset.Start != e.offset {
+			t.Logf("Expected offset %d, got %d", e.offset, actual.offset.Start)
+		}
+		if actual.replacement != e.replacement {
+			t.Logf("Expected replacement %s, got %s\n", e.replacement, actual.replacement)
 		}
 		if actual.variables.Len() != len(e.variables) {
 			t.Errorf("Expected %d variables, got %d variables\n", len(e.variables), actual.variables.Len())

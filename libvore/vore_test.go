@@ -347,3 +347,22 @@ find all
 		{0, "jhneasterday09@gmail.com", "", []TestVar{}},
 	})
 }
+
+func TestCSV(t *testing.T) {
+	vore, err := CompileFile("../docs/examples/csv.vore")
+	checkNoError(t, err)
+	results := vore.Run(`a, b, c
+1, 2, 3
+x, y, z`)
+	matches(t, results, []TestMatch{
+		{0, "a, b, c\n", "", []TestVar{
+			{"row", "[ValueHashMap]"}, // TODO check the nested structure
+		}},
+		{0, "1, 2, 3\n", "", []TestVar{
+			{"row", "[ValueHashMap]"}, // TODO check the nested structure
+		}},
+		{0, "x, y, z", "", []TestVar{
+			{"row", "[ValueHashMap]"}, // TODO check the nested structure
+		}},
+	})
+}
