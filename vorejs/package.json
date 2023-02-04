@@ -21,7 +21,7 @@
   },
   "keywords": ["regex", "regular expressions", "verbose"],
   "author": "John Easterday",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/jmeaster30/vore/issues"
   },
