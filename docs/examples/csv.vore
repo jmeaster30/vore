@@ -9,6 +9,6 @@ find all
   at least 0 (
     maybe ","
     at least 0 (not in ",", "\n") = element
-  )
+  ) named row
   line end
   "\n" or file end

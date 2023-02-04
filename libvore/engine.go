@@ -18,6 +18,7 @@ type LoopState struct {
 	iterationStep       int
 	name                string
 	loopMatchIndexStart int
+	variables           ValueHashMap
 }
 
 type VariableRecord struct {
@@ -36,7 +37,7 @@ type SearchEngineState struct {
 	backtrack     *Stack[SearchEngineState]
 	variableStack *Stack[VariableRecord]
 	callStack     *Stack[CallState]
-	environment   map[string]string
+	environment   ValueHashMap
 
 	status            Status
 	programCounter    int
@@ -322,11 +323,14 @@ func (es *SearchEngineState) MATCH(value string, not bool) {
 }
 
 func (es *SearchEngineState) MATCHVAR(name string) {
-	value, found := es.environment[name]
+	value, found := es.environment.Get(name)
 	if !found {
 		es.BACKTRACK()
+	} else if value.getType() == ValueHashMapType {
+		// TODO add syntax for indexing hash maps but also I want something a bit better than just failing here
+		es.BACKTRACK()
 	} else {
-		es.MATCH(value, false)
+		es.MATCH(value.String().Value, false)
 	}
 }
 
@@ -345,13 +349,16 @@ func (es *SearchEngineState) GETPC() int {
 func (es *SearchEngineState) INITLOOPSTACK(loopId int64, name string) bool {
 	top := es.loopStack.Peek()
 	if es.loopStack.IsEmpty() || top.loopId != loopId || top.callLevel != int(es.callStack.Size()) {
-		es.loopStack.Push(LoopState{
+		lstate := LoopState{
 			loopId:              loopId,
 			name:                name,
 			callLevel:           int(es.callStack.Size()),
 			iterationStep:       0,
 			loopMatchIndexStart: len(es.currentMatch),
-		})
+			variables:           NewValueHashMap(),
+		}
+		lstate.variables.Add("0", NewValueHashMap())
+		es.loopStack.Push(lstate)
 		return true
 	}
 	return false
@@ -363,6 +370,7 @@ func (es *SearchEngineState) INCLOOPSTACK() {
 	}
 	es.loopStack.Peek().iterationStep += 1
 	es.loopStack.Peek().loopMatchIndexStart = len(es.currentMatch)
+	es.loopStack.Peek().variables.Add(strconv.Itoa(es.loopStack.Peek().iterationStep), NewValueHashMap())
 }
 
 func (es *SearchEngineState) GETITERATIONSTEP() int {
@@ -380,7 +388,15 @@ func (es *SearchEngineState) CHECKZEROMATCHLOOP() bool {
 }
 
 func (es *SearchEngineState) POPLOOPSTACK() LoopState {
-	return *es.loopStack.Pop()
+	if es.loopStack.IsEmpty() {
+		panic("oh crap :(")
+	}
+	top := es.loopStack.Peek()
+	es.loopStack.Pop()
+	if top.name != "" {
+		es.INSERTVARIABLE(top.name, top.variables)
+	}
+	return *top
 }
 
 func (es *SearchEngineState) PUSHLOOPSTACK(loopState LoopState) {
@@ -402,8 +418,34 @@ func (es *SearchEngineState) ENDVAR(name string) {
 		panic("UHOH BAD INSTRUCTIONS I TRIED RESOLVING A VARIABLE THAT I WASN'T EXPECTING")
 	}
 	value := es.currentMatch[record.startOffset:]
-	es.environment[name] = value
+	es.INSERTVARIABLE(name, NewValueString(value))
 	es.NEXT()
+}
+
+func (es *SearchEngineState) INSERTVARIABLE(name string, value Value) {
+	var lowestScope *LoopState = nil
+	for i := int(es.loopStack.Size()) - 1; i >= 0; i-- {
+		lowestScope = es.loopStack.Index(i)
+		if lowestScope.name != "" {
+			break
+		}
+	}
+
+	if lowestScope == nil || lowestScope.name == "" {
+		es.environment.Add(name, value)
+	} else {
+		index := strconv.Itoa(lowestScope.iterationStep)
+		v, prs := lowestScope.variables.Get(index)
+		if !prs {
+			m := NewValueHashMap()
+			m.Add(name, value)
+			lowestScope.variables.Add(index, m)
+		} else {
+			m := v.Hashmap()
+			m.Add(name, value)
+			lowestScope.variables.Add(index, m)
+		}
+	}
 }
 
 func (es *SearchEngineState) VALIDATECALL(id int, returnOffset int) {
@@ -439,7 +481,7 @@ func CreateState(filename string, reader *VReader, fileOffset int, lineNumber in
 		backtrack:         NewStack[SearchEngineState](),
 		variableStack:     NewStack[VariableRecord](),
 		callStack:         NewStack[CallState](),
-		environment:       make(map[string]string),
+		environment:       NewValueHashMap(),
 		status:            INPROCESS,
 		programCounter:    0,
 		currentFileOffset: fileOffset,
@@ -454,17 +496,12 @@ func CreateState(filename string, reader *VReader, fileOffset int, lineNumber in
 }
 
 func (es *SearchEngineState) Copy() *SearchEngineState {
-	envCopy := make(map[string]string)
-	for k, v := range es.environment {
-		envCopy[k] = v
-	}
-
 	return &SearchEngineState{
 		loopStack:         es.loopStack.Copy(),
 		backtrack:         es.backtrack.Copy(),
 		variableStack:     es.variableStack.Copy(),
 		callStack:         es.callStack.Copy(),
-		environment:       envCopy,
+		environment:       es.environment,
 		status:            es.status,
 		programCounter:    es.programCounter,
 		currentFileOffset: es.currentFileOffset,
@@ -499,43 +536,34 @@ func (es *SearchEngineState) Set(value *SearchEngineState) {
 }
 
 func (es *SearchEngineState) MakeMatch(matchNumber int) Match {
-	result := Match{
+	return Match{
 		filename:    es.filename,
 		matchNumber: matchNumber,
 		offset:      *NewRange(es.startFileOffset, es.currentFileOffset),
 		line:        *NewRange(es.startLineNum, es.currentLineNum),
 		column:      *NewRange(es.startColumnNum, es.currentColumnNum),
 		value:       es.currentMatch,
-		variables:   make(map[string]string),
+		variables:   es.environment,
 	}
-
-	for key, value := range es.environment {
-		result.variables[key] = value
-	}
-
-	return result
 }
 
 type ReplacerState struct {
-	variables      map[string]string
+	variables      ValueHashMap
 	match          Match
 	programCounter int
 }
 
 func InitReplacerState(match Match, totalMatches int) *ReplacerState {
-	variables := make(map[string]string)
-	for key, value := range match.variables {
-		variables[key] = value
-	}
+	variables := match.variables.Copy().Hashmap()
 
-	variables["totalMatches"] = strconv.Itoa(totalMatches)
-	variables["matchNumber"] = strconv.Itoa(match.matchNumber)
-	variables["startOffset"] = strconv.Itoa(match.offset.Start)
-	variables["endOffset"] = strconv.Itoa(match.offset.Start)
-	variables["lineNumber"] = strconv.Itoa(match.line.Start)
-	variables["columnNumber"] = strconv.Itoa(match.column.Start)
-	variables["value"] = strconv.Itoa(match.offset.Start)
-	variables["filename"] = strconv.Itoa(match.offset.Start)
+	variables.Add("totalMatches", NewValueString(strconv.Itoa(totalMatches)))
+	variables.Add("matchNumber", NewValueString(strconv.Itoa(match.matchNumber)))
+	variables.Add("startOffset", NewValueString(strconv.Itoa(match.offset.Start)))
+	variables.Add("endOffset", NewValueString(strconv.Itoa(match.offset.End)))
+	variables.Add("lineNumber", NewValueString(strconv.Itoa(match.line.Start)))
+	variables.Add("columnNumber", NewValueString(strconv.Itoa(match.column.Start)))
+	variables.Add("value", NewValueString(match.value))
+	variables.Add("filename", NewValueString(match.filename))
 	return &ReplacerState{
 		variables:      variables,
 		match:          match,
@@ -552,22 +580,17 @@ func (rs *ReplacerState) WRITESTRING(value string) {
 }
 
 func (rs *ReplacerState) WRITEVAR(name string) {
-	value, found := rs.variables[name]
-	if found {
-		rs.match.replacement += value
+	value, found := rs.variables.Get(name)
+	if found && value.getType() == ValueStringType {
+		rs.match.replacement += value.String().Value
 	}
 }
 
 func (rs *ReplacerState) Copy() *ReplacerState {
-	varsCopy := make(map[string]string)
-	for k, v := range rs.variables {
-		varsCopy[k] = v
-	}
-
 	return &ReplacerState{
 		programCounter: rs.programCounter,
 		match:          rs.match,
-		variables:      varsCopy,
+		variables:      rs.variables,
 	}
 }
 

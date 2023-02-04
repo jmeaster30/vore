@@ -41,6 +41,13 @@ func (s *Stack[T]) Pop() *T {
 	return &result
 }
 
+func (s *Stack[T]) Index(index int) *T {
+	if s.IsEmpty() || index < 0 || index >= len(s.store) {
+		return nil
+	}
+	return &s.store[index]
+}
+
 // isEmpty
 func (s *Stack[T]) IsEmpty() bool {
 	return len(s.store) == 0

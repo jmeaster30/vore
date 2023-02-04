@@ -46,12 +46,13 @@ func matches(t *testing.T, results Matches, expected []TestMatch) {
 				e.offset, actual.offset.Start,
 				e.replacement, actual.replacement)
 		}
-		if len(actual.variables) != len(e.variables) {
-			t.Errorf("Expected %d variables, got %d variables\n", len(e.variables), len(actual.variables))
+		if actual.variables.Len() != len(e.variables) {
+			t.Errorf("Expected %d variables, got %d variables\n", len(e.variables), actual.variables.Len())
 		} else {
 			for _, exVar := range e.variables {
-				if actual.variables[exVar.key] != exVar.value {
-					t.Errorf("Expected %s, got %s\n", exVar.value, actual.variables[exVar.key])
+				v, prs := actual.variables.Get(exVar.key)
+				if prs && v.String().Value != exVar.value {
+					t.Errorf("Expected %s, got %s\n", exVar.value, v.String().Value)
 				}
 			}
 		}

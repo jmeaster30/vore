@@ -439,7 +439,7 @@ func parse_between(tokens []*Token, token_index int) (*AstLoop, int, ParseError)
 			loopName = nameToken.lexeme
 			current_index += 1
 		} else {
-			return nil, current_index, parseError
+			return nil, current_index, NewParseError(*current_token, "Expected identifier following keyword 'named'")
 		}
 	}
 

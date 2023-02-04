@@ -26,11 +26,118 @@ type Match struct {
 	column      Range
 	value       string
 	replacement string
-	variables   map[string]string
+	variables   ValueHashMap
+}
+
+type ValueType int
+
+const (
+	ValueStringType ValueType = iota
+	ValueHashMapType
+)
+
+// TODO implement good interface for reading the values from these Value objects
+type Value interface {
+	String() ValueString
+	Hashmap() ValueHashMap
+
+	getType() ValueType
+	// add an interface that runs provided functions on each type of value
+	process(hashmapFunc func(ValueHashMap), stringFunc func(ValueString))
+	Copy() Value
+}
+
+type ValueString struct {
+	Value string
+}
+
+func NewValueString(value string) ValueString {
+	return ValueString{value}
+}
+
+func (v ValueString) String() ValueString {
+	return v
+}
+
+func (v ValueString) Hashmap() ValueHashMap {
+	result := ValueHashMap{
+		Value: make(map[string]Value),
+	}
+
+	result.Value["value"] = NewValueString(v.Value)
+	return result
+}
+
+func (v ValueString) Copy() Value {
+	return NewValueString(v.Value)
+}
+
+func (v ValueString) getType() ValueType {
+	return ValueStringType
+}
+
+func (v ValueString) process(hashmapFunc func(ValueHashMap), stringFunc func(ValueString)) {
+	stringFunc(v)
+}
+
+type ValueHashMap struct {
+	Value map[string]Value
+}
+
+func NewValueHashMap() ValueHashMap {
+	return ValueHashMap{
+		Value: make(map[string]Value),
+	}
+}
+
+func (v ValueHashMap) String() ValueString {
+	return NewValueString("[ValueHashMap]")
+}
+
+func (v ValueHashMap) Hashmap() ValueHashMap {
+	return v
+}
+
+func (v ValueHashMap) Copy() Value {
+	result := NewValueHashMap()
+	for k, val := range v.Value {
+		result.Add(k, val.Copy())
+	}
+	return result
+}
+
+func (v ValueHashMap) getType() ValueType {
+	return ValueHashMapType
+}
+
+func (v ValueHashMap) process(hashmapFunc func(ValueHashMap), stringFunc func(ValueString)) {
+	hashmapFunc(v)
+}
+
+func (v ValueHashMap) Get(name string) (Value, bool) {
+	val, found := v.Value[name]
+	return val, found
+}
+
+func (v ValueHashMap) Add(name string, value Value) {
+	v.Value[name] = value
+}
+
+func (v ValueHashMap) Len() int {
+	return len(v.Value)
+}
+
+func (v ValueHashMap) Keys() []string {
+	res := []string{}
+	for k := range v.Value {
+		res = append(res, k)
+	}
+	return res
 }
 
 type Matches []Match
 
+// TODO convert this to clean all characters of the new ValueHashMap
 func cleanControlCharacters(s string) string {
 	result := ""
 	for _, c := range s {
@@ -91,17 +198,15 @@ func (m Match) FormattedJson() string {
 	result += "\t\"replaced\": \"" + cleanControlCharacters(m.replacement) + "\",\n"
 	result += "\t\"variables\": [\n"
 
-	keys := make([]string, 0, len(m.variables))
-	for k := range m.variables {
-		keys = append(keys, k)
-	}
+	keys := m.variables.Keys()
 	sort.Strings(keys)
 
 	vars := []string{}
 	for _, k := range keys {
 		key := k
-		value := m.variables[k]
-		vars = append(vars, "\t\t{\n\t\t\t\""+key+"\": \""+cleanControlCharacters(value)+"\"\n\t\t}")
+		value, _ := m.variables.Get(k)
+		// TODO allow for outputing nested values in the hashmap
+		vars = append(vars, "\t\t{\n\t\t\t\""+key+"\": \""+cleanControlCharacters(value.String().Value)+"\"\n\t\t}")
 	}
 
 	for i, v := range vars {
@@ -138,17 +243,15 @@ func (m Match) Json() string {
 	result += "\"replaced\":\"" + cleanControlCharacters(m.replacement) + "\","
 	result += "\"variables\":["
 
-	keys := make([]string, 0, len(m.variables))
-	for k := range m.variables {
-		keys = append(keys, k)
-	}
+	keys := m.variables.Keys()
 	sort.Strings(keys)
 
 	vars := []string{}
 	for _, k := range keys {
 		key := k
-		value := m.variables[k]
-		vars = append(vars, "{\""+key+"\":\""+cleanControlCharacters(value)+"\"}")
+		value, _ := m.variables.Get(k)
+		// TODO allow for outputing nested ValueHashMaps
+		vars = append(vars, "{\""+key+"\":\""+cleanControlCharacters(value.String().Value)+"\"}")
 	}
 
 	for i, v := range vars {
@@ -170,6 +273,24 @@ func (m Matches) Print() {
 	}
 }
 
+var matchPrintDepth int
+
+func printHashmap(hashmap ValueHashMap) {
+	matchPrintDepth += 1
+	keys := hashmap.Keys()
+	sort.Strings(keys)
+	for _, k := range keys {
+		v, _ := hashmap.Get(k)
+		fmt.Printf("\n%s'%s' = ", strings.Repeat("  ", matchPrintDepth), k)
+		v.process(printHashmap, printString)
+	}
+	matchPrintDepth -= 1
+}
+
+func printString(str ValueString) {
+	fmt.Printf("'%s'", str.Value)
+}
+
 func (m Match) Print() {
 	fmt.Printf("Filename: %s\n", m.filename)
 	fmt.Printf("MatchNumber: %d\n", m.matchNumber)
@@ -179,10 +300,12 @@ func (m Match) Print() {
 	fmt.Printf("Line: %d %d\n", m.line.Start, m.line.End)
 	fmt.Printf("Column: %d %d\n", m.column.Start, m.column.End)
 	fmt.Println("Variables:")
-	fmt.Println("\t[key] = [value]")
-	for key, value := range m.variables {
-		fmt.Printf("\t%s = %s\n", key, value)
-	}
+	fmt.Print("  [key] = [value]")
+
+	matchPrintDepth = 0
+
+	m.variables.process(printHashmap, printString)
+	fmt.Println()
 }
 
 type Vore struct {

@@ -554,10 +554,15 @@ func (i ReplaceProcess) execute(current_state *ReplacerState) *ReplacerState {
 
 	// execute AST
 	env := make(map[string]ProcessValue)
-
-	for varname, varvalue := range current_state.match.variables {
-		env[varname] = ProcessValueString{varvalue}
+	keys := current_state.variables.Keys()
+	for _, key := range keys {
+		value, _ := current_state.variables.Get(key)
+		if value.getType() == ValueStringType {
+			env[key] = ProcessValueString{value.String().Value}
+		}
+		// TODO Need to add process hash maps or merge into the main Values
 	}
+
 	env["match"] = ProcessValueString{next_state.match.value}
 	env["matchLength"] = ProcessValueNumber{len(next_state.match.value)}
 	env["matchNumber"] = ProcessValueNumber{next_state.match.matchNumber}
