@@ -58,12 +58,14 @@ func matches(t *testing.T, results Matches, expected []TestMatch) {
 }
 
 func checkNoError(t *testing.T, err error) {
+	t.Helper()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func mustPanic(t *testing.T, process func(*testing.T)) {
+	t.Helper()
 	defer func() {
 		if r := recover(); r == nil {
 			t.Errorf("The code did not panic")
