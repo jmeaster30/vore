@@ -3,3 +3,6 @@ cpp
 coverage.*
 vore
 *.vsix
+
+vorejs/lib
+vorejs/node_modules
