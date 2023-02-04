@@ -7,7 +7,7 @@ import (
 
 type MemoryStream struct {
 	contents []byte
-	pos      int
+	pos      int // TODO need to update this to int64
 }
 
 func NewMemoryStream() *MemoryStream {
@@ -43,7 +43,7 @@ func (ms *MemoryStream) Seek(offset int64, whence int) (int64, error) {
 		newPos = len(ms.contents) + offs
 	}
 	if newPos < 0 {
-		return 0, errors.New("negative result pos")
+		return int64(ms.pos), errors.New("negative result pos")
 	}
 	ms.pos = newPos
 	return int64(newPos), nil

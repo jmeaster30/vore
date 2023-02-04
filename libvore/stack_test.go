@@ -60,3 +60,25 @@ func TestIsEmpty(t *testing.T) {
 		t.Errorf("The stack was expected to be empty after removing an element :(")
 	}
 }
+
+func TestIndex(t *testing.T) {
+	stack := NewStack[int]()
+	if !stack.IsEmpty() {
+		t.Errorf("The stack was expected to be empty after creating new stack :(")
+	}
+
+	if stack.Index(0) != nil {
+		t.Errorf("Index was suppose to return nil when the stack is empty")
+	}
+
+	stack.Push(1)
+	stack.Push(2)
+	stack.Index(0)
+	if stack.Size() != 2 {
+		t.Errorf("Index is not supposed to change the size of the stack")
+	}
+
+	if *stack.Index(1) != 2 {
+		t.Errorf("Expected 2 but got %d", *stack.Index(1))
+	}
+}
