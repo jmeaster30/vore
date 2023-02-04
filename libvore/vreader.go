@@ -3,11 +3,10 @@ package libvore
 import (
 	"io"
 	"os"
-	"strings"
 )
 
 type VReader struct {
-	contents io.ReadSeeker
+	contents ReadSeekCloser
 	offset   int
 	size     int
 }
@@ -19,7 +18,7 @@ func VReaderFromFileToMemory(filename string) *VReader {
 	}
 
 	return &VReader{
-		contents: strings.NewReader(string(contents)),
+		contents: NewStringReadCloser(string(contents)),
 		offset:   0,
 		size:     len(contents),
 	}
@@ -45,7 +44,7 @@ func VReaderFromFile(filename string) *VReader {
 
 func VReaderFromString(contents string) *VReader {
 	return &VReader{
-		contents: strings.NewReader(contents),
+		contents: NewStringReadCloser(contents),
 		offset:   0,
 		size:     len(contents),
 	}
@@ -53,7 +52,7 @@ func VReaderFromString(contents string) *VReader {
 
 func (v *VReader) Seek(offset int) {
 	v.offset = offset
-	_, err := v.contents.Seek(int64(offset), 0)
+	_, err := v.contents.Seek(int64(offset), io.SeekStart)
 	if err != nil {
 		panic(err)
 	}
@@ -88,4 +87,11 @@ func (v *VReader) ReadAt(length int, offset int) string {
 		return ""
 	}
 	return string(currentString)
+}
+
+func (v *VReader) Close() {
+	err := v.contents.Close()
+	if err != nil {
+		panic(err)
+	}
 }

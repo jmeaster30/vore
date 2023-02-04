@@ -6,11 +6,10 @@ import (
 )
 
 type VWriter struct {
-	contents io.WriteSeeker
-	offset   int
+	contents WriteSeekCloser
 }
 
-func NewVWriter(filename string) *VWriter {
+func VWriterFromFile(filename string) *VWriter {
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(0666))
 	if err != nil {
 		panic(err)
@@ -18,14 +17,12 @@ func NewVWriter(filename string) *VWriter {
 
 	return &VWriter{
 		contents: file,
-		offset:   0,
 	}
 }
 
-func DummyVWriter() *VWriter {
+func VWriterFromMemory() *VWriter {
 	return &VWriter{
 		contents: NewMemoryStream(),
-		offset:   0,
 	}
 }
 
@@ -37,5 +34,12 @@ func (vw *VWriter) WriteAt(offset int, data string) {
 	_, werr := vw.contents.Write([]byte(data))
 	if werr != nil {
 		panic(werr)
+	}
+}
+
+func (vw *VWriter) Close() {
+	err := vw.contents.Close()
+	if err != nil {
+		panic(err)
 	}
 }

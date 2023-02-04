@@ -48,3 +48,7 @@ func (ms *MemoryStream) Seek(offset int64, whence int) (int64, error) {
 	ms.pos = newPos
 	return int64(newPos), nil
 }
+
+func (ms *MemoryStream) Close() error {
+	return nil // Don't need to do anything here :)
+}

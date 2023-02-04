@@ -358,10 +358,10 @@ x, y, z`)
 		{0, "a, b, c\n", "", []TestVar{
 			{"row", "[ValueHashMap]"}, // TODO check the nested structure
 		}},
-		{0, "1, 2, 3\n", "", []TestVar{
+		{8, "1, 2, 3\n", "", []TestVar{
 			{"row", "[ValueHashMap]"}, // TODO check the nested structure
 		}},
-		{0, "x, y, z", "", []TestVar{
+		{16, "x, y, z", "", []TestVar{
 			{"row", "[ValueHashMap]"}, // TODO check the nested structure
 		}},
 	})

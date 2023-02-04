@@ -1,6 +1,11 @@
 package libvore
 
-import "testing"
+import (
+	"fmt"
+	"math/rand"
+	"os"
+	"testing"
+)
 
 type TestMatch struct {
 	offset      int
@@ -39,13 +44,13 @@ func matches(t *testing.T, results Matches, expected []TestMatch) {
 	for i, e := range expected {
 		actual := results[i]
 		if actual.value != e.value {
-			t.Logf("Expected value %s, got %s\n", e.value, actual.value)
+			t.Errorf("Expected value %s, got %s\n", e.value, actual.value)
 		}
 		if actual.offset.Start != e.offset {
-			t.Logf("Expected offset %d, got %d", e.offset, actual.offset.Start)
+			t.Errorf("Expected offset %d, got %d", e.offset, actual.offset.Start)
 		}
 		if actual.replacement != e.replacement {
-			t.Logf("Expected replacement %s, got %s\n", e.replacement, actual.replacement)
+			t.Errorf("Expected replacement %s, got %s\n", e.replacement, actual.replacement)
 		}
 		if actual.variables.Len() != len(e.variables) {
 			t.Errorf("Expected %d variables, got %d variables\n", len(e.variables), actual.variables.Len())
@@ -67,13 +72,49 @@ func checkNoError(t *testing.T, err error) {
 	}
 }
 
-func mustPanic(t *testing.T, process func(*testing.T)) {
+func mustPanic(t *testing.T, message string, process func(*testing.T)) {
 	t.Helper()
 	defer func() {
 		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
+			t.Errorf(message)
 		}
 	}()
 
 	process(t)
+}
+
+func pseudo_uuid(t *testing.T) (string, error) {
+	t.Helper()
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:]), nil
+}
+
+func getTestingFilename(t *testing.T, touchFile bool) string {
+	filename, err := pseudo_uuid(t)
+	checkNoError(t, err)
+
+	fullFilename := filename + ".txt"
+
+	if touchFile {
+		if _, err := os.Stat(fullFilename); err == nil {
+			t.Errorf("Randomized testing file '%s' already exists. I don't want to overwrite it :(", fullFilename)
+		}
+
+		file, err := os.OpenFile(fullFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(0666))
+		checkNoError(t, err)
+
+		err = file.Close()
+		checkNoError(t, err)
+	}
+
+	return fullFilename
+}
+
+func removeTestingFile(t *testing.T, filename string) {
+	err := os.Remove(filename)
+	checkNoError(t, err)
 }

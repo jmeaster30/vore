@@ -100,15 +100,15 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 	var writer *VWriter
 	replaceReader := reader
 	if mode == NEW {
-		writer = NewVWriter(filename + ".vored")
+		writer = VWriterFromFile(filename + ".vored")
 	} else if mode == OVERWRITE {
 		// If we are overwriting the file we have to load the original
 		// into memory since we will be writing over areas of text that
 		// we need to read from
 		replaceReader = VReaderFromFileToMemory(filename)
-		writer = NewVWriter(filename)
+		writer = VWriterFromFile(filename)
 	} else if mode == NOTHING {
-		writer = DummyVWriter()
+		writer = VWriterFromMemory()
 	}
 
 	lastReaderOffset := 0
@@ -130,6 +130,9 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 		outputValue := replaceReader.ReadAt(reader.size-lastReaderOffset, lastReaderOffset)
 		writer.WriteAt(currentWriterOffset, outputValue)
 	}
+
+	writer.Close()
+	replaceReader.Close()
 
 	return replacedMatches
 }
