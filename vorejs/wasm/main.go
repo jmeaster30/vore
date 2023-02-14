@@ -1,20 +1,28 @@
 package main
 
 import (
-	"crypto"
-	"encoding/hex"
 	"syscall/js"
+
+	"github.com/jmeaster30/vore/libvore"
 )
 
 func main() {
 	done := make(chan struct{}, 0)
-	js.Global().Set("wasmHash", js.FuncOf(hash))
+	root := js.Global().Get("__libvore__")
+	root.Set("voreSearch", js.FuncOf(voreSearch))
 	<-done
 }
 
-func hash(this js.Value, args []js.Value) interface{} {
-	h := crypto.SHA512.New()
-	h.Write([]byte(args[0].String()))
+// TODO I would like to add the "compile" and "run" functions so you don't have to compile the source each search
 
-	return hex.EncodeToString(h.Sum(nil))
+func voreSearch(this js.Value, args []js.Value) any {
+	returnObject := make(map[string]interface{})
+	vore, err := libvore.Compile(args[0].String())
+	if err != nil {
+		returnObject["error"] = err.Error()
+		return js.ValueOf(returnObject)
+	}
+	matches := vore.Run(args[1].String())
+	returnObject["matches"] = matches
+	return returnObject
 }
