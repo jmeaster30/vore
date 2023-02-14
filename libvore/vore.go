@@ -36,7 +36,6 @@ const (
 	ValueHashMapType
 )
 
-// TODO implement good interface for reading the values from these Value objects
 type Value interface {
 	String() ValueString
 	Hashmap() ValueHashMap

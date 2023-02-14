@@ -6,7 +6,7 @@
   "types": "lib/index.d.ts",
   "files": ["lib/**/*"],
   "scripts": {
-    "build": "tsc",
+    "build": "./build.sh",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
     "prepare": "npm run build",
