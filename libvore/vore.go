@@ -415,11 +415,11 @@ func (v *Vore) Run(searchText string) Matches {
 	return result
 }
 
-func (v *Vore) PrintTokens() {
-	for _, token := range v.tokens {
-		fmt.Printf("[%s] '%s' \tline: %d, \tstart column: %d, \tend column: %d\n", token.tokenType.pp(), token.lexeme, token.line.Start, token.column.Start, token.column.End)
-	}
-}
+// func (v *Vore) PrintTokens() {
+// 	for _, token := range v.tokens {
+// 		fmt.Printf("[%s] '%s' \tline: %d, \tstart column: %d, \tend column: %d\n", token.tokenType.pp(), token.lexeme, token.line.Start, token.column.Start, token.column.End)
+// 	}
+// }
 
 func (v *Vore) PrintAST() {
 	for _, command := range v.commands {
