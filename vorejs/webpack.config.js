@@ -24,8 +24,31 @@ const config = {
       cleanOnceBeforeBuildPatterns: [path.resolve(__dirname, './dist')],
     }),
   ],
+  experiments: {
+    asyncWebAssembly: true,
+    syncWebAssembly: true,
+  },
   module: {
     rules: [
+      {
+        test: /\.go$/,
+        use: [
+          { 
+            loader: path.resolve('go-loader.js'),
+            options: {
+              name: '[name].[ext]'
+            }
+          }
+        ],
+      },
+      {
+        test: /\.wasm$/,
+        type: 'javascript/auto',
+        loader: 'file-loader',
+        options: {
+          name: '[name].[ext]',
+        },
+      },
       {
         test: /\.ts(x?)$/,
         exclude: [/node_modules/, /test/],
@@ -35,16 +58,13 @@ const config = {
           },
         ],
       },
-      {
-        test: /\.go$/,
-        use: [
-          { loader: path.resolve('go-loader.js') }
-        ]
-      }
     ],
   },
   resolve: {
-    extensions: ['.go', '.tsx', '.ts', '.js'],
+    alias: {
+      libvorejs$: '/dist/main.wasm'
+    },
+    extensions: ['.go', '.wasm', '.tsx', '.ts', '.js'],
   },
   resolveLoader: {
     modules: ['node_modules', path.resolve(__dirname)],

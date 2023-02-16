@@ -65,6 +65,7 @@ module.exports = function loader(contents) {
   const cb = this.async();
 
   console.log(cb)
+  console.log(contents)
 
   const opts = {
     env: {
@@ -79,6 +80,7 @@ module.exports = function loader(contents) {
   console.log(opts);
 
   //const goBin = `${opts.env.GOROOT}/bin/go`;
+  console.log(this.resourcePath)
   const outFile = `${this.resourcePath}.wasm`;
   const args = ["build", "-o", outFile, this.resourcePath];
 
@@ -95,6 +97,13 @@ module.exports = function loader(contents) {
     this.emitFile(emittedFilename, out, null);
 
     console.log(`emittedFilename: '${emittedFilename}'`)
+
+    console.log([
+      "require('!",
+      join("lib", "wasm_exec.js"),
+      "');",
+      proxyBuilder(emittedFilename)
+    ].join(""))
 
     cb(
       null,

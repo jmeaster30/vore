@@ -1,4 +1,4 @@
-import wasm from '../wasm/main.go'
+import wasm from './main.go'
 
 export class LibVoreJS {
   search(source: string, text: string) {
