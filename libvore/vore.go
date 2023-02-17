@@ -313,19 +313,19 @@ type Vore struct {
 	bytecode []Command
 }
 
-func Compile(command string) (*Vore, error) {
+func Compile(command string) (*Vore, *VoreError) {
 	return compile("source", strings.NewReader(command))
 }
 
-func CompileFile(source string) (*Vore, error) {
+func CompileFile(source string) (*Vore, *VoreError) {
 	dat, err := os.Open(source)
 	if err != nil {
-		return nil, err
+		return nil, NewFileError(err)
 	}
 	return compile(source, dat)
 }
 
-func compile(filename string, reader io.Reader) (*Vore, error) {
+func compile(filename string, reader io.Reader) (*Vore, *VoreError) {
 	lexer := initLexer(reader)
 
 	tokens := lexer.getTokens()
@@ -334,8 +334,8 @@ func compile(filename string, reader io.Reader) (*Vore, error) {
 	//}
 
 	commands, parseError := parse(tokens)
-	if parseError.isError {
-		return nil, fmt.Errorf("ERROR:  %s\nToken:  '%s'\nTokenType: %d\nLine:   %d - %d\nColumn: %d - %d", parseError.message, parseError.token.lexeme, parseError.token.tokenType, parseError.token.line.Start, parseError.token.line.End, parseError.token.column.Start, parseError.token.column.End)
+	if parseError != nil {
+		return nil, parseError
 	}
 
 	bytecode := []Command{}
@@ -347,7 +347,7 @@ func compile(filename string, reader io.Reader) (*Vore, error) {
 	for _, ast_comm := range commands {
 		byte_comm, gen_error := ast_comm.generate(gen_state)
 		if gen_error != nil {
-			return nil, gen_error
+			return nil, NewGenError(gen_error)
 		}
 		bytecode = append(bytecode, byte_comm)
 	}

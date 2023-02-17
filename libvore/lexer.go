@@ -100,7 +100,7 @@ const (
 	CONTINUE
 )
 
-func (t TokenType) pp() string {
+func (t TokenType) PP() string {
 	switch t {
 	case ERROR:
 		return "ERROR"
@@ -252,11 +252,11 @@ func (t TokenType) pp() string {
 }
 
 type Token struct {
-	tokenType TokenType
-	offset    *Range
-	line      *Range
-	column    *Range
-	lexeme    string
+	TokenType TokenType
+	Offset    *Range
+	Line      *Range
+	Column    *Range
+	Lexeme    string
 }
 
 /*
@@ -296,7 +296,7 @@ func (s *Lexer) getTokens() []*Token {
 	for {
 		token := s.getNextToken()
 		tokens = append(tokens, token)
-		if token.tokenType == EOF {
+		if token.TokenType == EOF {
 			break
 		}
 	}
@@ -521,175 +521,175 @@ func (s *Lexer) getNextToken() *Token {
 		}
 	}
 
-	token.tokenType = ERROR
+	token.TokenType = ERROR
 
 	switch current_state {
 	case SERROR:
-		token.tokenType = ERROR
+		token.TokenType = ERROR
 	case SSTRING_SINGLE:
 		fallthrough
 	case SSTRING_DOUBLE:
-		token.tokenType = STRING
+		token.TokenType = STRING
 	case SNUMBER:
-		token.tokenType = NUMBER
+		token.TokenType = NUMBER
 	case SIDENTIFIER:
-		token.tokenType = IDENTIFIER
+		token.TokenType = IDENTIFIER
 		lexeme := strings.ToLower(buf.String())
 		switch lexeme {
 		case "find":
-			token.tokenType = FIND
+			token.TokenType = FIND
 		case "replace":
-			token.tokenType = REPLACE
+			token.TokenType = REPLACE
 		case "with":
-			token.tokenType = WITH
+			token.TokenType = WITH
 		case "set":
-			token.tokenType = SET
+			token.TokenType = SET
 		case "to":
-			token.tokenType = TO
+			token.TokenType = TO
 		case "pattern":
-			token.tokenType = PATTERN
+			token.TokenType = PATTERN
 		case "matches":
-			token.tokenType = MATCHES
+			token.TokenType = MATCHES
 		case "transform":
-			token.tokenType = TRANSFORM
+			token.TokenType = TRANSFORM
 		case "all":
-			token.tokenType = ALL
+			token.TokenType = ALL
 		case "skip":
-			token.tokenType = SKIP
+			token.TokenType = SKIP
 		case "take":
-			token.tokenType = TAKE
+			token.TokenType = TAKE
 		case "top":
-			token.tokenType = TOP
+			token.TokenType = TOP
 		case "last":
-			token.tokenType = LAST
+			token.TokenType = LAST
 		case "any":
-			token.tokenType = ANY
+			token.TokenType = ANY
 		case "whitespace":
-			token.tokenType = WHITESPACE
+			token.TokenType = WHITESPACE
 		case "digit":
-			token.tokenType = DIGIT
+			token.TokenType = DIGIT
 		case "upper":
-			token.tokenType = UPPER
+			token.TokenType = UPPER
 		case "lower":
-			token.tokenType = LOWER
+			token.TokenType = LOWER
 		case "letter":
-			token.tokenType = LETTER
+			token.TokenType = LETTER
 		case "line":
-			token.tokenType = LINE
+			token.TokenType = LINE
 		case "file":
-			token.tokenType = FILE
+			token.TokenType = FILE
 		case "word":
-			token.tokenType = WORD
+			token.TokenType = WORD
 		case "start":
-			token.tokenType = START
+			token.TokenType = START
 		case "end":
-			token.tokenType = END
+			token.TokenType = END
 		case "begin":
-			token.tokenType = BEGIN
+			token.TokenType = BEGIN
 		case "not":
-			token.tokenType = NOT
+			token.TokenType = NOT
 		case "at":
-			token.tokenType = AT
+			token.TokenType = AT
 		case "least":
-			token.tokenType = LEAST
+			token.TokenType = LEAST
 		case "most":
-			token.tokenType = MOST
+			token.TokenType = MOST
 		case "between":
-			token.tokenType = BETWEEN
+			token.TokenType = BETWEEN
 		case "and":
-			token.tokenType = AND
+			token.TokenType = AND
 		case "exactly":
-			token.tokenType = EXACTLY
+			token.TokenType = EXACTLY
 		case "maybe":
-			token.tokenType = MAYBE
+			token.TokenType = MAYBE
 		case "fewest":
-			token.tokenType = FEWEST
+			token.TokenType = FEWEST
 		case "named":
-			token.tokenType = NAMED
+			token.TokenType = NAMED
 		case "in":
-			token.tokenType = IN
+			token.TokenType = IN
 		case "or":
-			token.tokenType = OR
+			token.TokenType = OR
 		case "if":
-			token.tokenType = IF
+			token.TokenType = IF
 		case "then":
-			token.tokenType = THEN
+			token.TokenType = THEN
 		case "else":
-			token.tokenType = ELSE
+			token.TokenType = ELSE
 		case "debug":
-			token.tokenType = DEBUG
+			token.TokenType = DEBUG
 		case "return":
-			token.tokenType = RETURN
+			token.TokenType = RETURN
 		case "head":
-			token.tokenType = HEAD
+			token.TokenType = HEAD
 		case "tail":
-			token.tokenType = TAIL
+			token.TokenType = TAIL
 		case "loop":
-			token.tokenType = LOOP
+			token.TokenType = LOOP
 		case "continue":
-			token.tokenType = CONTINUE
+			token.TokenType = CONTINUE
 		case "break":
-			token.tokenType = BREAK
+			token.TokenType = BREAK
 		}
 	case SWHITESPACE:
-		token.tokenType = WS
+		token.TokenType = WS
 	case SOPENPAREN:
-		token.tokenType = OPENPAREN
+		token.TokenType = OPENPAREN
 	case SCLOSEPAREN:
-		token.tokenType = CLOSEPAREN
+		token.TokenType = CLOSEPAREN
 	case SOPENCURLY:
-		token.tokenType = OPENCURLY
+		token.TokenType = OPENCURLY
 	case SCLOSECURLY:
-		token.tokenType = CLOSECURLY
+		token.TokenType = CLOSECURLY
 	case SCOMMA:
-		token.tokenType = COMMA
+		token.TokenType = COMMA
 	case SEQUAL_1:
-		token.tokenType = EQUAL
+		token.TokenType = EQUAL
 	case SDEQUAL:
-		token.tokenType = DEQUAL
+		token.TokenType = DEQUAL
 	case SNEQUAL:
-		token.tokenType = NEQUAL
+		token.TokenType = NEQUAL
 	case SCOLON:
-		token.tokenType = ERROR
+		token.TokenType = ERROR
 	case SBLOCKCOMMENTSTARTEND:
 		fallthrough
 	case SBLOCKCOMMENTENDEND:
-		token.tokenType = ERROR
+		token.TokenType = ERROR
 	case SBLOCKCOMMENT:
 		fallthrough
 	case SBLOCKCOMMENTFINAL:
 		fallthrough
 	case SCOMMENT:
-		token.tokenType = COMMENT
+		token.TokenType = COMMENT
 	case SDASH:
-		token.tokenType = MINUS
+		token.TokenType = MINUS
 	case SCOLONEQ:
-		token.tokenType = COLONEQ
+		token.TokenType = COLONEQ
 	case SOPERATORSTART:
 		fallthrough
 	case SOPERATOR:
-		token.tokenType = ERROR
+		token.TokenType = ERROR
 		lexeme := buf.String()
 		switch lexeme {
 		case "+":
-			token.tokenType = PLUS
+			token.TokenType = PLUS
 		case "*":
-			token.tokenType = MULT
+			token.TokenType = MULT
 		case "/":
-			token.tokenType = DIV
+			token.TokenType = DIV
 		case "%":
-			token.tokenType = MOD
+			token.TokenType = MOD
 		case "<":
-			token.tokenType = LESS
+			token.TokenType = LESS
 		case ">":
-			token.tokenType = GREATER
+			token.TokenType = GREATER
 		case "<=":
-			token.tokenType = LESSEQ
+			token.TokenType = LESSEQ
 		case ">=":
-			token.tokenType = GREATEREQ
+			token.TokenType = GREATEREQ
 		}
 	case SEND:
-		token.tokenType = EOF
+		token.TokenType = EOF
 	default:
 		fmt.Println(current_state)
 		fmt.Println(startPosInfo.line)
@@ -701,10 +701,10 @@ func (s *Lexer) getNextToken() *Token {
 	}
 
 	endPosInfo := s.get_position()
-	token.offset = NewRange(startPosInfo.offset, endPosInfo.offset)
-	token.column = NewRange(startPosInfo.column, endPosInfo.column)
-	token.line = NewRange(startPosInfo.line, endPosInfo.line)
-	token.lexeme = buf.String()
+	token.Offset = NewRange(startPosInfo.offset, endPosInfo.offset)
+	token.Column = NewRange(startPosInfo.column, endPosInfo.column)
+	token.Line = NewRange(startPosInfo.line, endPosInfo.line)
+	token.Lexeme = buf.String()
 	//fmt.Printf("[%s] '%s' \tline: %d, \tstart column: %d, \tend column: %d\n", token.tokenType.pp(), token.lexeme, token.line.Start, token.column.Start, token.column.End)
 	return token
 }

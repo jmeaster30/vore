@@ -473,7 +473,7 @@ type AstProcessUnaryExpression struct {
 
 func (e AstProcessUnaryExpression) isProcessExpr() {}
 func (e AstProcessUnaryExpression) print() {
-	fmt.Printf("(unary %s ", e.op.pp())
+	fmt.Printf("(unary %s ", e.op.PP())
 	e.expr.print()
 	fmt.Print(")")
 }
@@ -486,7 +486,7 @@ type AstProcessBinaryExpression struct {
 
 func (e AstProcessBinaryExpression) isProcessExpr() {}
 func (e AstProcessBinaryExpression) print() {
-	fmt.Printf("(binary %s ", e.op.pp())
+	fmt.Printf("(binary %s ", e.op.PP())
 	e.lhs.print()
 	fmt.Print(" ")
 	e.rhs.print()

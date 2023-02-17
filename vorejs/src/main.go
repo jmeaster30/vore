@@ -15,18 +15,38 @@ func main() {
 }
 
 // TODO I would like to add the "compile" and "run" functions so you don't have to compile the source each search
+// TODO I would also like to use promises for asynchronous code and a little better error handling
 
-func voreSearch(this js.Value, args []js.Value) any {
+func buildError(err *libvore.VoreError) map[string]interface{} {
+	return map[string]interface{}{
+		"error": map[string]interface{}{
+			"message":   err.Message,
+			"token":     err.Token.Lexeme,
+			"tokenType": err.Token.TokenType.PP(),
+			"line": map[string]interface{}{
+				"start": err.Token.Line.Start,
+				"end":   err.Token.Line.End,
+			},
+			"column": map[string]interface{}{
+				"start": err.Token.Column.Start,
+				"end":   err.Token.Column.End,
+			},
+			"offset": map[string]interface{}{
+				"start": err.Token.Offset.Start,
+				"end":   err.Token.Offset.End,
+			},
+		},
+	}
+}
+
+func voreSearch(this js.Value, args []js.Value) interface{} {
 	fmt.Println("HERE!!!!")
-	returnObject := make(map[string]interface{})
 	vore, err := libvore.Compile(args[0].String())
 	if err != nil {
 		fmt.Println(err)
-		returnObject["error"] = err.Error()
-		return js.ValueOf(returnObject)
+		return js.ValueOf(buildError(err))
 	}
 	matches := vore.Run(args[1].String())
-	returnObject["matches"] = matches
-	fmt.Printf("THERE WERE %d MATCHES", len(matches))
-	return returnObject
+	fmt.Printf("THERE WERE %d MATCHES\n", len(matches))
+	return js.ValueOf(map[string]interface{}{"numberOfMatches": len(matches)})
 }

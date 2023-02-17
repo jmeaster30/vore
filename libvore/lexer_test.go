@@ -14,13 +14,13 @@ func tokenList(t *testing.T, results []*Token, expected []*Token) {
 
 	for i, e := range expected {
 		actual := results[i]
-		if actual.tokenType != e.tokenType || actual.lexeme != e.lexeme {
+		if actual.TokenType != e.TokenType || actual.Lexeme != e.Lexeme {
 			t.Logf("Expected token type %d, got %d\nExpected lexeme [%s], got [%s]\n",
-				e.tokenType, actual.tokenType,
-				e.lexeme, actual.lexeme)
+				e.TokenType, actual.TokenType,
+				e.Lexeme, actual.Lexeme)
 		}
-		if actual.offset.Start != e.offset.Start || actual.offset.End != e.offset.End {
-			t.Errorf("Expected offset (%d, %d), got offset (%d, %d)\n", e.offset.Start, e.offset.End, actual.offset.Start, actual.offset.End)
+		if actual.Offset.Start != e.Offset.Start || actual.Offset.End != e.Offset.End {
+			t.Errorf("Expected offset (%d, %d), got offset (%d, %d)\n", e.Offset.Start, e.Offset.End, actual.Offset.Start, actual.Offset.End)
 		}
 	}
 }
@@ -39,8 +39,8 @@ func TestLexerBasic(t *testing.T) {
 }
 
 func ppMatch(t *testing.T, a TokenType, b string) {
-	if a.pp() != b {
-		t.Errorf("%s != %s", a.pp(), b)
+	if a.PP() != b {
+		t.Errorf("%s != %s", a.PP(), b)
 	}
 }
 
