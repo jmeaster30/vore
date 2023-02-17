@@ -3,3 +3,8 @@ cpp
 coverage.*
 vore
 *.vsix
+
+vorejs/node_modules
+vorejs/dist
+*.wasm
+.gocache
