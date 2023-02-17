@@ -42,9 +42,6 @@ function loadwasm(bytes) {
     {},
     {
       get: (a, key) => {
-        console.log(a)
-        console.log(key)
-        console.log(bridge)
         return (...args) => {
           return new Promise(async (resolve, reject) => {
             let run = () => {
@@ -104,8 +101,6 @@ module.exports = function loader(contents) {
 
     let out = readFileSync(outFile).toString('base64');
     unlinkSync(outFile);
-
-    console.log(out);
 
     cb(
       null,

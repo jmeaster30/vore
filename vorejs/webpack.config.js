@@ -24,10 +24,6 @@ const config = {
       cleanOnceBeforeBuildPatterns: [path.resolve(__dirname, './dist')],
     }),
   ],
-  experiments: {
-    asyncWebAssembly: true,
-    syncWebAssembly: true,
-  },
   module: {
     rules: [
       {
@@ -41,17 +37,13 @@ const config = {
           }
         ],
       },
-      {
-        test: /\.wasm$/,
-        type: 'asset/inline',
-      },
     ],
   },
   resolve: {
     alias: {
       libvorejs$: './main.go'
     },
-    extensions: ['.go', '.wasm', '.tsx', '.ts', '.js'],
+    extensions: ['.go', '.js'],
   },
   resolveLoader: {
     modules: ['node_modules', path.resolve(__dirname)],
@@ -64,6 +56,5 @@ module.exports = (env, argv) => {
   } else {
     throw new Error('Specify env');
   }
-
   return config;
 };
