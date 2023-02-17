@@ -4,7 +4,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const config = {
   target: 'web',
   entry: {
-    index: './src/libvore.ts',
+    index: './src/libvore.js',
   },
   output: {
     path: path.resolve(__dirname, './dist'),
@@ -43,26 +43,13 @@ const config = {
       },
       {
         test: /\.wasm$/,
-        type: 'javascript/auto',
-        loader: 'file-loader',
-        options: {
-          name: '[name].[ext]',
-        },
-      },
-      {
-        test: /\.ts(x?)$/,
-        exclude: [/node_modules/, /test/],
-        use: [
-          {
-            loader: 'ts-loader',
-          },
-        ],
+        type: 'asset/inline',
       },
     ],
   },
   resolve: {
     alias: {
-      libvorejs$: '/dist/main.wasm'
+      libvorejs$: './main.go'
     },
     extensions: ['.go', '.wasm', '.tsx', '.ts', '.js'],
   },
