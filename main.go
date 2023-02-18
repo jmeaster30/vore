@@ -81,7 +81,7 @@ func main() {
 	}
 
 	var vore *libvore.Vore
-	var comp_error error
+	var comp_error *libvore.VoreError
 	if len(source) != 0 {
 		vore, comp_error = libvore.CompileFile(source)
 	} else {
@@ -89,7 +89,7 @@ func main() {
 	}
 
 	if comp_error != nil {
-		panic(comp_error)
+		fmt.Printf("%s\n", comp_error.Error())
 	}
 
 	//vore.PrintTokens()

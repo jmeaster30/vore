@@ -313,11 +313,11 @@ type Vore struct {
 	bytecode []Command
 }
 
-func Compile(command string) (*Vore, *VoreError) {
+func Compile(command string) (*Vore, error) {
 	return compile("source", strings.NewReader(command))
 }
 
-func CompileFile(source string) (*Vore, *VoreError) {
+func CompileFile(source string) (*Vore, error) {
 	dat, err := os.Open(source)
 	if err != nil {
 		return nil, NewFileError(err)
@@ -325,7 +325,7 @@ func CompileFile(source string) (*Vore, *VoreError) {
 	return compile(source, dat)
 }
 
-func compile(filename string, reader io.Reader) (*Vore, *VoreError) {
+func compile(filename string, reader io.Reader) (*Vore, error) {
 	lexer := initLexer(reader)
 
 	tokens, lexError := lexer.getTokens()

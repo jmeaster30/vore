@@ -45,7 +45,14 @@ func buildError(err *libvore.VoreError) map[string]interface{} {
 func voreSearch(this js.Value, args []js.Value) interface{} {
 	vore, err := libvore.Compile(args[0].String())
 	if err != nil {
-		return js.ValueOf(buildError(err))
+		if detailedErr, ok := err.(*libvore.VoreError); ok {
+			return js.ValueOf(buildError(detailedErr))
+		} else {
+			return js.ValueOf(map[string]interface{}{
+				"error": err.Error(),
+			})
+		}
+
 	}
 	matches := vore.Run(args[1].String())
 	return js.ValueOf(map[string]interface{}{"numberOfMatches": len(matches)})

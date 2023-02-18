@@ -4,7 +4,7 @@ import (
 	"strconv"
 )
 
-func parse(tokens []*Token) ([]AstCommand, *VoreError) {
+func parse(tokens []*Token) ([]AstCommand, error) {
 	commands := []AstCommand{}
 
 	token_index := 0
@@ -23,7 +23,7 @@ func parse(tokens []*Token) ([]AstCommand, *VoreError) {
 	return commands, nil
 }
 
-func parse_command(tokens []*Token, token_index int) (AstCommand, int, *VoreError) {
+func parse_command(tokens []*Token, token_index int) (AstCommand, int, error) {
 	if tokens[token_index].TokenType == FIND {
 		return parse_find(tokens, token_index)
 	} else if tokens[token_index].TokenType == REPLACE {
@@ -37,7 +37,7 @@ func parse_command(tokens []*Token, token_index int) (AstCommand, int, *VoreErro
 	}
 }
 
-func parse_find(tokens []*Token, token_index int) (*AstFind, int, *VoreError) {
+func parse_find(tokens []*Token, token_index int) (*AstFind, int, error) {
 	all, skipValue, takeValue, lastValue, new_index, amountError := parse_amount(tokens, token_index+1)
 	if amountError != nil {
 		return nil, new_index, amountError
@@ -68,7 +68,7 @@ func parse_find(tokens []*Token, token_index int) (*AstFind, int, *VoreError) {
 	return &findCommand, current_index, nil
 }
 
-func parse_replace(tokens []*Token, token_index int) (*AstReplace, int, *VoreError) {
+func parse_replace(tokens []*Token, token_index int) (*AstReplace, int, error) {
 	all, skipValue, takeValue, lastValue, new_index, amountError := parse_amount(tokens, token_index+1)
 	if amountError != nil {
 		return nil, new_index, amountError
@@ -116,7 +116,7 @@ func parse_replace(tokens []*Token, token_index int) (*AstReplace, int, *VoreErr
 	return &replaceCommand, current_index, nil
 }
 
-func parse_set(tokens []*Token, token_index int) (*AstSet, int, *VoreError) {
+func parse_set(tokens []*Token, token_index int) (*AstSet, int, error) {
 	var current_index = consumeIgnoreableTokens(tokens, token_index+1)
 	var current_token = tokens[current_index]
 
@@ -168,7 +168,7 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, *VoreError) {
 	return &setCommand, current_index, nil
 }
 
-func parse_set_transform(tokens []*Token, token_index int) (AstSetBody, int, *VoreError) {
+func parse_set_transform(tokens []*Token, token_index int) (AstSetBody, int, error) {
 	current_index := consumeIgnoreableTokens(tokens, token_index+1)
 	statements, next_index, err := parse_process_statements(tokens, current_index)
 	if err != nil {
@@ -182,7 +182,7 @@ func parse_set_transform(tokens []*Token, token_index int) (AstSetBody, int, *Vo
 	return &AstSetTransform{statements}, next_index + 1, err
 }
 
-func parse_set_pattern(tokens []*Token, token_index int) (AstSetBody, int, *VoreError) {
+func parse_set_pattern(tokens []*Token, token_index int) (AstSetBody, int, error) {
 	current_index := consumeIgnoreableTokens(tokens, token_index+1)
 	expr, next_index, err := parse_expression(tokens, current_index)
 	if err != nil {
@@ -206,7 +206,7 @@ func parse_set_pattern(tokens []*Token, token_index int) (AstSetBody, int, *Vore
 	return &AstSetPattern{expr, statements}, next_index + 1, err
 }
 
-func parse_set_matches(tokens []*Token, token_index int) (AstSetBody, int, *VoreError) {
+func parse_set_matches(tokens []*Token, token_index int) (AstSetBody, int, error) {
 	current_index := consumeIgnoreableTokens(tokens, token_index+1)
 	command, next_index, err := parse_command(tokens, current_index)
 	if err != nil {
@@ -215,7 +215,7 @@ func parse_set_matches(tokens []*Token, token_index int) (AstSetBody, int, *Vore
 	return &AstSetMatches{command}, next_index, err
 }
 
-func parse_amount(tokens []*Token, token_index int) (bool, int, int, int, int, *VoreError) {
+func parse_amount(tokens []*Token, token_index int) (bool, int, int, int, int, error) {
 	new_index := consumeIgnoreableTokens(tokens, token_index)
 
 	if tokens[new_index].TokenType == ALL {
@@ -275,7 +275,7 @@ func parse_amount(tokens []*Token, token_index int) (bool, int, int, int, int, *
 	return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'all', 'skip', or 'take'")
 }
 
-func parse_expression(tokens []*Token, token_index int) (AstExpression, int, *VoreError) {
+func parse_expression(tokens []*Token, token_index int) (AstExpression, int, error) {
 	current_token := tokens[token_index]
 	if current_token.TokenType == AT {
 		return parse_at(tokens, token_index)
@@ -302,7 +302,7 @@ func parse_expression(tokens []*Token, token_index int) (AstExpression, int, *Vo
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected 'at', 'between', 'exactly', 'maybe', 'in', '<string>', '<identifier>', or a character class ")
 }
 
-func parse_at(tokens []*Token, token_index int) (*AstLoop, int, *VoreError) {
+func parse_at(tokens []*Token, token_index int) (*AstLoop, int, error) {
 	current_index := consumeIgnoreableTokens(tokens, token_index+1)
 	current_token := tokens[current_index]
 
@@ -370,7 +370,7 @@ func parse_at(tokens []*Token, token_index int) (*AstLoop, int, *VoreError) {
 	return &atLoop, current_index, nil
 }
 
-func parse_between(tokens []*Token, token_index int) (*AstLoop, int, *VoreError) {
+func parse_between(tokens []*Token, token_index int) (*AstLoop, int, error) {
 	current_index := consumeIgnoreableTokens(tokens, token_index+1)
 	current_token := tokens[current_index]
 
@@ -436,7 +436,7 @@ func parse_between(tokens []*Token, token_index int) (*AstLoop, int, *VoreError)
 	return &between, current_index, nil
 }
 
-func parse_exactly(tokens []*Token, token_index int) (*AstLoop, int, *VoreError) {
+func parse_exactly(tokens []*Token, token_index int) (*AstLoop, int, error) {
 	current_index := consumeIgnoreableTokens(tokens, token_index+1)
 	current_token := tokens[current_index]
 
@@ -479,7 +479,7 @@ func parse_exactly(tokens []*Token, token_index int) (*AstLoop, int, *VoreError)
 	return &exactly, next_index, nil
 }
 
-func parse_maybe(tokens []*Token, token_index int) (*AstLoop, int, *VoreError) {
+func parse_maybe(tokens []*Token, token_index int) (*AstLoop, int, error) {
 	new_index := consumeIgnoreableTokens(tokens, token_index+1)
 	expr, next_index, err := parse_expression(tokens, new_index)
 	if err != nil {
@@ -498,7 +498,7 @@ func parse_maybe(tokens []*Token, token_index int) (*AstLoop, int, *VoreError) {
 	return &maybe, current_index, nil
 }
 
-func parse_not_expression(tokens []*Token, token_index int) (AstExpression, int, *VoreError) {
+func parse_not_expression(tokens []*Token, token_index int) (AstExpression, int, error) {
 	new_index := consumeIgnoreableTokens(tokens, token_index+1)
 	current_token := tokens[new_index]
 
@@ -525,7 +525,7 @@ func parse_not_expression(tokens []*Token, token_index int) (AstExpression, int,
 	}
 }
 
-func parse_not_literal(tokens []*Token, token_index int) (AstLiteral, int, *VoreError) {
+func parse_not_literal(tokens []*Token, token_index int) (AstLiteral, int, error) {
 	new_index := consumeIgnoreableTokens(tokens, token_index+1)
 	current_token := tokens[new_index]
 
@@ -542,7 +542,7 @@ func parse_not_literal(tokens []*Token, token_index int) (AstLiteral, int, *Vore
 	}
 }
 
-func parse_in(tokens []*Token, token_index int, not bool) (*AstList, int, *VoreError) {
+func parse_in(tokens []*Token, token_index int, not bool) (*AstList, int, error) {
 	new_index := consumeIgnoreableTokens(tokens, token_index+1)
 	contents := []AstListable{}
 
@@ -571,7 +571,7 @@ func isListableClass(t TokenType) bool {
 	return t == ANY || t == WHITESPACE || t == DIGIT || t == UPPER || t == LOWER || t == LETTER
 }
 
-func parse_listable(tokens []*Token, token_index int) (AstListable, int, *VoreError) {
+func parse_listable(tokens []*Token, token_index int) (AstListable, int, error) {
 	current_token := tokens[token_index]
 	if current_token.TokenType == STRING {
 		from, next_index, err := parse_string(tokens, token_index, false)
@@ -603,7 +603,7 @@ func parse_listable(tokens []*Token, token_index int) (AstListable, int, *VoreEr
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected listable literal")
 }
 
-func parse_literal(tokens []*Token, token_index int) (AstLiteral, int, *VoreError) {
+func parse_literal(tokens []*Token, token_index int) (AstLiteral, int, error) {
 	current_token := tokens[token_index]
 	if current_token.TokenType == STRING {
 		return parse_string(tokens, token_index, false)
@@ -623,7 +623,7 @@ func parse_literal(tokens []*Token, token_index int) (AstLiteral, int, *VoreErro
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected '(', '<string>', '<identifier>', or a character class.")
 }
 
-func parse_primary_or_dec(tokens []*Token, token_index int) (AstExpression, int, *VoreError) {
+func parse_primary_or_dec(tokens []*Token, token_index int) (AstExpression, int, error) {
 	literal, new_index, err := parse_literal(tokens, token_index)
 	if err != nil {
 		return nil, new_index, err
@@ -666,7 +666,7 @@ func parse_primary_or_dec(tokens []*Token, token_index int) (AstExpression, int,
 	return &prim, new_index, nil
 }
 
-func parse_primary_or_or(tokens []*Token, token_index int) (AstExpression, int, *VoreError) {
+func parse_primary_or_or(tokens []*Token, token_index int) (AstExpression, int, error) {
 	literal, new_index, err := parse_literal(tokens, token_index)
 	if err != nil {
 		return nil, new_index, err
@@ -694,7 +694,7 @@ func parse_primary_or_or(tokens []*Token, token_index int) (AstExpression, int, 
 	return &prim, new_index, nil
 }
 
-func parse_atom(tokens []*Token, token_index int) (AstAtom, int, *VoreError) {
+func parse_atom(tokens []*Token, token_index int) (AstAtom, int, error) {
 	current_token := tokens[token_index]
 	if current_token.TokenType == STRING {
 		return parse_string(tokens, token_index, false)
@@ -704,7 +704,7 @@ func parse_atom(tokens []*Token, token_index int) (AstAtom, int, *VoreError) {
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected '<string>' or '<identifier>'.")
 }
 
-func parse_string(tokens []*Token, token_index int, not bool) (*AstString, int, *VoreError) {
+func parse_string(tokens []*Token, token_index int, not bool) (*AstString, int, error) {
 	current_token := tokens[token_index]
 	str_literal := AstString{
 		not: not,
@@ -718,7 +718,7 @@ func parse_string(tokens []*Token, token_index int, not bool) (*AstString, int, 
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected a string")
 }
 
-func parse_variable(tokens []*Token, token_index int) (*AstVariable, int, *VoreError) {
+func parse_variable(tokens []*Token, token_index int) (*AstVariable, int, error) {
 	current_token := tokens[token_index]
 	var_literal := AstVariable{}
 
@@ -730,7 +730,7 @@ func parse_variable(tokens []*Token, token_index int) (*AstVariable, int, *VoreE
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected a variable")
 }
 
-func parse_sub_expression(tokens []*Token, token_index int) (*AstSubExpr, int, *VoreError) {
+func parse_sub_expression(tokens []*Token, token_index int) (*AstSubExpr, int, error) {
 	current_token := tokens[token_index+1]
 	current_index := token_index + 1
 	expr_list := []AstExpression{}
@@ -755,7 +755,7 @@ func parse_sub_expression(tokens []*Token, token_index int) (*AstSubExpr, int, *
 	return &sub_expr, current_index + 1, nil
 }
 
-func parse_subroutine(tokens []*Token, token_index int) (*AstSub, int, *VoreError) {
+func parse_subroutine(tokens []*Token, token_index int) (*AstSub, int, error) {
 	current_token := tokens[token_index+1]
 	current_index := token_index + 1
 	expr_list := []AstExpression{}
@@ -796,7 +796,7 @@ func parse_subroutine(tokens []*Token, token_index int) (*AstSub, int, *VoreErro
 	return &dec, current_index + 1, nil
 }
 
-func parse_character_class(tokens []*Token, token_index int, not bool) (*AstCharacterClass, int, *VoreError) {
+func parse_character_class(tokens []*Token, token_index int, not bool) (*AstCharacterClass, int, error) {
 	current_token := tokens[token_index]
 	charClass := AstCharacterClass{
 		not: not,
@@ -853,7 +853,7 @@ func parse_character_class(tokens []*Token, token_index int, not bool) (*AstChar
 	return nil, token_index, NewParseError(*tokens[token_index], "Unexpected token. Expected a character class: 'any', 'whitespace', 'digit', 'upper', 'lower', 'letter', 'line start', 'line end', 'file start', or 'file end'.")
 }
 
-func parse_process_statements(tokens []*Token, index int) ([]AstProcessStatement, int, *VoreError) {
+func parse_process_statements(tokens []*Token, index int) ([]AstProcessStatement, int, error) {
 	statements := []AstProcessStatement{}
 	token_index := index
 	for token_index < len(tokens)-1 {
@@ -873,7 +873,7 @@ func parse_process_statements(tokens []*Token, index int) ([]AstProcessStatement
 	return statements, token_index, nil
 }
 
-func parse_process_statement(tokens []*Token, index int) (AstProcessStatement, int, *VoreError) {
+func parse_process_statement(tokens []*Token, index int) (AstProcessStatement, int, error) {
 	if tokens[index].TokenType == SET {
 		return parse_process_set(tokens, index)
 	} else if tokens[index].TokenType == IF {
@@ -897,7 +897,7 @@ func parse_process_statement(tokens []*Token, index int) (AstProcessStatement, i
 	}
 }
 
-func parse_process_set(tokens []*Token, index int) (AstProcessStatement, int, *VoreError) {
+func parse_process_set(tokens []*Token, index int) (AstProcessStatement, int, error) {
 	var current_index = consumeIgnoreableTokens(tokens, index+1)
 	var current_token = tokens[current_index]
 
@@ -927,7 +927,7 @@ func parse_process_set(tokens []*Token, index int) (AstProcessStatement, int, *V
 	return &setStatement, next_index, nil
 }
 
-func parse_process_if(tokens []*Token, index int) (AstProcessStatement, int, *VoreError) {
+func parse_process_if(tokens []*Token, index int) (AstProcessStatement, int, error) {
 	current_index := consumeIgnoreableTokens(tokens, index+1)
 	expr, next_index, err := parse_process_expression(tokens, current_index)
 	if err != nil {
@@ -961,7 +961,7 @@ func parse_process_if(tokens []*Token, index int) (AstProcessStatement, int, *Vo
 	return &AstProcessIf{expr, trueBody, falseBody}, follow_index + 1, nil
 }
 
-func parse_process_return(tokens []*Token, index int) (AstProcessStatement, int, *VoreError) {
+func parse_process_return(tokens []*Token, index int) (AstProcessStatement, int, error) {
 	current_index := consumeIgnoreableTokens(tokens, index+1)
 	expr, next_index, err := parse_process_expression(tokens, current_index)
 	if err != nil {
@@ -971,7 +971,7 @@ func parse_process_return(tokens []*Token, index int) (AstProcessStatement, int,
 	return &AstProcessReturn{expr}, next_index, err
 }
 
-func parse_process_debug(tokens []*Token, index int) (AstProcessStatement, int, *VoreError) {
+func parse_process_debug(tokens []*Token, index int) (AstProcessStatement, int, error) {
 	current_index := consumeIgnoreableTokens(tokens, index+1)
 	expr, next_index, err := parse_process_expression(tokens, current_index)
 	if err != nil {
@@ -981,7 +981,7 @@ func parse_process_debug(tokens []*Token, index int) (AstProcessStatement, int, 
 	return &AstProcessDebug{expr}, next_index, err
 }
 
-func parse_process_loop(tokens []*Token, index int) (AstProcessStatement, int, *VoreError) {
+func parse_process_loop(tokens []*Token, index int) (AstProcessStatement, int, error) {
 	current_index := consumeIgnoreableTokens(tokens, index+1)
 
 	body, next_index, err := parse_process_statements(tokens, current_index)
@@ -997,7 +997,7 @@ func parse_process_loop(tokens []*Token, index int) (AstProcessStatement, int, *
 	return &AstProcessLoop{body}, next_index + 1, nil
 }
 
-func parse_process_expression(tokens []*Token, index int) (AstProcessExpression, int, *VoreError) {
+func parse_process_expression(tokens []*Token, index int) (AstProcessExpression, int, error) {
 	exprTokens, next_index := getProcessExpressionTokens(tokens, index)
 	expr, fail_index, err := parse_expr_pratt(exprTokens, 0, 0)
 	if err != nil {
@@ -1006,7 +1006,7 @@ func parse_process_expression(tokens []*Token, index int) (AstProcessExpression,
 	return expr, next_index, nil
 }
 
-func parse_expr_pratt(tokens []*Token, index int, minPrecedence int) (AstProcessExpression, int, *VoreError) {
+func parse_expr_pratt(tokens []*Token, index int, minPrecedence int) (AstProcessExpression, int, error) {
 	token_index := index + 1
 	var lhs AstProcessExpression
 	if tokens[index].TokenType == STRING {

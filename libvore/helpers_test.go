@@ -68,6 +68,7 @@ func matches(t *testing.T, results Matches, expected []TestMatch) {
 func checkNoError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
+		fmt.Println(err.Error())
 		t.Error(err)
 	}
 }

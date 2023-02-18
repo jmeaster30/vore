@@ -290,7 +290,7 @@ func initLexer(r io.Reader) *Lexer {
 	return &lexer
 }
 
-func (s *Lexer) getTokens() ([]*Token, *VoreError) {
+func (s *Lexer) getTokens() ([]*Token, error) {
 	tokens := []*Token{}
 	for {
 		token, err := s.getNextToken()
@@ -305,7 +305,7 @@ func (s *Lexer) getTokens() ([]*Token, *VoreError) {
 	return tokens, nil
 }
 
-func (s *Lexer) getNextToken() (*Token, *VoreError) {
+func (s *Lexer) getNextToken() (*Token, error) {
 	type TokenState int
 
 	const (
