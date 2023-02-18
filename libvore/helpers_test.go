@@ -73,6 +73,24 @@ func checkNoError(t *testing.T, err error) {
 	}
 }
 
+func checkVoreError(t *testing.T, err error, expectedType string, expectedMessage string) {
+	if err == nil {
+		t.Errorf("Did not return any error :(")
+		t.FailNow()
+	}
+
+	if detailedErr, ok := err.(*VoreError); ok {
+		if detailedErr.ErrorType != expectedType {
+			t.Errorf("Expected %s but got %s", expectedType, detailedErr.ErrorType)
+		}
+		if detailedErr.Message != expectedMessage {
+			t.Errorf("Expected message '%s' but got '%s'", expectedMessage, detailedErr.Message)
+		}
+	} else {
+		t.Errorf("Expected VoreError returned but got some other error. %s", err.Error())
+	}
+}
+
 func checkVoreErrorToken(t *testing.T,
 	err error,
 	expectedType string,

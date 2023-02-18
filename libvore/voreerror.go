@@ -15,8 +15,6 @@ func (v *VoreError) Error() string {
 	case "FileError":
 		return v.Message
 	case "ParseError":
-		fmt.Printf("%s\n", v.Message)
-		fmt.Printf("%s\n", v.Token.Lexeme)
 		return fmt.Sprintf("ERROR:  %s\nToken:  '%s'\nTokenType: %s\nLine:   %d - %d\nColumn: %d - %d", v.Message, v.Token.Lexeme, v.Token.TokenType.PP(), v.Token.Line.Start, v.Token.Line.End, v.Token.Column.Start, v.Token.Column.End)
 	case "GenError":
 		return v.Message
@@ -50,7 +48,7 @@ func NewParseError(t Token, message string) *VoreError {
 
 func NewGenError(err error) *VoreError {
 	return &VoreError{
-		ErrorType: "ParseError",
+		ErrorType: "GenError",
 		Token:     nil,
 		Message:   err.Error(),
 	}

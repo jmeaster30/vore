@@ -110,7 +110,8 @@ func (s AstSetTransform) generate(state *GenState, id string) (SetCommandBody, e
 	for _, stmt := range s.statements {
 		info = stmt.check(info)
 		if info.currentType == PTERROR {
-			return nil, fmt.Errorf("%s", info.errorMessage)
+			// TODO add more info to the gen error like the statement that failed
+			return nil, NewGenError(fmt.Errorf("%s", info.errorMessage))
 		}
 	}
 
@@ -143,7 +144,8 @@ func (s AstSetPattern) generate(state *GenState, id string) (SetCommandBody, err
 	for _, stmt := range s.body {
 		info = stmt.check(info)
 		if info.currentType == PTERROR {
-			return nil, fmt.Errorf("%s", info.errorMessage)
+			// TODO add more info to the gen error like the statement that failed
+			return nil, NewGenError(fmt.Errorf("%s", info.errorMessage))
 		}
 	}
 
@@ -243,7 +245,7 @@ func (l *AstDec) generate(offset int, state *GenState) ([]SearchInstruction, err
 
 	_, prs := state.variables[l.name]
 	if prs {
-		return []SearchInstruction{}, fmt.Errorf("name clash '%s'", l.name)
+		return []SearchInstruction{}, NewGenError(fmt.Errorf("name clash '%s'", l.name))
 	}
 	state.variables[l.name] = -1
 
@@ -258,7 +260,7 @@ func (l *AstSub) generate(offset int, state *GenState) ([]SearchInstruction, err
 
 	_, prs := state.variables[l.name]
 	if prs {
-		return []SearchInstruction{}, fmt.Errorf("name clash '%s'", l.name)
+		return []SearchInstruction{}, NewGenError(fmt.Errorf("name clash '%s'", l.name))
 	}
 	state.variables[l.name] = offset
 
@@ -397,7 +399,7 @@ func (l *AstVariable) generate(offset int, state *GenState) ([]SearchInstruction
 		// we don't have a variable check the subroutines
 		globalSub, globalPrs := state.globalSubroutines[l.name]
 		if !globalPrs {
-			return []SearchInstruction{}, fmt.Errorf("identifier '%s' is not defined", l.name)
+			return []SearchInstruction{}, NewGenError(fmt.Errorf("identifier '%s' is not defined", l.name))
 		}
 
 		state.variables[l.name] = offset
