@@ -4,7 +4,6 @@ coverage.*
 vore
 *.vsix
 
-vorejs/node_modules
-vorejs/dist
-*.wasm
-.gocache
+libvorejs/node_modules
+libvorejs/dist
+libvorejs/.gocache

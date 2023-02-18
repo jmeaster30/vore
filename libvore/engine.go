@@ -537,13 +537,13 @@ func (es *SearchEngineState) Set(value *SearchEngineState) {
 
 func (es *SearchEngineState) MakeMatch(matchNumber int) Match {
 	return Match{
-		filename:    es.filename,
-		matchNumber: matchNumber,
-		offset:      *NewRange(es.startFileOffset, es.currentFileOffset),
-		line:        *NewRange(es.startLineNum, es.currentLineNum),
-		column:      *NewRange(es.startColumnNum, es.currentColumnNum),
-		value:       es.currentMatch,
-		variables:   es.environment,
+		Filename:    es.filename,
+		MatchNumber: matchNumber,
+		Offset:      *NewRange(es.startFileOffset, es.currentFileOffset),
+		Line:        *NewRange(es.startLineNum, es.currentLineNum),
+		Column:      *NewRange(es.startColumnNum, es.currentColumnNum),
+		Value:       es.currentMatch,
+		Variables:   es.environment,
 	}
 }
 
@@ -554,16 +554,16 @@ type ReplacerState struct {
 }
 
 func InitReplacerState(match Match, totalMatches int) *ReplacerState {
-	variables := match.variables.Copy().Hashmap()
+	variables := match.Variables.Copy().Hashmap()
 
 	variables.Add("totalMatches", NewValueString(strconv.Itoa(totalMatches)))
-	variables.Add("matchNumber", NewValueString(strconv.Itoa(match.matchNumber)))
-	variables.Add("startOffset", NewValueString(strconv.Itoa(match.offset.Start)))
-	variables.Add("endOffset", NewValueString(strconv.Itoa(match.offset.End)))
-	variables.Add("lineNumber", NewValueString(strconv.Itoa(match.line.Start)))
-	variables.Add("columnNumber", NewValueString(strconv.Itoa(match.column.Start)))
-	variables.Add("value", NewValueString(match.value))
-	variables.Add("filename", NewValueString(match.filename))
+	variables.Add("matchNumber", NewValueString(strconv.Itoa(match.MatchNumber)))
+	variables.Add("startOffset", NewValueString(strconv.Itoa(match.Offset.Start)))
+	variables.Add("endOffset", NewValueString(strconv.Itoa(match.Offset.End)))
+	variables.Add("lineNumber", NewValueString(strconv.Itoa(match.Line.Start)))
+	variables.Add("columnNumber", NewValueString(strconv.Itoa(match.Column.Start)))
+	variables.Add("value", NewValueString(match.Value))
+	variables.Add("filename", NewValueString(match.Filename))
 	return &ReplacerState{
 		variables:      variables,
 		match:          match,
@@ -576,13 +576,13 @@ func (rs *ReplacerState) NEXT() {
 }
 
 func (rs *ReplacerState) WRITESTRING(value string) {
-	rs.match.replacement += value
+	rs.match.Replacement += value
 }
 
 func (rs *ReplacerState) WRITEVAR(name string) {
 	value, found := rs.variables.Get(name)
 	if found && value.getType() == ValueStringType {
-		rs.match.replacement += value.String().Value
+		rs.match.Replacement += value.String().Value
 	}
 }
 

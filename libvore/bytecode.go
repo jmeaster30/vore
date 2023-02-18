@@ -118,16 +118,16 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 	currentWriterOffset := 0
 	for i := 0; i < len(replacedMatches); i++ {
 		// read from where we left off to the next replacedMatch
-		currentReaderLength := replacedMatches[i].offset.Start - lastReaderOffset
+		currentReaderLength := replacedMatches[i].Offset.Start - lastReaderOffset
 		orig := replaceReader.ReadAt(currentReaderLength, lastReaderOffset)
 		writer.WriteAt(currentWriterOffset, orig)
 		currentWriterOffset += currentReaderLength
 		lastReaderOffset += currentReaderLength
 
 		// write the replacement. We have to update the lastReaderOffset with the part of the string that was matched
-		writer.WriteAt(currentWriterOffset, replacedMatches[i].replacement)
-		currentWriterOffset += len(replacedMatches[i].replacement)
-		lastReaderOffset += len(replacedMatches[i].value)
+		writer.WriteAt(currentWriterOffset, replacedMatches[i].Replacement)
+		currentWriterOffset += len(replacedMatches[i].Replacement)
+		lastReaderOffset += len(replacedMatches[i].Value)
 	}
 	if lastReaderOffset < replaceReader.size {
 		outputValue := replaceReader.ReadAt(reader.size-lastReaderOffset, lastReaderOffset)
@@ -569,9 +569,9 @@ func (i ReplaceProcess) execute(current_state *ReplacerState) *ReplacerState {
 		// TODO Need to add process hash maps or merge into the main Values
 	}
 
-	env["match"] = ProcessValueString{next_state.match.value}
-	env["matchLength"] = ProcessValueNumber{len(next_state.match.value)}
-	env["matchNumber"] = ProcessValueNumber{next_state.match.matchNumber}
+	env["match"] = ProcessValueString{next_state.match.Value}
+	env["matchLength"] = ProcessValueNumber{len(next_state.match.Value)}
+	env["matchNumber"] = ProcessValueNumber{next_state.match.MatchNumber}
 
 	pstate := ProcessState{
 		currentValue: ProcessValueString{""},

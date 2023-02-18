@@ -19,14 +19,14 @@ const (
 )
 
 type Match struct {
-	filename    string
-	matchNumber int
-	offset      Range
-	line        Range
-	column      Range
-	value       string
-	replacement string
-	variables   ValueHashMap
+	Filename    string
+	MatchNumber int
+	Offset      Range
+	Line        Range
+	Column      Range
+	Value       string
+	Replacement string
+	Variables   ValueHashMap
 }
 
 type ValueType int
@@ -188,22 +188,22 @@ func (m Matches) FormattedJson() string {
 func (m Match) FormattedJson() string {
 	result := "{\n"
 
-	result += "\t\"filename\": \"" + m.filename + "\",\n"
-	result += "\t\"matchNumber\": \"" + strconv.Itoa(m.matchNumber) + "\",\n"
-	result += "\t\"offset\": {\n\t\t\"start\": \"" + strconv.Itoa(m.offset.Start) + "\",\n\t\t\"end\": \"" + strconv.Itoa(m.offset.End) + "\"\n\t},\n"
-	result += "\t\"line\": {\n\t\t\"start\": \"" + strconv.Itoa(m.line.Start) + "\",\n\t\t\"end\": \"" + strconv.Itoa(m.line.End) + "\"\n\t},\n"
-	result += "\t\"column\": {\n\t\t\"start\": \"" + strconv.Itoa(m.column.Start) + "\",\n\t\t\"end\": \"" + strconv.Itoa(m.column.End) + "\"\n\t},\n"
-	result += "\t\"value\": \"" + cleanControlCharacters(m.value) + "\",\n"
-	result += "\t\"replaced\": \"" + cleanControlCharacters(m.replacement) + "\",\n"
+	result += "\t\"filename\": \"" + m.Filename + "\",\n"
+	result += "\t\"matchNumber\": \"" + strconv.Itoa(m.MatchNumber) + "\",\n"
+	result += "\t\"offset\": {\n\t\t\"start\": \"" + strconv.Itoa(m.Offset.Start) + "\",\n\t\t\"end\": \"" + strconv.Itoa(m.Offset.End) + "\"\n\t},\n"
+	result += "\t\"line\": {\n\t\t\"start\": \"" + strconv.Itoa(m.Line.Start) + "\",\n\t\t\"end\": \"" + strconv.Itoa(m.Line.End) + "\"\n\t},\n"
+	result += "\t\"column\": {\n\t\t\"start\": \"" + strconv.Itoa(m.Column.Start) + "\",\n\t\t\"end\": \"" + strconv.Itoa(m.Column.End) + "\"\n\t},\n"
+	result += "\t\"value\": \"" + cleanControlCharacters(m.Value) + "\",\n"
+	result += "\t\"replaced\": \"" + cleanControlCharacters(m.Replacement) + "\",\n"
 	result += "\t\"variables\": [\n"
 
-	keys := m.variables.Keys()
+	keys := m.Variables.Keys()
 	sort.Strings(keys)
 
 	vars := []string{}
 	for _, k := range keys {
 		key := k
-		value, _ := m.variables.Get(k)
+		value, _ := m.Variables.Get(k)
 		// TODO allow for outputing nested values in the hashmap
 		vars = append(vars, "\t\t{\n\t\t\t\""+key+"\": \""+cleanControlCharacters(value.String().Value)+"\"\n\t\t}")
 	}
@@ -233,22 +233,22 @@ func (m Matches) Json() string {
 
 func (m Match) Json() string {
 	result := "{"
-	result += "\"filename\":\"" + m.filename + "\","
-	result += "\"matchNumber\":\"" + strconv.Itoa(m.matchNumber) + "\","
-	result += "\"offset\":{\"start\":\"" + strconv.Itoa(m.offset.Start) + "\",\"end\":\"" + strconv.Itoa(m.offset.End) + "\"},"
-	result += "\"line\":{\"start\":\"" + strconv.Itoa(m.line.Start) + "\",\"end\":\"" + strconv.Itoa(m.line.End) + "\"},"
-	result += "\"column\":{\"start\":\"" + strconv.Itoa(m.column.Start) + "\",\"end\":\"" + strconv.Itoa(m.column.End) + "\"},"
-	result += "\"value\":\"" + cleanControlCharacters(m.value) + "\","
-	result += "\"replaced\":\"" + cleanControlCharacters(m.replacement) + "\","
+	result += "\"filename\":\"" + m.Filename + "\","
+	result += "\"matchNumber\":\"" + strconv.Itoa(m.MatchNumber) + "\","
+	result += "\"offset\":{\"start\":\"" + strconv.Itoa(m.Offset.Start) + "\",\"end\":\"" + strconv.Itoa(m.Offset.End) + "\"},"
+	result += "\"line\":{\"start\":\"" + strconv.Itoa(m.Line.Start) + "\",\"end\":\"" + strconv.Itoa(m.Line.End) + "\"},"
+	result += "\"column\":{\"start\":\"" + strconv.Itoa(m.Column.Start) + "\",\"end\":\"" + strconv.Itoa(m.Column.End) + "\"},"
+	result += "\"value\":\"" + cleanControlCharacters(m.Value) + "\","
+	result += "\"replaced\":\"" + cleanControlCharacters(m.Replacement) + "\","
 	result += "\"variables\":["
 
-	keys := m.variables.Keys()
+	keys := m.Variables.Keys()
 	sort.Strings(keys)
 
 	vars := []string{}
 	for _, k := range keys {
 		key := k
-		value, _ := m.variables.Get(k)
+		value, _ := m.Variables.Get(k)
 		// TODO allow for outputing nested ValueHashMaps
 		vars = append(vars, "{\""+key+"\":\""+cleanControlCharacters(value.String().Value)+"\"}")
 	}
@@ -291,19 +291,19 @@ func printString(str ValueString) {
 }
 
 func (m Match) Print() {
-	fmt.Printf("Filename: %s\n", m.filename)
-	fmt.Printf("MatchNumber: %d\n", m.matchNumber)
-	fmt.Printf("Value: %s\n", m.value)
-	fmt.Printf("Replaced: %s\n", m.replacement)
-	fmt.Printf("Offset: %d %d\n", m.offset.Start, m.offset.End)
-	fmt.Printf("Line: %d %d\n", m.line.Start, m.line.End)
-	fmt.Printf("Column: %d %d\n", m.column.Start, m.column.End)
+	fmt.Printf("Filename: %s\n", m.Filename)
+	fmt.Printf("MatchNumber: %d\n", m.MatchNumber)
+	fmt.Printf("Value: %s\n", m.Value)
+	fmt.Printf("Replaced: %s\n", m.Replacement)
+	fmt.Printf("Offset: %d %d\n", m.Offset.Start, m.Offset.End)
+	fmt.Printf("Line: %d %d\n", m.Line.Start, m.Line.End)
+	fmt.Printf("Column: %d %d\n", m.Column.Start, m.Column.End)
 	fmt.Println("Variables:")
 	fmt.Print("  [key] = [value]")
 
 	matchPrintDepth = 0
 
-	m.variables.process(printHashmap, printString)
+	m.Variables.process(printHashmap, printString)
 	fmt.Println()
 }
 
@@ -396,10 +396,10 @@ func (v *Vore) RunFiles(filenames []string, mode ReplaceMode, processFilenames b
 				}
 				foundMatches := command.execute(actualFilename, reader, actualMode)
 				result = append(result, foundMatches...)
-				if processFilenames && len(foundMatches) != 0 && len(foundMatches[0].replacement) != 0 {
-					err := os.Rename(actualFilename, foundMatches[0].replacement)
+				if processFilenames && len(foundMatches) != 0 && len(foundMatches[0].Replacement) != 0 {
+					err := os.Rename(actualFilename, foundMatches[0].Replacement)
 					if err != nil {
-						os.Stderr.WriteString("Failed to rename file '" + actualFilename + "' to '" + foundMatches[0].replacement + "'\n")
+						os.Stderr.WriteString("Failed to rename file '" + actualFilename + "' to '" + foundMatches[0].Replacement + "'\n")
 					}
 				}
 			}

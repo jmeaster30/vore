@@ -38,12 +38,57 @@ func buildError(err *libvore.VoreError) map[string]interface{} {
 	}
 }
 
-// func buildMatches(matches libvore.Matches) map[string]interface{} {
+func buildMatch(match libvore.Match) map[string]interface{} {
+	return map[string]interface{}{
+		"filename":    match.Filename,
+		"matchNumber": match.MatchNumber,
+		"offset": map[string]interface{}{
+			"start": match.Offset.Start,
+			"end":   match.Offset.End,
+		},
+		"line": map[string]interface{}{
+			"start": match.Line.Start,
+			"end":   match.Line.End,
+		},
+		"column": map[string]interface{}{
+			"start": match.Column.Start,
+			"end":   match.Column.End,
+		},
+		"value":       match.Value,
+		"replacement": match.Replacement,
+	}
+}
 
-// }
+func buildMatches(input string, matches libvore.Matches) map[string]interface{} {
+	convertedMatches := []interface{}{}
+
+	// I think the libvore.Vore.Run function should ultimately return the resulting string but not quite sure if I like that
+	resultString := ""
+	inputIndex := 0
+
+	for _, match := range matches {
+		convertedMatches = append(convertedMatches, buildMatch(match))
+		startSlice := input[inputIndex:match.Offset.Start]
+		resultString += startSlice
+		resultString += match.Replacement
+		inputIndex = match.Offset.End
+	}
+
+	if inputIndex < len(input) {
+		resultString += input[inputIndex:len(input)]
+	}
+
+	return map[string]interface{}{
+		"input":   input,
+		"output":  resultString,
+		"matches": convertedMatches,
+	}
+}
 
 func voreSearch(this js.Value, args []js.Value) interface{} {
-	vore, err := libvore.Compile(args[0].String())
+	source := args[0].String()
+	input := args[1].String()
+	vore, err := libvore.Compile(source)
 	if err != nil {
 		if detailedErr, ok := err.(*libvore.VoreError); ok {
 			return js.ValueOf(buildError(detailedErr))
@@ -54,6 +99,6 @@ func voreSearch(this js.Value, args []js.Value) interface{} {
 		}
 
 	}
-	matches := vore.Run(args[1].String())
-	return js.ValueOf(map[string]interface{}{"numberOfMatches": len(matches)})
+	matches := vore.Run(input)
+	return js.ValueOf(buildMatches(input, matches))
 }

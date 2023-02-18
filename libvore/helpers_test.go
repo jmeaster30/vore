@@ -29,7 +29,7 @@ func singleMatch(t *testing.T, results Matches, startOffset int, value string) {
 	}
 
 	match := results[0]
-	if match.value != value || match.offset.Start != startOffset {
+	if match.Value != value || match.Offset.Start != startOffset {
 		t.FailNow()
 	}
 }
@@ -43,20 +43,20 @@ func matches(t *testing.T, results Matches, expected []TestMatch) {
 
 	for i, e := range expected {
 		actual := results[i]
-		if actual.value != e.value {
-			t.Errorf("Expected value %s, got %s\n", e.value, actual.value)
+		if actual.Value != e.value {
+			t.Errorf("Expected value %s, got %s\n", e.value, actual.Value)
 		}
-		if actual.offset.Start != e.offset {
-			t.Errorf("Expected offset %d, got %d", e.offset, actual.offset.Start)
+		if actual.Offset.Start != e.offset {
+			t.Errorf("Expected offset %d, got %d", e.offset, actual.Offset.Start)
 		}
-		if actual.replacement != e.replacement {
-			t.Errorf("Expected replacement %s, got %s\n", e.replacement, actual.replacement)
+		if actual.Replacement != e.replacement {
+			t.Errorf("Expected replacement %s, got %s\n", e.replacement, actual.Replacement)
 		}
-		if actual.variables.Len() != len(e.variables) {
-			t.Errorf("Expected %d variables, got %d variables\n", len(e.variables), actual.variables.Len())
+		if actual.Variables.Len() != len(e.variables) {
+			t.Errorf("Expected %d variables, got %d variables\n", len(e.variables), actual.Variables.Len())
 		} else {
 			for _, exVar := range e.variables {
-				v, prs := actual.variables.Get(exVar.key)
+				v, prs := actual.Variables.Get(exVar.key)
 				if prs && v.String().Value != exVar.value {
 					t.Errorf("Expected %s, got %s\n", exVar.value, v.String().Value)
 				}
