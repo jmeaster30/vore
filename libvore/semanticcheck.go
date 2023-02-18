@@ -95,12 +95,14 @@ func (s AstProcessDebug) check(info ProcessTypeInfo) ProcessTypeInfo {
 }
 
 func (s AstProcessLoop) check(info ProcessTypeInfo) ProcessTypeInfo {
+	info.inLoop = true
 	for _, stmt := range s.body {
 		info = stmt.check(info)
 		if info.currentType == PTERROR {
 			return info
 		}
 	}
+	info.inLoop = false
 	return info
 }
 
@@ -115,7 +117,7 @@ func (s AstProcessContinue) check(info ProcessTypeInfo) ProcessTypeInfo {
 func (s AstProcessBreak) check(info ProcessTypeInfo) ProcessTypeInfo {
 	if !info.inLoop {
 		info.currentType = PTERROR
-		info.errorMessage = "Cannot use 'continue' outside of a loop."
+		info.errorMessage = "Cannot use 'break' outside of a loop."
 	}
 	return info
 }

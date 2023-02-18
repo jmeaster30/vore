@@ -1,5 +1,7 @@
 package libvore
 
+import "fmt"
+
 type Command interface {
 	execute(string, *VReader, ReplaceMode) Matches
 }
@@ -29,7 +31,6 @@ func findMatches(insts []SearchInstruction, all bool, skip int, take int, last i
 		for currentState.status == INPROCESS {
 			inst := insts[currentState.programCounter]
 			currentState = inst.execute(currentState)
-
 			if currentState.status == INPROCESS && currentState.programCounter >= len(insts) {
 				currentState.SUCCESS()
 			}
@@ -110,6 +111,8 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 	} else if mode == NOTHING {
 		writer = VWriterFromMemory()
 	}
+
+	fmt.Println("replacing")
 
 	lastReaderOffset := 0
 	currentWriterOffset := 0

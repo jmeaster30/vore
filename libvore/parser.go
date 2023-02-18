@@ -158,7 +158,7 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, error) {
 		body = expr
 		current_index = next_index
 	} else {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'pattern' or 'matches'")
+		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'pattern', 'transform', or 'matches'")
 	}
 
 	setCommand := AstSet{

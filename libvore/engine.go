@@ -1,6 +1,7 @@
 package libvore
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -181,10 +182,12 @@ func IsLetter(value string) bool {
 }
 
 func (es *SearchEngineState) MATCHWORDSTART(not bool) {
-	if es.currentFileOffset == 0 {
+	if es.currentFileOffset == 0 || es.currentFileOffset == es.reader.size {
 		if not {
+			fmt.Println("BACKTRACK WHEN NOT WROD START AT START OR END")
 			es.BACKTRACK()
 		} else {
+			fmt.Println("GO NEXT WHEN AT START OR END")
 			es.NEXT()
 		}
 		return
@@ -208,7 +211,7 @@ func (es *SearchEngineState) MATCHWORDSTART(not bool) {
 }
 
 func (es *SearchEngineState) MATCHWORDEND(not bool) {
-	if es.currentFileOffset == es.reader.size {
+	if es.currentFileOffset == 0 || es.currentFileOffset == es.reader.size {
 		if not {
 			es.BACKTRACK()
 		} else {
