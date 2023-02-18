@@ -328,7 +328,10 @@ func CompileFile(source string) (*Vore, *VoreError) {
 func compile(filename string, reader io.Reader) (*Vore, *VoreError) {
 	lexer := initLexer(reader)
 
-	tokens := lexer.getTokens()
+	tokens, lexError := lexer.getTokens()
+	if lexError != nil {
+		return nil, lexError
+	}
 	//for _, token := range tokens {
 	//	fmt.Printf("[%s] '%s' \tline: %d, \tstart column: %d, \tend column: %d\n", token.tokenType.pp(), token.lexeme, token.line.Start, token.column.Start, token.column.End)
 	//}

@@ -1,6 +1,8 @@
 const path = require('path');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
+// TODO make it so we watch the libvore folder so changes there auto rebuild vorejs
+
 const config = {
   target: 'web',
   entry: {
@@ -40,9 +42,7 @@ const config = {
     ],
   },
   resolve: {
-    alias: {
-      libvorejs$: './main.go'
-    },
+    alias: { libvorejs$: './main.go' },
     extensions: ['.go', '.js'],
   },
   resolveLoader: {

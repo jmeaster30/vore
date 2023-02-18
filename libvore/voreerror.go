@@ -20,6 +20,22 @@ func (v *VoreError) Error() string {
 	return fmt.Sprintf("UNKNOWN ERROR :( %s", v.Message)
 }
 
+func NewLexErrorUnknown(t *Token) *VoreError {
+	return &VoreError{
+		ErrorType: "LexError",
+		Token:     t,
+		Message:   "Unknown token :(",
+	}
+}
+
+func NewLexErrorCustomMsg(t *Token, message string) *VoreError {
+	return &VoreError{
+		ErrorType: "LexError",
+		Token:     t,
+		Message:   message,
+	}
+}
+
 func NewParseError(t Token, message string) *VoreError {
 	return &VoreError{
 		ErrorType: "ParseError",

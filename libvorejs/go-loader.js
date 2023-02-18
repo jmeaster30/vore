@@ -45,7 +45,6 @@ function loadwasm(bytes) {
         return (...args) => {
           return new Promise(async (resolve, reject) => {
             while (!ready) {
-              console.log("not ready");
               await sleep();
             }
   
@@ -55,12 +54,10 @@ function loadwasm(bytes) {
             }
   
             if (typeof bridge[key] !== 'function') {
-              console.log("NOT A FUNCTION")
               resolve(bridge[key]);
               return;
             }
-  
-            console.log("RUNNING")
+
             resolve(bridge[key].apply(undefined, [...args]));
           });
         };

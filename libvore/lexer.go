@@ -3,7 +3,6 @@ package libvore
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -291,19 +290,22 @@ func initLexer(r io.Reader) *Lexer {
 	return &lexer
 }
 
-func (s *Lexer) getTokens() []*Token {
+func (s *Lexer) getTokens() ([]*Token, *VoreError) {
 	tokens := []*Token{}
 	for {
-		token := s.getNextToken()
+		token, err := s.getNextToken()
+		if err != nil {
+			return []*Token{}, err
+		}
 		tokens = append(tokens, token)
 		if token.TokenType == EOF {
 			break
 		}
 	}
-	return tokens
+	return tokens, nil
 }
 
-func (s *Lexer) getNextToken() *Token {
+func (s *Lexer) getNextToken() (*Token, *VoreError) {
 	type TokenState int
 
 	const (
@@ -311,6 +313,7 @@ func (s *Lexer) getNextToken() *Token {
 		SWHITESPACE
 		SSTRING_DOUBLE
 		SSTRING_SINGLE
+		SSTRING_END
 		SSTRING_D_ESCAPE
 		SSTRING_S_ESCAPE
 		SNUMBER
@@ -381,6 +384,7 @@ func (s *Lexer) getNextToken() *Token {
 			current_state = SSTRING_D_ESCAPE
 		} else if current_state == SSTRING_DOUBLE {
 			if ch == '"' {
+				current_state = SSTRING_END
 				break
 			}
 			buf.WriteRune(ch)
@@ -388,6 +392,7 @@ func (s *Lexer) getNextToken() *Token {
 			current_state = SSTRING_S_ESCAPE
 		} else if current_state == SSTRING_SINGLE {
 			if ch == '\'' {
+				current_state = SSTRING_END
 				break
 			}
 			buf.WriteRune(ch)
@@ -523,12 +528,18 @@ func (s *Lexer) getNextToken() *Token {
 
 	token.TokenType = ERROR
 
+	unendingString := false
+	unendingBlockComment := false
+
 	switch current_state {
 	case SERROR:
 		token.TokenType = ERROR
 	case SSTRING_SINGLE:
 		fallthrough
 	case SSTRING_DOUBLE:
+		unendingString = true
+		token.TokenType = ERROR
+	case SSTRING_END:
 		token.TokenType = STRING
 	case SNUMBER:
 		token.TokenType = NUMBER
@@ -654,6 +665,7 @@ func (s *Lexer) getNextToken() *Token {
 	case SBLOCKCOMMENTSTARTEND:
 		fallthrough
 	case SBLOCKCOMMENTENDEND:
+		unendingBlockComment = true
 		token.TokenType = ERROR
 	case SBLOCKCOMMENT:
 		fallthrough
@@ -691,12 +703,6 @@ func (s *Lexer) getNextToken() *Token {
 	case SEND:
 		token.TokenType = EOF
 	default:
-		fmt.Println(current_state)
-		fmt.Println(startPosInfo.line)
-		fmt.Println(startPosInfo.column)
-		endPosInfo := s.get_position()
-		fmt.Println(endPosInfo.line)
-		fmt.Println(endPosInfo.column)
 		panic("Unknown final state")
 	}
 
@@ -705,8 +711,15 @@ func (s *Lexer) getNextToken() *Token {
 	token.Column = NewRange(startPosInfo.column, endPosInfo.column)
 	token.Line = NewRange(startPosInfo.line, endPosInfo.line)
 	token.Lexeme = buf.String()
-	//fmt.Printf("[%s] '%s' \tline: %d, \tstart column: %d, \tend column: %d\n", token.tokenType.pp(), token.lexeme, token.line.Start, token.column.Start, token.column.End)
-	return token
+
+	if token.TokenType == ERROR && unendingBlockComment {
+		return nil, NewLexErrorCustomMsg(token, "Unending block comment")
+	} else if token.TokenType == ERROR && unendingString {
+		return nil, NewLexErrorCustomMsg(token, "Unending string")
+	} else if token.TokenType == ERROR {
+		return nil, NewLexErrorUnknown(token)
+	}
+	return token, nil
 }
 
 func getEscapedRune(ch rune) rune {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"syscall/js"
 
 	"github.com/jmeaster30/vore/libvore"
@@ -39,14 +38,15 @@ func buildError(err *libvore.VoreError) map[string]interface{} {
 	}
 }
 
+// func buildMatches(matches libvore.Matches) map[string]interface{} {
+
+// }
+
 func voreSearch(this js.Value, args []js.Value) interface{} {
-	fmt.Println("HERE!!!!")
 	vore, err := libvore.Compile(args[0].String())
 	if err != nil {
-		fmt.Println(err)
 		return js.ValueOf(buildError(err))
 	}
 	matches := vore.Run(args[1].String())
-	fmt.Printf("THERE WERE %d MATCHES\n", len(matches))
 	return js.ValueOf(map[string]interface{}{"numberOfMatches": len(matches)})
 }

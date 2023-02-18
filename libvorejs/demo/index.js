@@ -7,7 +7,7 @@ const doVoreSearch = () => {
   const searchText = document.getElementById("searchText").value;
   libvore.search(sourceCode, searchText)
     .then(value => {
-      console.log("RES: ", value);
+      console.log(value);
       document.getElementById("results").innerHTML = JSON.stringify(value, null, 4);
     });
 }

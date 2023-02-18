@@ -27,7 +27,8 @@ func tokenList(t *testing.T, results []*Token, expected []*Token) {
 
 func TestLexerBasic(t *testing.T) {
 	lexer := initLexer(strings.NewReader("ident 'string1' \"string2\""))
-	actual := lexer.getTokens()
+	actual, err := lexer.getTokens()
+	checkNoError(t, err)
 	tokenList(t, actual, []*Token{
 		{IDENTIFIER, NewRange(0, 5), NewRange(1, 1), NewRange(0, 5), "ident"},
 		{WS, NewRange(5, 6), NewRange(1, 1), NewRange(5, 6), " "},
