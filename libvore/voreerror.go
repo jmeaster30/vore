@@ -10,10 +10,12 @@ type VoreError struct {
 
 func (v *VoreError) Error() string {
 	switch v.ErrorType {
+	case "LexError":
+		return fmt.Sprintf("LEX ERROR: %s\nToken: '%s'\nLine:   %d - %d\nColumn: %d - %d", v.Message, v.Token.Lexeme, v.Token.Line.Start, v.Token.Line.End, v.Token.Column.Start, v.Token.Column.End)
 	case "FileError":
 		return v.Message
 	case "ParseError":
-		return fmt.Sprintf("ERROR:  %s\nToken:  '%s'\nTokenType: %d\nLine:   %d - %d\nColumn: %d - %d", v.Message, v.Token.Lexeme, v.Token.TokenType, v.Token.Line.Start, v.Token.Line.End, v.Token.Column.Start, v.Token.Column.End)
+		return fmt.Sprintf("ERROR:  %s\nToken:  '%s'\nTokenType: %s\nLine:   %d - %d\nColumn: %d - %d", v.Message, v.Token.Lexeme, v.Token.TokenType.PP(), v.Token.Line.Start, v.Token.Line.End, v.Token.Column.Start, v.Token.Column.End)
 	case "GenError":
 		return v.Message
 	}

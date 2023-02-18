@@ -662,13 +662,13 @@ func (s *Lexer) getNextToken() (*Token, error) {
 		token.TokenType = NEQUAL
 	case SCOLON:
 		token.TokenType = ERROR
+	case SBLOCKCOMMENT:
+		fallthrough
 	case SBLOCKCOMMENTSTARTEND:
 		fallthrough
 	case SBLOCKCOMMENTENDEND:
 		unendingBlockComment = true
 		token.TokenType = ERROR
-	case SBLOCKCOMMENT:
-		fallthrough
 	case SBLOCKCOMMENTFINAL:
 		fallthrough
 	case SCOMMENT:

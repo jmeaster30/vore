@@ -39,6 +39,50 @@ func TestLexerBasic(t *testing.T) {
 	})
 }
 
+func TestCheckUnendingStringError(t *testing.T) {
+	lexer := initLexer(strings.NewReader("ident 'testing"))
+	tokens, err := lexer.getTokens()
+
+	checkVoreErrorToken(t, err, "LexError", ERROR, "testing", 6, 14, "Unending string")
+
+	if len(tokens) != 0 {
+		t.Errorf("Expected no tokens returned on error. Got %d tokens", len(tokens))
+	}
+}
+
+func TestCheckUnendingBlockCommentError(t *testing.T) {
+	lexer := initLexer(strings.NewReader("ident --(test comment"))
+	tokens, err := lexer.getTokens()
+
+	checkVoreErrorToken(t, err, "LexError", ERROR, "--(test comment", 6, 21, "Unending block comment")
+
+	if len(tokens) != 0 {
+		t.Errorf("Expected no tokens returned on error. Got %d tokens", len(tokens))
+	}
+}
+
+func TestCheckUnendingBlockCommentError2(t *testing.T) {
+	lexer := initLexer(strings.NewReader("ident --(test comment)"))
+	tokens, err := lexer.getTokens()
+
+	checkVoreErrorToken(t, err, "LexError", ERROR, "--(test comment)", 6, 22, "Unending block comment")
+
+	if len(tokens) != 0 {
+		t.Errorf("Expected no tokens returned on error. Got %d tokens", len(tokens))
+	}
+}
+
+func TestCheckUnknownToken(t *testing.T) {
+	lexer := initLexer(strings.NewReader("ident @"))
+	tokens, err := lexer.getTokens()
+
+	checkVoreErrorToken(t, err, "LexError", ERROR, "@", 6, 7, "Unknown token :(")
+
+	if len(tokens) != 0 {
+		t.Errorf("Expected no tokens returned on error. Got %d tokens", len(tokens))
+	}
+}
+
 func ppMatch(t *testing.T, a TokenType, b string) {
 	if a.PP() != b {
 		t.Errorf("%s != %s", a.PP(), b)

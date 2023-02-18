@@ -73,6 +73,41 @@ func checkNoError(t *testing.T, err error) {
 	}
 }
 
+func checkVoreErrorToken(t *testing.T,
+	err error,
+	expectedType string,
+	expectedTokenType TokenType,
+	expectedLexeme string,
+	expectedOffsetStart int,
+	expectedOffsetEnd int,
+	expectedMessage string,
+) {
+	if err == nil {
+		t.Errorf("Did not return any error :(")
+		t.FailNow()
+	}
+
+	if detailedErr, ok := err.(*VoreError); ok {
+		if detailedErr.ErrorType != expectedType {
+			t.Errorf("Expected %s but got %s", expectedType, detailedErr.ErrorType)
+		}
+		if detailedErr.Token.TokenType != expectedTokenType {
+			t.Errorf("Expected tokenType %s but got %s", expectedTokenType.PP(), detailedErr.Token.TokenType.PP())
+		}
+		if detailedErr.Token.Lexeme != expectedLexeme {
+			t.Errorf("Expected lexeme '%s' but got '%s'", expectedLexeme, detailedErr.Token.Lexeme)
+		}
+		if detailedErr.Token.Offset.Start != expectedOffsetStart && detailedErr.Token.Offset.End != expectedOffsetEnd {
+			t.Errorf("Expected range (%d, %d) but got (%d, %d)", expectedOffsetStart, expectedOffsetEnd, detailedErr.Token.Offset.Start, detailedErr.Token.Offset.End)
+		}
+		if detailedErr.Message != expectedMessage {
+			t.Errorf("Expected message '%s' but got '%s'", expectedMessage, detailedErr.Message)
+		}
+	} else {
+		t.Errorf("Expected VoreError returned but got some other error. %s", err.Error())
+	}
+}
+
 func mustPanic(t *testing.T, message string, process func(*testing.T)) {
 	t.Helper()
 	defer func() {
