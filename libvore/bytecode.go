@@ -21,6 +21,10 @@ func findMatches(insts []SearchInstruction, all bool, skip int, take int, last i
 	lineNumber := 1
 	columnNumber := 1
 
+	if reader.size == 0 {
+		return Matches{}
+	}
+
 	// fmt.Println("Find Commnad Instructions")
 	// for i, inst := range insts {
 	// 	fmt.Printf("[%d] %v\n", i, inst)
