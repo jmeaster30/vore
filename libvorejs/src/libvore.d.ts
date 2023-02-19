@@ -1,0 +1,1 @@
+declare function search(source: string, text: string): Promise<any>;

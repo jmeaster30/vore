@@ -1,8 +1,9 @@
 {
   "name": "@jmeaster30/libvorejs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "libvore wrapper for JavaScript",
-  "main": "dist/index.js",
+  "main": "dist/libvore.js",
+  "types": "dist/libvore.d.ts",
   "files": [
     "dist/**/*",
     "lib/wasm_exec.js"
@@ -32,6 +33,7 @@
   "homepage": "https://github.com/jmeaster30/vore#readme",
   "devDependencies": {
     "clean-webpack-plugin": "^4.0.0",
+    "copy-webpack-plugin": "^11.0.0",
     "prettier": "^2.8.3",
     "webpack": "^5.75.0",
     "webpack-cli": "^5.0.1",

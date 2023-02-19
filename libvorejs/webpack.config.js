@@ -1,5 +1,6 @@
 const path = require('path');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 // TODO make it so we watch the libvore folder so changes there auto rebuild vorejs
 
@@ -25,6 +26,11 @@ const config = {
       cleanStaleWebpackAssets: false,
       cleanOnceBeforeBuildPatterns: [path.resolve(__dirname, './dist')],
     }),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: 'src/libvore.d.ts' }
+      ]
+    })
   ],
   module: {
     rules: [
@@ -38,7 +44,7 @@ const config = {
             }
           }
         ],
-      },
+      }
     ],
   },
   resolve: {
