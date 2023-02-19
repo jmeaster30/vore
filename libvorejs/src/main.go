@@ -93,6 +93,14 @@ func voreSearch(this js.Value, args []js.Value) any {
 	input := args[1].String()
 	resolve := args[2]
 	reject := args[3]
+	defer func() {
+		if r := recover(); r == nil {
+			reject.Invoke(js.ValueOf(map[string]interface{}{
+				"error": "Aw man :( ... Go paniced",
+			}))
+		}
+	}()
+
 	vore, err := libvore.Compile(source)
 	if err != nil {
 		// TODO pass in resolve and reject promises so if there is an error we can reject and use the "catch" syntax
