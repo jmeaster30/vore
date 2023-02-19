@@ -11,7 +11,7 @@ const config = {
   output: {
     path: path.resolve(__dirname, './dist'),
     filename: 'libvore.js',
-    library: 'LibVoreJS',
+    library: 'libvorejs',
     libraryTarget: 'umd',
     globalObject: 'this',
     umdNamedDefine: true,

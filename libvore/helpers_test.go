@@ -10,7 +10,7 @@ import (
 type TestMatch struct {
 	offset      int
 	value       string
-	replacement string
+	replacement Optional[string]
 	variables   []TestVar
 }
 
@@ -50,7 +50,7 @@ func matches(t *testing.T, results Matches, expected []TestMatch) {
 			t.Errorf("Expected offset %d, got %d", e.offset, actual.Offset.Start)
 		}
 		if actual.Replacement != e.replacement {
-			t.Errorf("Expected replacement %s, got %s\n", e.replacement, actual.Replacement)
+			t.Errorf("Expected replacement %s, got %s\n", e.replacement.GetValueOrDefault("NONE OPTIONAL VALUE"), actual.Replacement.GetValueOrDefault("NONE OPTIONAL VALUE"))
 		}
 		if actual.Variables.Len() != len(e.variables) {
 			t.Errorf("Expected %d variables, got %d variables\n", len(e.variables), actual.Variables.Len())

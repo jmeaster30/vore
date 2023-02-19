@@ -39,7 +39,7 @@ func buildError(err *libvore.VoreError) map[string]interface{} {
 }
 
 func buildMatch(match libvore.Match) map[string]interface{} {
-	return map[string]interface{}{
+	result := map[string]interface{}{
 		"filename":    match.Filename,
 		"matchNumber": match.MatchNumber,
 		"offset": map[string]interface{}{
@@ -54,9 +54,12 @@ func buildMatch(match libvore.Match) map[string]interface{} {
 			"start": match.Column.Start,
 			"end":   match.Column.End,
 		},
-		"value":       match.Value,
-		"replacement": match.Replacement,
+		"value": match.Value,
 	}
+	if match.Replacement.HasValue() {
+		result["replacement"] = match.Replacement.GetValue()
+	}
+	return result
 }
 
 func buildMatches(input string, matches libvore.Matches) map[string]interface{} {
@@ -70,7 +73,7 @@ func buildMatches(input string, matches libvore.Matches) map[string]interface{} 
 		convertedMatches = append(convertedMatches, buildMatch(match))
 		startSlice := input[inputIndex:match.Offset.Start]
 		resultString += startSlice
-		resultString += match.Replacement
+		resultString += match.Replacement.GetValueOrDefault(match.Value)
 		inputIndex = match.Offset.End
 	}
 
@@ -85,20 +88,24 @@ func buildMatches(input string, matches libvore.Matches) map[string]interface{} 
 	}
 }
 
-func voreSearch(this js.Value, args []js.Value) interface{} {
+func voreSearch(this js.Value, args []js.Value) any {
 	source := args[0].String()
 	input := args[1].String()
+	resolve := args[2]
+	reject := args[3]
 	vore, err := libvore.Compile(source)
 	if err != nil {
+		// TODO pass in resolve and reject promises so if there is an error we can reject and use the "catch" syntax
 		if detailedErr, ok := err.(*libvore.VoreError); ok {
-			return js.ValueOf(buildError(detailedErr))
+			reject.Invoke(js.ValueOf(buildError(detailedErr)))
 		} else {
-			return js.ValueOf(map[string]interface{}{
+			reject.Invoke(js.ValueOf(map[string]interface{}{
 				"error": err.Error(),
-			})
+			}))
 		}
-
+		return nil
 	}
 	matches := vore.Run(input)
-	return js.ValueOf(buildMatches(input, matches))
+	resolve.Invoke(js.ValueOf(buildMatches(input, matches)))
+	return nil
 }

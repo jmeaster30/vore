@@ -14,9 +14,9 @@ find all divisibleBy3`)
 	checkNoError(t, err)
 	results := vore.Run("123 4 6 51 52")
 	matches(t, results, []TestMatch{
-		{0, "123", "", []TestVar{}},
-		{6, "6", "", []TestVar{}},
-		{8, "51", "", []TestVar{}},
+		{0, "123", None[string](), []TestVar{}},
+		{6, "6", None[string](), []TestVar{}},
+		{8, "51", None[string](), []TestVar{}},
 	})
 }
 
@@ -161,10 +161,10 @@ replace all word start at least 1 any fewest word end with ">" matchRepeater "<"
 	checkNoError(t, err)
 	results := vore.Run("this is a test")
 	matches(t, results, []TestMatch{
-		{0, "this", ">this<", []TestVar{}},
-		{5, "is", ">isis<", []TestVar{}},
-		{8, "a", ">aaa<", []TestVar{}},
-		{10, "test", ">testtesttesttest<", []TestVar{}},
+		{0, "this", Some(">this<"), []TestVar{}},
+		{5, "is", Some(">isis<"), []TestVar{}},
+		{8, "a", Some(">aaa<"), []TestVar{}},
+		{10, "test", Some(">testtesttesttest<"), []TestVar{}},
 	})
 }
 
@@ -173,6 +173,6 @@ func TestTheDarknessInsideMe(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("this is it. hello world")
 	matches(t, results, []TestMatch{
-		{12, "hello", "goodbye", []TestVar{}},
+		{12, "hello", Some("goodbye"), []TestVar{}},
 	})
 }

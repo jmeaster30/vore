@@ -25,7 +25,7 @@ type Match struct {
 	Line        Range
 	Column      Range
 	Value       string
-	Replacement string
+	Replacement Optional[string]
 	Variables   ValueHashMap
 }
 
@@ -194,7 +194,7 @@ func (m Match) FormattedJson() string {
 	result += "\t\"line\": {\n\t\t\"start\": \"" + strconv.Itoa(m.Line.Start) + "\",\n\t\t\"end\": \"" + strconv.Itoa(m.Line.End) + "\"\n\t},\n"
 	result += "\t\"column\": {\n\t\t\"start\": \"" + strconv.Itoa(m.Column.Start) + "\",\n\t\t\"end\": \"" + strconv.Itoa(m.Column.End) + "\"\n\t},\n"
 	result += "\t\"value\": \"" + cleanControlCharacters(m.Value) + "\",\n"
-	result += "\t\"replaced\": \"" + cleanControlCharacters(m.Replacement) + "\",\n"
+	result += "\t\"replaced\": \"" + cleanControlCharacters(m.Replacement.GetValueOrDefault("")) + "\",\n"
 	result += "\t\"variables\": [\n"
 
 	keys := m.Variables.Keys()
@@ -239,7 +239,7 @@ func (m Match) Json() string {
 	result += "\"line\":{\"start\":\"" + strconv.Itoa(m.Line.Start) + "\",\"end\":\"" + strconv.Itoa(m.Line.End) + "\"},"
 	result += "\"column\":{\"start\":\"" + strconv.Itoa(m.Column.Start) + "\",\"end\":\"" + strconv.Itoa(m.Column.End) + "\"},"
 	result += "\"value\":\"" + cleanControlCharacters(m.Value) + "\","
-	result += "\"replaced\":\"" + cleanControlCharacters(m.Replacement) + "\","
+	result += "\"replaced\":\"" + cleanControlCharacters(m.Replacement.GetValueOrDefault("")) + "\","
 	result += "\"variables\":["
 
 	keys := m.Variables.Keys()
@@ -294,7 +294,9 @@ func (m Match) Print() {
 	fmt.Printf("Filename: %s\n", m.Filename)
 	fmt.Printf("MatchNumber: %d\n", m.MatchNumber)
 	fmt.Printf("Value: %s\n", m.Value)
-	fmt.Printf("Replaced: %s\n", m.Replacement)
+	if m.Replacement.HasValue() {
+		fmt.Printf("Replaced: %s\n", m.Replacement.GetValue())
+	}
 	fmt.Printf("Offset: %d %d\n", m.Offset.Start, m.Offset.End)
 	fmt.Printf("Line: %d %d\n", m.Line.Start, m.Line.End)
 	fmt.Printf("Column: %d %d\n", m.Column.Start, m.Column.End)
@@ -396,10 +398,10 @@ func (v *Vore) RunFiles(filenames []string, mode ReplaceMode, processFilenames b
 				}
 				foundMatches := command.execute(actualFilename, reader, actualMode)
 				result = append(result, foundMatches...)
-				if processFilenames && len(foundMatches) != 0 && len(foundMatches[0].Replacement) != 0 {
-					err := os.Rename(actualFilename, foundMatches[0].Replacement)
+				if processFilenames && len(foundMatches) != 0 && len(foundMatches[0].Replacement.GetValueOrDefault("")) != 0 {
+					err := os.Rename(actualFilename, foundMatches[0].Replacement.GetValueOrDefault(""))
 					if err != nil {
-						os.Stderr.WriteString("Failed to rename file '" + actualFilename + "' to '" + foundMatches[0].Replacement + "'\n")
+						os.Stderr.WriteString("Failed to rename file '" + actualFilename + "' to '" + foundMatches[0].Replacement.GetValueOrDefault("") + "'\n")
 					}
 				}
 			}

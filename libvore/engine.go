@@ -576,13 +576,13 @@ func (rs *ReplacerState) NEXT() {
 }
 
 func (rs *ReplacerState) WRITESTRING(value string) {
-	rs.match.Replacement += value
+	rs.match.Replacement = Some(rs.match.Replacement.GetValueOrDefault("") + value)
 }
 
 func (rs *ReplacerState) WRITEVAR(name string) {
 	value, found := rs.variables.Get(name)
 	if found && value.getType() == ValueStringType {
-		rs.match.Replacement += value.String().Value
+		rs.match.Replacement = Some(rs.match.Replacement.GetValueOrDefault("") + value.String().Value)
 	}
 }
 

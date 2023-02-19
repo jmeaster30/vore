@@ -125,8 +125,8 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 		lastReaderOffset += currentReaderLength
 
 		// write the replacement. We have to update the lastReaderOffset with the part of the string that was matched
-		writer.WriteAt(currentWriterOffset, replacedMatches[i].Replacement)
-		currentWriterOffset += len(replacedMatches[i].Replacement)
+		writer.WriteAt(currentWriterOffset, replacedMatches[i].Replacement.GetValueOrDefault(""))
+		currentWriterOffset += len(replacedMatches[i].Replacement.GetValueOrDefault(""))
 		lastReaderOffset += len(replacedMatches[i].Value)
 	}
 	if lastReaderOffset < replaceReader.size {

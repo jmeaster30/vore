@@ -16,16 +16,16 @@ func TestFindDigit(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("please 1234567890 wow")
 	matches(t, results, []TestMatch{
-		{7, "1", "", []TestVar{}},
-		{8, "2", "", []TestVar{}},
-		{9, "3", "", []TestVar{}},
-		{10, "4", "", []TestVar{}},
-		{11, "5", "", []TestVar{}},
-		{12, "6", "", []TestVar{}},
-		{13, "7", "", []TestVar{}},
-		{14, "8", "", []TestVar{}},
-		{15, "9", "", []TestVar{}},
-		{16, "0", "", []TestVar{}},
+		{7, "1", None[string](), []TestVar{}},
+		{8, "2", None[string](), []TestVar{}},
+		{9, "3", None[string](), []TestVar{}},
+		{10, "4", None[string](), []TestVar{}},
+		{11, "5", None[string](), []TestVar{}},
+		{12, "6", None[string](), []TestVar{}},
+		{13, "7", None[string](), []TestVar{}},
+		{14, "8", None[string](), []TestVar{}},
+		{15, "9", None[string](), []TestVar{}},
+		{16, "0", None[string](), []TestVar{}},
 	})
 }
 
@@ -62,10 +62,10 @@ func TestFindAny(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("omg this is cool :)")
 	matches(t, results, []TestMatch{
-		{0, "omg t", "", []TestVar{}},
-		{5, "his i", "", []TestVar{}},
-		{10, "s coo", "", []TestVar{}},
-		{15, "l :)", "", []TestVar{}},
+		{0, "omg t", None[string](), []TestVar{}},
+		{5, "his i", None[string](), []TestVar{}},
+		{10, "s coo", None[string](), []TestVar{}},
+		{15, "l :)", None[string](), []TestVar{}},
 	})
 }
 
@@ -74,9 +74,9 @@ func TestFindAnyFewest(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("omg this is")
 	matches(t, results, []TestMatch{
-		{0, "omg", "", []TestVar{}},
-		{3, " th", "", []TestVar{}},
-		{6, "is ", "", []TestVar{}},
+		{0, "omg", None[string](), []TestVar{}},
+		{3, " th", None[string](), []TestVar{}},
+		{6, "is ", None[string](), []TestVar{}},
 	})
 }
 
@@ -85,8 +85,8 @@ func TestFindFewest(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("oh wow geez nice")
 	matches(t, results, []TestMatch{
-		{3, "wow ", "", []TestVar{}},
-		{7, "geez ", "", []TestVar{}},
+		{3, "wow ", None[string](), []TestVar{}},
+		{7, "geez ", None[string](), []TestVar{}},
 	})
 }
 
@@ -95,8 +95,8 @@ func TestFindAtLeast3Upper(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("it SHOULD get THIS but THis")
 	matches(t, results, []TestMatch{
-		{3, "SHOULD", "", []TestVar{}},
-		{14, "THIS", "", []TestVar{}},
+		{3, "SHOULD", None[string](), []TestVar{}},
+		{14, "THIS", None[string](), []TestVar{}},
 	})
 }
 
@@ -105,10 +105,10 @@ func TestFindAtMost2Lower(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("IT WILL CATCH this AND it WILL GET me")
 	matches(t, results, []TestMatch{
-		{14, "th", "", []TestVar{}},
-		{16, "is", "", []TestVar{}},
-		{23, "it", "", []TestVar{}},
-		{35, "me", "", []TestVar{}},
+		{14, "th", None[string](), []TestVar{}},
+		{16, "is", None[string](), []TestVar{}},
+		{23, "it", None[string](), []TestVar{}},
+		{35, "me", None[string](), []TestVar{}},
 	})
 }
 
@@ -131,8 +131,8 @@ func TestLastTest(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("here >here< >here<")
 	matches(t, results, []TestMatch{
-		{6, "here", "", []TestVar{}},
-		{13, "here", "", []TestVar{}},
+		{6, "here", None[string](), []TestVar{}},
+		{13, "here", None[string](), []TestVar{}},
 	})
 }
 
@@ -162,8 +162,8 @@ func TestOrBranch(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("this and that")
 	matches(t, results, []TestMatch{
-		{0, "this", "", []TestVar{}},
-		{9, "that", "", []TestVar{}},
+		{0, "this", None[string](), []TestVar{}},
+		{9, "that", None[string](), []TestVar{}},
 	})
 }
 
@@ -172,9 +172,9 @@ func TestInBranch(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("abcdefghijklmnopqrstuvwxyz")
 	matches(t, results, []TestMatch{
-		{0, "a", "", []TestVar{}},
-		{1, "b", "", []TestVar{}},
-		{2, "c", "", []TestVar{}},
+		{0, "a", None[string](), []TestVar{}},
+		{1, "b", None[string](), []TestVar{}},
+		{2, "c", None[string](), []TestVar{}},
 	})
 }
 
@@ -183,12 +183,12 @@ func TestInBranchRange(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("abcdefghijklmnopqrstuvwxyz")
 	matches(t, results, []TestMatch{
-		{0, "a", "", []TestVar{}},
-		{1, "b", "", []TestVar{}},
-		{2, "c", "", []TestVar{}},
-		{23, "x", "", []TestVar{}},
-		{24, "y", "", []TestVar{}},
-		{25, "z", "", []TestVar{}},
+		{0, "a", None[string](), []TestVar{}},
+		{1, "b", None[string](), []TestVar{}},
+		{2, "c", None[string](), []TestVar{}},
+		{23, "x", None[string](), []TestVar{}},
+		{24, "y", None[string](), []TestVar{}},
+		{25, "z", None[string](), []TestVar{}},
 	})
 }
 
@@ -197,10 +197,10 @@ func TestVariables(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("abcdefghijklmnopqrstuvwxyz")
 	matches(t, results, []TestMatch{
-		{0, "abc", "", []TestVar{
+		{0, "abc", None[string](), []TestVar{
 			{"test", "abc"},
 		}},
-		{23, "xyz", "", []TestVar{
+		{23, "xyz", None[string](), []TestVar{
 			{"test", "xyz"},
 		}},
 	})
@@ -221,13 +221,13 @@ func TestNameIdMatches(t *testing.T) {
 tx555555	martha
 FR420420	celeste`)
 	matches(t, results, []TestMatch{
-		{0, "US123456\tlilith", "", []TestVar{
+		{0, "US123456\tlilith", None[string](), []TestVar{
 			{"country", "US"},
 			{"department", "123456"},
 			{"id", "US123456"},
 			{"name", "lilith"},
 		}},
-		{32, "FR420420\tceleste", "", []TestVar{
+		{32, "FR420420\tceleste", None[string](), []TestVar{
 			{"country", "FR"},
 			{"department", "420420"},
 			{"id", "FR420420"},
@@ -241,7 +241,7 @@ func TestVariableMatch(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("wow wowwow")
 	matches(t, results, []TestMatch{
-		{4, "wowwow", "", []TestVar{
+		{4, "wowwow", None[string](), []TestVar{
 			{"wow", "wow"},
 		}},
 	})
@@ -252,13 +252,13 @@ func TestReplaceStatement(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("wow wowwow")
 	matches(t, results, []TestMatch{
-		{0, "wow", ">wowwow<", []TestVar{
+		{0, "wow", Some(">wowwow<"), []TestVar{
 			{"wow", "wow"},
 		}},
-		{4, "wow", ">wowwow<", []TestVar{
+		{4, "wow", Some(">wowwow<"), []TestVar{
 			{"wow", "wow"},
 		}},
-		{7, "wow", ">wowwow<", []TestVar{
+		{7, "wow", Some(">wowwow<"), []TestVar{
 			{"wow", "wow"},
 		}},
 	})
@@ -269,10 +269,10 @@ func TestNot(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("this \tfinds all  \nnon-whitespace!")
 	matches(t, results, []TestMatch{
-		{0, "this", "", []TestVar{}},
-		{6, "finds", "", []TestVar{}},
-		{12, "all", "", []TestVar{}},
-		{18, "non-whitespace!", "", []TestVar{}},
+		{0, "this", None[string](), []TestVar{}},
+		{6, "finds", None[string](), []TestVar{}},
+		{12, "all", None[string](), []TestVar{}},
+		{18, "non-whitespace!", None[string](), []TestVar{}},
 	})
 }
 
@@ -281,12 +281,12 @@ func TestNotInBasic(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("abcdefxyzghi")
 	matches(t, results, []TestMatch{
-		{3, "d", "", []TestVar{}},
-		{4, "e", "", []TestVar{}},
-		{5, "f", "", []TestVar{}},
-		{9, "g", "", []TestVar{}},
-		{10, "h", "", []TestVar{}},
-		{11, "i", "", []TestVar{}},
+		{3, "d", None[string](), []TestVar{}},
+		{4, "e", None[string](), []TestVar{}},
+		{5, "f", None[string](), []TestVar{}},
+		{9, "g", None[string](), []TestVar{}},
+		{10, "h", None[string](), []TestVar{}},
+		{11, "i", None[string](), []TestVar{}},
 	})
 }
 
@@ -295,8 +295,8 @@ func TestNotInInLoop(t *testing.T) {
 	checkNoError(t, err)
 	results := vore.Run("abcdefxyzghi")
 	matches(t, results, []TestMatch{
-		{3, "def", "", []TestVar{}},
-		{9, "ghi", "", []TestVar{}},
+		{3, "def", None[string](), []TestVar{}},
+		{9, "ghi", None[string](), []TestVar{}},
 	})
 }
 
@@ -344,7 +344,7 @@ find all
 	checkNoError(t, err)
 	results := vore.Run("jhneasterday09@gmail.com")
 	matches(t, results, []TestMatch{
-		{0, "jhneasterday09@gmail.com", "", []TestVar{}},
+		{0, "jhneasterday09@gmail.com", None[string](), []TestVar{}},
 	})
 }
 
@@ -355,13 +355,13 @@ func TestCSV(t *testing.T) {
 1, 2, 3
 x, y, z`)
 	matches(t, results, []TestMatch{
-		{0, "a, b, c\n", "", []TestVar{
+		{0, "a, b, c\n", None[string](), []TestVar{
 			{"row", "[ValueHashMap]"}, // TODO check the nested structure
 		}},
-		{8, "1, 2, 3\n", "", []TestVar{
+		{8, "1, 2, 3\n", None[string](), []TestVar{
 			{"row", "[ValueHashMap]"}, // TODO check the nested structure
 		}},
-		{16, "x, y, z", "", []TestVar{
+		{16, "x, y, z", None[string](), []TestVar{
 			{"row", "[ValueHashMap]"}, // TODO check the nested structure
 		}},
 	})

@@ -58,7 +58,7 @@ function loadwasm(bytes) {
               return;
             }
 
-            resolve(bridge[key].apply(undefined, [...args]));
+            bridge[key].apply(undefined, [...args, resolve, reject]);
           });
         };
       }
