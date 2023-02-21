@@ -587,6 +587,7 @@ func (i ReplaceProcess) execute(current_state *ReplacerState) *ReplacerState {
 		pstate = stmt.execute(pstate)
 		if pstate.status == RETURNING {
 			final_value = pstate.currentValue
+			break
 		}
 	}
 

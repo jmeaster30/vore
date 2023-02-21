@@ -1,6 +1,6 @@
 {
   "name": "@jmeaster30/libvorejs",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "libvore wrapper for JavaScript",
   "main": "dist/libvore.js",
   "types": "dist/libvore.d.ts",
