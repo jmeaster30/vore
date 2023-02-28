@@ -68,8 +68,8 @@ func TestLexerWhole(t *testing.T) {
 	actual, err := lexer.getTokens()
 	checkNoError(t, err)
 	tokenList(t, actual, []*Token{
-		{WHOLE, NewRange(0, 5), NewRange(1, 1), NewRange(0, 5), "whole"},
-		{EOF, NewRange(5, 5), NewRange(1, 1), NewRange(5, 5), ""},
+		{WHOLE, NewRange(0, 4), NewRange(1, 1), NewRange(0, 4), "whole"},
+		{EOF, NewRange(4, 4), NewRange(1, 1), NewRange(4, 4), ""},
 	})
 }
 
