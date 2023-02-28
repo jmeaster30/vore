@@ -70,6 +70,7 @@ func checkNoError(t *testing.T, err error) {
 	if err != nil {
 		fmt.Println(err.Error())
 		t.Error(err)
+		t.FailNow()
 	}
 }
 

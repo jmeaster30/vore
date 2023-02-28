@@ -115,7 +115,7 @@ func (s AstSetTransform) generate(state *GenState, id string) (SetCommandBody, e
 		}
 	}
 
-	return SetCommandTransform{s.statements}, nil
+	return SetCommandTransform(s), nil
 }
 
 func (s AstSetPattern) generate(state *GenState, id string) (SetCommandBody, error) {

@@ -20,6 +20,41 @@ find all divisibleBy3`)
 	})
 }
 
+func TestTrueLiteralIfStmt(t *testing.T) {
+	vore, err := Compile(`
+set check to function
+	if true then
+		return 'oh yeah'
+	end
+	return match
+end
+
+replace all 'test' with check`)
+	checkNoError(t, err)
+	results := vore.Run("this is a test")
+	matches(t, results, []TestMatch{
+		{10, "test", Some("oh yeah"), []TestVar{}},
+	})
+}
+
+func TestFalseLiteralIfStmt(t *testing.T) {
+	vore, err := Compile(`
+set check to function
+begin
+	if false then
+		return 'oh yeah'
+	end
+	return match
+end
+
+replace all 'test' with check`)
+	checkNoError(t, err)
+	results := vore.Run("this is a test")
+	matches(t, results, []TestMatch{
+		{10, "test", Some("test"), []TestVar{}},
+	})
+}
+
 func TestErroredPredicate(t *testing.T) {
 	vore, err := Compile(`
 set divisibleBy3 to pattern

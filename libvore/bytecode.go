@@ -1,7 +1,5 @@
 package libvore
 
-import "fmt"
-
 type Command interface {
 	execute(string, *VReader, ReplaceMode) Matches
 }
@@ -115,8 +113,6 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 	} else if mode == NOTHING {
 		writer = VWriterFromMemory()
 	}
-
-	fmt.Println("replacing")
 
 	lastReaderOffset := 0
 	currentWriterOffset := 0
@@ -242,6 +238,12 @@ func (i MatchCharClass) execute(current_state *SearchEngineState) *SearchEngineS
 		next_state.MATCHWORDSTART(i.not)
 	case ClassWordEnd:
 		next_state.MATCHWORDEND(i.not)
+	case ClassWholeFile:
+		next_state.MATCHWHOLEFILE(i.not)
+	case ClassWholeLine:
+		next_state.MATCHWHOLELINE(i.not)
+	case ClassWholeWord:
+		next_state.MATCHWHOLEWORD(i.not)
 	default:
 		panic("Unexpected character class type")
 	}

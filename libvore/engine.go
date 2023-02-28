@@ -181,7 +181,7 @@ func IsLetter(value string) bool {
 }
 
 func (es *SearchEngineState) MATCHWORDSTART(not bool) {
-	if es.currentFileOffset == 0 || es.currentFileOffset == es.reader.size {
+	if es.currentFileOffset == es.reader.size {
 		if not {
 			es.BACKTRACK()
 		} else {
@@ -190,8 +190,25 @@ func (es *SearchEngineState) MATCHWORDSTART(not bool) {
 		return
 	}
 
-	previous := es.READAT(es.currentFileOffset-1, 1)
 	current := es.READ(1)
+	if es.currentFileOffset == 0 {
+		if IsLetter(current) {
+			if not {
+				es.BACKTRACK()
+			} else {
+				es.NEXT()
+			}
+		} else {
+			if not {
+				es.NEXT()
+			} else {
+				es.BACKTRACK()
+			}
+		}
+		return
+	}
+
+	previous := es.READAT(es.currentFileOffset-1, 1)
 	if IsLetter(current) && !IsLetter(previous) {
 		if not {
 			es.BACKTRACK()
@@ -208,7 +225,7 @@ func (es *SearchEngineState) MATCHWORDSTART(not bool) {
 }
 
 func (es *SearchEngineState) MATCHWORDEND(not bool) {
-	if es.currentFileOffset == 0 || es.currentFileOffset == es.reader.size {
+	if es.currentFileOffset == 0 {
 		if not {
 			es.BACKTRACK()
 		} else {
@@ -217,8 +234,26 @@ func (es *SearchEngineState) MATCHWORDEND(not bool) {
 		return
 	}
 
-	previous := es.READAT(es.currentFileOffset-1, 1)
 	current := es.READ(1)
+	if es.currentFileOffset == es.reader.size {
+		if !IsLetter(current) {
+			if not {
+				es.BACKTRACK()
+			} else {
+				es.NEXT()
+			}
+		} else {
+			if not {
+				es.NEXT()
+			} else {
+				es.BACKTRACK()
+			}
+		}
+		return
+	}
+
+	previous := es.READAT(es.currentFileOffset-1, 1)
+
 	if !IsLetter(current) && IsLetter(previous) {
 		if not {
 			es.BACKTRACK()
@@ -232,6 +267,93 @@ func (es *SearchEngineState) MATCHWORDEND(not bool) {
 			es.BACKTRACK()
 		}
 	}
+}
+
+func (es *SearchEngineState) MATCHWHOLEFILE(not bool) {
+	if es.currentFileOffset != 0 {
+		if not {
+			// TODO Should this be a zero match or a single char match?
+			// I think zero match is better so it keeps in line with the other file anchors
+			es.NEXT()
+		} else {
+			es.BACKTRACK()
+		}
+		return
+	}
+
+	if not {
+		es.BACKTRACK()
+		return
+	}
+
+	// TODO This is probably going to be a performance concern
+	es.CONSUME(es.reader.size)
+	es.NEXT()
+}
+
+func (es *SearchEngineState) MATCHWHOLELINE(not bool) {
+	if (es.currentFileOffset != 0 && es.READAT(es.currentFileOffset-1, 1) != "\n") || es.currentFileOffset == es.reader.size {
+		if not {
+			es.NEXT()
+		} else {
+			es.BACKTRACK()
+		}
+		return
+	}
+
+	if not {
+		es.BACKTRACK()
+		return
+	}
+
+	// we know we are at the start of a line and we can read a character
+	for {
+		es.CONSUME(1)
+		if es.currentFileOffset == es.reader.size {
+			break
+		}
+
+		nextChar := es.READ(1)
+		nextTwoChar := es.READ(2)
+		if nextChar == "\n" || nextTwoChar == "\r\n" || es.currentFileOffset == es.reader.size {
+			break
+		}
+	}
+
+	es.NEXT()
+}
+
+func (es *SearchEngineState) MATCHWHOLEWORD(not bool) {
+	if (es.currentFileOffset != 0 && (!IsLetter(es.READ(1)) || IsLetter(es.READAT(es.currentFileOffset-1, 1)))) || es.currentFileOffset == es.reader.size {
+		if not {
+			es.NEXT()
+		} else {
+			es.BACKTRACK()
+		}
+		return
+	}
+
+	if not {
+		es.BACKTRACK()
+		return
+	}
+
+	// we know we are at the start of a line and we can read a character
+	for {
+		es.CONSUME(1)
+		if es.currentFileOffset == es.reader.size {
+			break
+		}
+
+		current := es.READ(1)
+		previous := es.READAT(es.currentFileOffset-1, 1)
+
+		if !IsLetter(current) && IsLetter(previous) {
+			break
+		}
+	}
+
+	es.NEXT()
 }
 
 func (es *SearchEngineState) MATCHANY(not bool) {

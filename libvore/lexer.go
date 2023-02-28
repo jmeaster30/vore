@@ -67,6 +67,7 @@ const (
 	UPPER
 	LOWER
 	LETTER
+	WHOLE
 	LINE
 	FILE
 	WORD
@@ -97,6 +98,8 @@ const (
 	LOOP
 	BREAK
 	CONTINUE
+	TRUE
+	FALSE
 )
 
 func (t TokenType) PP() string {
@@ -167,6 +170,8 @@ func (t TokenType) PP() string {
 		return "LOWER"
 	case LETTER:
 		return "LETTER"
+	case WHOLE:
+		return "WHOLE"
 	case LINE:
 		return "LINE"
 	case START:
@@ -245,6 +250,10 @@ func (t TokenType) PP() string {
 		return "BREAK"
 	case NAMED:
 		return "NAMED"
+	case TRUE:
+		return "TRUE"
+	case FALSE:
+		return "FALSE"
 	default:
 		panic("UNKNOWN TOKEN TYPE")
 	}
@@ -563,6 +572,8 @@ func (s *Lexer) getNextToken() (*Token, error) {
 			token.TokenType = MATCHES
 		case "transform":
 			token.TokenType = TRANSFORM
+		case "function": // ALIAS
+			token.TokenType = TRANSFORM
 		case "all":
 			token.TokenType = ALL
 		case "skip":
@@ -641,6 +652,12 @@ func (s *Lexer) getNextToken() (*Token, error) {
 			token.TokenType = CONTINUE
 		case "break":
 			token.TokenType = BREAK
+		case "true":
+			token.TokenType = TRUE
+		case "false":
+			token.TokenType = FALSE
+		case "whole":
+			token.TokenType = WHOLE
 		}
 	case SWHITESPACE:
 		token.TokenType = WS

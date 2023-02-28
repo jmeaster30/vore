@@ -57,7 +57,7 @@
 		"commands": {
 			"patterns": [{
 				"name": "entity.name.function.vore",
-				"match": "\\b(find|replace|with|set|matches|pattern)\\b"
+				"match": "\\b(find|replace|with|set|matches|pattern|transform|function)\\b"
 			}]
 		},
 		"amount": {
@@ -69,7 +69,7 @@
 		"charClass": {
 			"patterns": [{
 				"name": "entity.name.class.vore",
-				"match": "\\b(any|whitespace|digit|upper|lower|letter|line|file|word|start|end|begin|if|then|else|loop)\\b"
+				"match": "\\b(any|whitespace|digit|upper|lower|letter|line|file|word|start|end|whole|begin|if|then|else|loop)\\b"
 			}]
 		},
 		"variable": {

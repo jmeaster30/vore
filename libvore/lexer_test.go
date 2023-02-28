@@ -39,6 +39,40 @@ func TestLexerBasic(t *testing.T) {
 	})
 }
 
+func TestLexerTransformAlias(t *testing.T) {
+	lexer := initLexer(strings.NewReader("transform function"))
+	actual, err := lexer.getTokens()
+	checkNoError(t, err)
+	tokenList(t, actual, []*Token{
+		{TRANSFORM, NewRange(0, 9), NewRange(1, 1), NewRange(0, 9), "transform"},
+		{WS, NewRange(9, 10), NewRange(1, 1), NewRange(9, 10), " "},
+		{TRANSFORM, NewRange(10, 17), NewRange(1, 1), NewRange(10, 17), "function"},
+		{EOF, NewRange(17, 17), NewRange(1, 1), NewRange(17, 17), ""},
+	})
+}
+
+func TestLexerTrueFalse(t *testing.T) {
+	lexer := initLexer(strings.NewReader("true false"))
+	actual, err := lexer.getTokens()
+	checkNoError(t, err)
+	tokenList(t, actual, []*Token{
+		{TRUE, NewRange(0, 4), NewRange(1, 1), NewRange(0, 4), "true"},
+		{WS, NewRange(4, 5), NewRange(1, 1), NewRange(4, 5), " "},
+		{FALSE, NewRange(5, 9), NewRange(1, 1), NewRange(5, 9), "false"},
+		{EOF, NewRange(9, 9), NewRange(1, 1), NewRange(9, 9), ""},
+	})
+}
+
+func TestLexerWhole(t *testing.T) {
+	lexer := initLexer(strings.NewReader("whole"))
+	actual, err := lexer.getTokens()
+	checkNoError(t, err)
+	tokenList(t, actual, []*Token{
+		{WHOLE, NewRange(0, 5), NewRange(1, 1), NewRange(0, 5), "whole"},
+		{EOF, NewRange(5, 5), NewRange(1, 1), NewRange(5, 5), ""},
+	})
+}
+
 func TestCheckUnendingStringError(t *testing.T) {
 	lexer := initLexer(strings.NewReader("ident 'testing"))
 	tokens, err := lexer.getTokens()
@@ -162,4 +196,7 @@ func TestTokenTypePP(t *testing.T) {
 	ppMatch(t, NEQUAL, "NEQUAL")
 	ppMatch(t, CONTINUE, "CONTINUE")
 	ppMatch(t, BREAK, "BREAK")
+	ppMatch(t, TRUE, "TRUE")
+	ppMatch(t, FALSE, "FALSE")
+	ppMatch(t, WHOLE, "WHOLE")
 }

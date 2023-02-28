@@ -292,12 +292,17 @@ func (s AstProcessUnaryExpression) execute(state ProcessState) ProcessState {
 }
 
 func (s AstProcessString) execute(state ProcessState) ProcessState {
-	state.currentValue = ProcessValueString{s.value}
+	state.currentValue = ProcessValueString(s)
+	return state
+}
+
+func (s AstProcessBoolean) execute(state ProcessState) ProcessState {
+	state.currentValue = ProcessValueBoolean(s)
 	return state
 }
 
 func (s AstProcessNumber) execute(state ProcessState) ProcessState {
-	state.currentValue = ProcessValueNumber{s.value}
+	state.currentValue = ProcessValueNumber(s)
 	return state
 }
 

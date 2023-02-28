@@ -320,6 +320,9 @@ const (
 	ClassLineEnd
 	ClassFileEnd
 	ClassWordEnd
+	ClassWholeLine
+	ClassWholeFile
+	ClassWholeWord
 )
 
 type AstCharacterClass struct {
@@ -347,10 +350,20 @@ func (c AstCharacterClass) getMaxSize() int {
 		return 0
 	case ClassFileStart:
 		return 0
+	case ClassWordStart:
+		return 0
 	case ClassLineEnd:
 		return 0
 	case ClassFileEnd:
 		return 0
+	case ClassWordEnd:
+		return 0
+	case ClassWholeFile:
+		return -1 // TODO i don't know what to do for these
+	case ClassWholeLine:
+		return -1
+	case ClassWholeWord:
+		return -1
 	}
 	panic("shouldn't get here")
 }
@@ -377,6 +390,16 @@ func (c AstCharacterClass) print() {
 		fmt.Print("line end")
 	case ClassFileEnd:
 		fmt.Print("file end")
+	case ClassWordStart:
+		fmt.Print("word start")
+	case ClassWordEnd:
+		fmt.Print("word end")
+	case ClassWholeFile:
+		fmt.Print("whole file")
+	case ClassWholeLine:
+		fmt.Print("whole line")
+	case ClassWholeWord:
+		fmt.Print("whole word")
 	}
 	fmt.Printf(")")
 }
@@ -509,6 +532,15 @@ type AstProcessNumber struct {
 func (e AstProcessNumber) isProcessExpr() {}
 func (e AstProcessNumber) print() {
 	fmt.Printf("(number %d)", e.value)
+}
+
+type AstProcessBoolean struct {
+	value bool
+}
+
+func (e AstProcessBoolean) isProcessExpr() {}
+func (e AstProcessBoolean) print() {
+	fmt.Printf("(boolean %t)", e.value)
 }
 
 type AstProcessVariable struct {

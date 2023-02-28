@@ -1,8 +1,6 @@
 package libvore
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestFindString(t *testing.T) {
 	vore, err := Compile("find all 'yay'")
@@ -208,13 +206,13 @@ func TestVariables(t *testing.T) {
 
 func TestNameIdMatches(t *testing.T) {
 	vore, err := Compile(`
-		find all 
+		find all
 			line start (
 				(exactly 2 upper) = country
 				(at least 6 digit) = department
-			) = id 
-			'\t' 
-			(at least 1 any fewest) = name 
+			) = id
+			'\t'
+			(at least 1 any fewest) = name
 			line end`)
 	checkNoError(t, err)
 	results := vore.Run(`US123456	lilith
@@ -310,17 +308,17 @@ func TestBlockComment(t *testing.T) {
 func TestEmail(t *testing.T) {
 	vore, err := Compile(`
 set localPart to pattern
-  in letter, digit, "!", "#", "$", "%", 
-    "&", "'", "*", "+", "/", "=", "?", 
+  in letter, digit, "!", "#", "$", "%",
+    "&", "'", "*", "+", "/", "=", "?",
     "^", "_", "{", "|", "}", "~", "-"  -- it is a little long to write but "verbose" is in the name
 
 set hexPart1 to pattern
-  in "\x01" to "\x08", "\x0b", "\x0C", 
+  in "\x01" to "\x08", "\x0b", "\x0C",
     "\x0e" to "\x1f", "\x21",
     "\x23" to "\x5b", "\x5d" to "\x7f"
 
 set hexPart2 to pattern
-  in "\x01" to "\x09", "\x0b", "\x0C", 
+  in "\x01" to "\x09", "\x0b", "\x0C",
     "\x0e" to "\x7f"
 
 set ld to pattern
@@ -329,16 +327,16 @@ set ld to pattern
 set ldd to pattern
   in letter, digit, "-"
 
-find all 
+find all
   (at least 1 localPart at least 0 ("." at least 1 localPart))
   or
   ('"' at least 0 (hexPart1 or ('\\' hexPart2)) '"')
   "@"
-  (at least 1 (ld maybe (at least 0 ldd ld) '.') ld maybe (at least 0 ldd ld)) 
+  (at least 1 (ld maybe (at least 0 ldd ld) '.') ld maybe (at least 0 ldd ld))
   or
   ("["
-    exactly 3 (("25" in "0" to "5") or (("2" in "0" to "4" digit) or (maybe ("0" or "1") digit maybe digit)) ".") 
-    (("25" in "0" to "5") or (("2" in "0" to "4" digit) or (maybe ("0" or "1") digit maybe digit))) 
+    exactly 3 (("25" in "0" to "5") or (("2" in "0" to "4" digit) or (maybe ("0" or "1") digit maybe digit)) ".")
+    (("25" in "0" to "5") or (("2" in "0" to "4" digit) or (maybe ("0" or "1") digit maybe digit)))
       or (maybe (at least 0 ldd ld) ":" at least 1 (hexPart1 or ("\\" hexPart2)))
   "]")`)
 	checkNoError(t, err)

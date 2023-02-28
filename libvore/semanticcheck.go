@@ -173,6 +173,11 @@ func (s AstProcessNumber) check(info ProcessTypeInfo) ProcessTypeInfo {
 	return info
 }
 
+func (s AstProcessBoolean) check(info ProcessTypeInfo) ProcessTypeInfo {
+	info.currentType = PTBOOLEAN
+	return info
+}
+
 func (s AstProcessVariable) check(info ProcessTypeInfo) ProcessTypeInfo {
 	t, prs := info.environment[s.name]
 	if prs {

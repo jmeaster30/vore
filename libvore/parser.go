@@ -170,6 +170,11 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, error) {
 
 func parse_set_transform(tokens []*Token, token_index int) (AstSetBody, int, error) {
 	current_index := consumeIgnoreableTokens(tokens, token_index+1)
+
+	if tokens[current_index].TokenType == BEGIN {
+		current_index += 1
+	}
+
 	statements, next_index, err := parse_process_statements(tokens, current_index)
 	if err != nil {
 		return nil, next_index, err
@@ -296,7 +301,8 @@ func parse_expression(tokens []*Token, token_index int) (AstExpression, int, err
 		current_token.TokenType == WHITESPACE || current_token.TokenType == DIGIT ||
 		current_token.TokenType == UPPER || current_token.TokenType == LOWER ||
 		current_token.TokenType == LETTER || current_token.TokenType == LINE ||
-		current_token.TokenType == FILE || current_token.TokenType == WORD {
+		current_token.TokenType == FILE || current_token.TokenType == WORD ||
+		current_token.TokenType == WHOLE {
 		return parse_primary_or_dec(tokens, token_index)
 	}
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected 'at', 'between', 'exactly', 'maybe', 'in', '<string>', '<identifier>', or a character class ")
@@ -514,7 +520,8 @@ func parse_not_expression(tokens []*Token, token_index int) (AstExpression, int,
 		current_token.TokenType == WHITESPACE || current_token.TokenType == DIGIT ||
 		current_token.TokenType == UPPER || current_token.TokenType == LOWER ||
 		current_token.TokenType == LETTER || current_token.TokenType == LINE ||
-		current_token.TokenType == FILE || current_token.TokenType == WORD {
+		current_token.TokenType == FILE || current_token.TokenType == WORD ||
+		current_token.TokenType == WHOLE {
 		ast_chclass, idx, err := parse_character_class(tokens, new_index, true)
 		if err != nil {
 			return nil, idx, err
@@ -535,7 +542,8 @@ func parse_not_literal(tokens []*Token, token_index int) (AstLiteral, int, error
 		current_token.TokenType == WHITESPACE || current_token.TokenType == DIGIT ||
 		current_token.TokenType == UPPER || current_token.TokenType == LOWER ||
 		current_token.TokenType == LETTER || current_token.TokenType == LINE ||
-		current_token.TokenType == FILE || current_token.TokenType == WORD {
+		current_token.TokenType == FILE || current_token.TokenType == WORD ||
+		current_token.TokenType == WHOLE {
 		return parse_character_class(tokens, new_index, true)
 	} else {
 		return nil, new_index, NewParseError(*current_token, "Unexpected token. Expected 'in', <string>, <character class>")
@@ -617,7 +625,8 @@ func parse_literal(tokens []*Token, token_index int) (AstLiteral, int, error) {
 		current_token.TokenType == WHITESPACE || current_token.TokenType == DIGIT ||
 		current_token.TokenType == UPPER || current_token.TokenType == LOWER ||
 		current_token.TokenType == LETTER || current_token.TokenType == LINE ||
-		current_token.TokenType == FILE || current_token.TokenType == WORD {
+		current_token.TokenType == FILE || current_token.TokenType == WORD ||
+		current_token.TokenType == WHOLE {
 		return parse_character_class(tokens, token_index, false)
 	}
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected '(', '<string>', '<identifier>', or a character class.")
@@ -849,6 +858,19 @@ func parse_character_class(tokens []*Token, token_index int, not bool) (*AstChar
 			return &charClass, new_index + 1, nil
 		}
 		return nil, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'start' or 'end'")
+	} else if current_token.TokenType == WHOLE {
+		new_index := consumeIgnoreableTokens(tokens, token_index+1)
+		if tokens[new_index].TokenType == LINE {
+			charClass.classType = ClassWholeLine
+			return &charClass, new_index + 1, nil
+		} else if tokens[new_index].TokenType == FILE {
+			charClass.classType = ClassWholeFile
+			return &charClass, new_index + 1, nil
+		} else if tokens[new_index].TokenType == WORD {
+			charClass.classType = ClassWholeWord
+			return &charClass, new_index + 1, nil
+		}
+		return nil, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'file', 'line', or 'word'")
 	}
 	return nil, token_index, NewParseError(*tokens[token_index], "Unexpected token. Expected a character class: 'any', 'whitespace', 'digit', 'upper', 'lower', 'letter', 'line start', 'line end', 'file start', or 'file end'.")
 }
@@ -1011,6 +1033,10 @@ func parse_expr_pratt(tokens []*Token, index int, minPrecedence int) (AstProcess
 	var lhs AstProcessExpression
 	if tokens[index].TokenType == STRING {
 		lhs = AstProcessString{tokens[index].Lexeme}
+	} else if tokens[index].TokenType == TRUE {
+		lhs = AstProcessBoolean{true}
+	} else if tokens[index].TokenType == FALSE {
+		lhs = AstProcessBoolean{false}
 	} else if tokens[index].TokenType == NUMBER {
 		intval, err := strconv.Atoi(tokens[index].Lexeme)
 		if err != nil {

@@ -1,8 +1,6 @@
 package libvore
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestBigTest(t *testing.T) {
 	vore, err := Compile(`
