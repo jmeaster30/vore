@@ -4,21 +4,26 @@ on:
   push:
     branches: [ "main" ]
     paths:
+      - '.github/workflows/npm.yml'
       - 'libvorejs/**'
   pull_request:
     branches: [ "main" ]
     paths:
+      - '.github/workflows/npm.yml'
       - 'libvorejs/**'
 
 jobs:
   publish-npm:
-    needs: build
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./libvorejs
     steps:
       - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
       - uses: actions/setup-node@v3
         with:
           node-version: 16
