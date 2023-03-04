@@ -4,11 +4,11 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'libvore'
+      - 'libvore/*'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'libvore'
+      - 'libvore/*'
 
 jobs:
   build:

@@ -4,11 +4,11 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'libvorejs'
+      - 'libvorejs/**'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'libvorejs'
+      - 'libvorejs/**'
 
 jobs:
   publish-npm:
