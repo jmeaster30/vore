@@ -1,6 +1,7 @@
 # Getting Started
 
 ## Installation
+
 ---
 
 I don't know how go packaging and installation works so just install go and run the following commands to build the executable from source. `libvore` uses external dependencies other than `go` itself so you shouldn't have to worry about making sure anything else is installed.
@@ -12,17 +13,20 @@ go build .
 ```
 
 ## Basics of Command Line Interface
+
 ---
 
 The command line interface was meant to be designed for simplicity so there aren't any esoteric flags that control the things you need. Each flag has a name that describes what the flag is for.
 
 In the command line, run:
+
 ```bash
 ./vore -help
 ```
 
 Output:
-```
+
+```text
 Usage of vore:
   -com string
         Vore command to run on search files
@@ -44,8 +48,8 @@ Usage of vore:
         Vore source file to run on search files
 ```
 
-
 ### Hello World Vore Command
+
 ---
 
 Open a text editor for the file we want to search and add:
@@ -63,6 +67,7 @@ In the command line, run:
 ```
 
 ### Hello World Vore Source Script
+
 ---
 
 Open a text editor for the file we want to search and add:
@@ -90,6 +95,7 @@ In the command line, run:
 ```
 
 ### JSON Output To Console
+
 ---
 
 Follwing the section [Hello World Vore Source Script](#hello-world-vore-source-script).
@@ -101,6 +107,7 @@ In the command line, run:
 ```
 
 ### Formatted JSON Output To Console
+
 ---
 
 Follwing the section [Hello World Vore Source Script](#hello-world-vore-source-script).
@@ -112,6 +119,7 @@ In the command line, run:
 ```
 
 ### JSON Output To File
+
 ---
 
 Follwing the section [Hello World Vore Source Script](#hello-world-vore-source-script).
@@ -123,6 +131,7 @@ In the command line, run:
 ```
 
 ### Formatted JSON Output To File
+
 ---
 
 Follwing the section [Hello World Vore Source Script](#hello-world-vore-source-script).
