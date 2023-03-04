@@ -510,6 +510,9 @@ func parse_not_expression(tokens []*Token, token_index int) (AstExpression, int,
 
 	if current_token.TokenType == IN {
 		return parse_in(tokens, new_index, true)
+
+		// TODO I think these 2 cases are unneccessary we can just call not_literal
+		// TODO calling not_literal will help resolve the bug with not parsing this part correctly
 	} else if current_token.TokenType == STRING {
 		ast_str, idx, err := parse_string(tokens, new_index, true)
 		if err != nil {

@@ -95,7 +95,90 @@ Going through this made me realize that some of these are unused. There are also
 
 ## Grammar and Parsing
 
-TODO
+The parser used here is a hand-rolled parser. I was trying to do it fairly freeform so there was no formalism. The main part of the parser ended up being LL(1) I believe and then for expressions in the transforms and predicates are parsed with a really basic pratt parser.
+
+In the following grammar, grammar rules are lowercase with underscores and tokens are uppercase like they are in the table above.
+
+```text
+program -> command program 
+        |  EOF
+        .
+
+command -> FIND amount search_operations
+        |  REPLACE amount search_operations WITH replace_operations
+        |  SET IDENTIFIER TO set_follow
+        .
+
+search_operations -> search_operation search_operations
+                  |  search_operation
+                  .
+
+search_operation -> AT LEAST NUMBER search_operation
+                 |  AT MOST NUMBER search_operation
+                 |  BETWEEN NUMBER AND NUMBER search_operation
+                 |  EXACTLY NUMBER search_operation
+                 |  MAYBE search_operation
+                 |  IN list
+                 |  NOT follow_not
+                 |  subroutine
+                 |  primary
+                 .
+
+list -> list_item follow_list .
+
+follow_list -> COMMA list
+            |
+            .
+
+follow_not -> IN list
+           |  character_class_anchor follow_primary
+           |  STRING follow_primary
+           .
+
+subroutine -> OPENCURLY search_operations CLOSECURLY EQUAL IDENTIFIER .
+
+primary -> literal follow_primary .
+
+follow_primary -> EQUAL IDENTIFIER
+               |  OR literal_not_literal follow_or
+               |  
+               .
+
+follow_or -> OR literal_not_literal follow_or
+          |  
+          .
+
+literal_not_literal -> literal
+                    |  NOT character_class_anchor
+                    |  NOT STRING
+                    .
+
+literal -> OPENPAREN search_operations CLOSEDPAREN
+        |  character_class_anchor
+        |  STRING
+        |  IDENTIFIER
+        .
+
+character_class_anchor -> ANY
+                       |  WHITESPACE
+                       |  DIGIT
+                       |  UPPER
+                       |  LOWER
+                       |  LETTER
+                       |  LINE START
+                       |  LINE END
+                       |  FILE START
+                       |  FILE END
+                       |  WORD START
+                       |  WORD END
+                       |  WHOLE LINE
+                       |  WHOLE FILE
+                       |  WHOLE WORD
+                       .
+
+##### TODO set_follow replace_operations
+
+```
 
 ## Typechecking
 
