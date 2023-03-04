@@ -18,7 +18,7 @@ Whitespace characters in the source code is not necessary anywhere but it's use 
 |------------|-------|------|
 | WS | `\s` | `whitespace` |
 | COMMENT (single line) | `\-\-.*` | `'--' at least 0 any fewest line end` |
-| COMMENT (full line) | `\-\-\([\s\S]*?\)\-\-` | `'--(' at least 0 any fewest ')--'` |
+| COMMENT (block) | `\-\-\([\s\S]*?\)\-\-` | `'--(' at least 0 any fewest ')--'` |
 | IDENTIFIER | `[a-zA-Z][a-zA-Z0-9]*` | `letter at least 0 (letter or digit)` |
 | NUMBER | | |
 | STRING | `('\|")[\s\S]*?\1` | `("'" or '"') = quote at least 0 any fewest quote` |
