@@ -1,5 +1,4 @@
-
-## Syntax mapping from Regex to VORE
+# Syntax mapping from Regex to VORE
 
 Regex Syntax | VORE Syntax
 -------------|-------------

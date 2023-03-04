@@ -8,11 +8,31 @@ VORE is just a regular expression engine but with more readable syntax and some 
 
 ## Documentation
 
+### [Docs Home](docs/DocumentationHome.md)
+
 ### [Getting Started](docs/GettingStarted.md)
 
-### [Regex Comparison](docs/RegexComparison.md)
-
 ### [Examples](docs/examples/)
+
+### [Regex Comparison](docs/language/RegexComparison.md)
+
+## Project Structure
+
+### root
+
+The root of this repository is the CLI app which is all in the main.go file. It just adds a command line interface over `libvore`.
+
+### libvore
+
+The core library where the regular expression engine is implemented.
+
+### libvorejs
+
+The Javascript wrapper for `libvore` it compiles the Go code into WASM and uses webpack and npm to package everything together.
+
+### libvore-syntax-highlighter
+
+This is a really basic syntax highlighter extension for VSCode so you can look at nice colors while writing out Vore code.
 
 ## About VORE
 
