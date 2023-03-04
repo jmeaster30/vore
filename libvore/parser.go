@@ -875,7 +875,7 @@ func parse_character_class(tokens []*Token, token_index int, not bool) (*AstChar
 		}
 		return nil, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'file', 'line', or 'word'")
 	}
-	return nil, token_index, NewParseError(*tokens[token_index], "Unexpected token. Expected a character class: 'any', 'whitespace', 'digit', 'upper', 'lower', 'letter', 'line start', 'line end', 'file start', or 'file end'.")
+	return nil, token_index, NewParseError(*tokens[token_index], "Unexpected token. Expected a character class: 'any', 'whitespace', 'digit', 'upper', 'lower', 'letter', 'whole word', 'whole line', 'whole file', 'word start', 'word end', 'line start', 'line end', 'file start', or 'file end'.")
 }
 
 func parse_process_statements(tokens []*Token, index int) ([]AstProcessStatement, int, error) {
