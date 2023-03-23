@@ -23,16 +23,17 @@ func findMatches(insts []SearchInstruction, all bool, skip int, take int, last i
 		return Matches{}
 	}
 
-	// fmt.Println("Find Commnad Instructions")
-	// for i, inst := range insts {
-	// 	fmt.Printf("[%d] %v\n", i, inst)
-	// }
+	//fmt.Println("Find Commnad Instructions")
+	//for i, inst := range insts {
+	//	fmt.Printf("[%d] %+v\n", i, inst)
+	//}
 
 	for all || matchNumber < skip+take {
 		currentState := CreateState(filename, reader, fileOffset, lineNumber, columnNumber)
 		for currentState.status == INPROCESS {
 			inst := insts[currentState.programCounter]
 			currentState = inst.execute(currentState)
+			//fmt.Printf("PC: %d INST: %+v MATCH: '%s'\n", currentState.programCounter, inst, currentState.currentMatch)
 			if currentState.status == INPROCESS && currentState.programCounter >= len(insts) {
 				currentState.SUCCESS()
 			}
@@ -427,6 +428,7 @@ type StopLoop struct {
 }
 
 func (i StopLoop) adjust(offset int, state *GenState) SearchInstruction {
+	i.startLoop += offset
 	return i
 }
 func (i StopLoop) execute(current_state *SearchEngineState) *SearchEngineState {
