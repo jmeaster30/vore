@@ -1,4 +1,4 @@
--- creates a sql seeding script based on the cacodes.txt file
+-- Pulls the codes and descriptions from the cacodes.txt file
 
 set date to pattern 
     (exactly 2 digit "/" exactly 2 digit "/" exactly 4 digit)
