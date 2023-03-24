@@ -36,7 +36,7 @@ func VReaderFromFile(filename string) *VReader {
 	}
 
 	return &VReader{
-		contents: file,
+		contents: NewVBufferedFile(file, fileinfo.Size()),
 		offset:   0,
 		size:     int(fileinfo.Size()),
 	}

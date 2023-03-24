@@ -7,3 +7,6 @@ vore
 libvorejs/node_modules
 libvorejs/dist
 libvorejs/.gocache
+
+*.prof
+*.png
