@@ -4,7 +4,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 	"os"
+	"runtime/pprof"
 
 	"github.com/jmeaster30/vore/libvore"
 )
@@ -36,7 +38,7 @@ func main() {
 	out_fjson_arg := flag.Bool("formatted-json", false, "Output formatted JSON to STDOUT")
 	json_file_arg := flag.String("json-file", "", "JSON output file")
 	fjson_file_arg := flag.String("formatted-json-file", "", "Formatted JSON output file")
-	ide_arg := flag.Bool("ide", false, "Open source and files in vore ide")
+	profile_arg := flag.String("profile", "", "CPU Profile")
 	flag.Func("replace-mode", "File mode for replace statements [NEW, NOTHING, OVERWRITE] (default: NEW)", replaceMode)
 	flag.Parse()
 
@@ -47,13 +49,16 @@ func main() {
 	fjson_file := *fjson_file_arg
 	out_json := *out_json_arg
 	out_fjson := *out_fjson_arg
-	ide := *ide_arg
+	profile_file := *profile_arg
 	command := *command_arg
 
-	if ide {
-		fmt.Println("Sorry repl mode is not implemented :(")
-		flag.PrintDefaults()
-		os.Exit(1)
+	if profile_file != "" {
+		f, err := os.Create(profile_file)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
 	}
 
 	if len(files) == 0 {
