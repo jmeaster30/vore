@@ -171,6 +171,14 @@ func (l *AstLoop) generate(offset int, state *GenState) ([]SearchInstruction, er
 		return []SearchInstruction{}, gen_error
 	}
 
+	if l.min == l.max {
+		result := []SearchInstruction{}
+		for i := 0; i < l.max; i++ {
+			result = append(result, body...)
+		}
+		return result, nil
+	}
+
 	id := rand.Int63()
 
 	start := StartLoop{
