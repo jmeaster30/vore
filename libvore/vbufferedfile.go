@@ -88,6 +88,10 @@ func (v *VBufferedFile) Seek(offset int64, whence int) (int64, error) {
 		return v.currentOffset, errors.New("TODO seek from end of file not implemented")
 	}
 
+	if newOffset == -1 {
+		return v.currentOffset, errors.New("seeking to negative file offset")
+	}
+
 	if newOffset < v.minOffset || newOffset >= v.maxOffset {
 		newStart := newOffset - (v.bufferSize / 2)
 		if newStart < 0 {
