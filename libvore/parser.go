@@ -1111,7 +1111,7 @@ func getProcessExpressionTokens(tokens []*Token, index int) ([]*Token, int) {
 }
 
 func isProcessExprEnd(tokenType TokenType) bool {
-	return tokenType == SET || tokenType == THEN || tokenType == IF || tokenType == ELSE || tokenType == END || tokenType == DEBUG || tokenType == RETURN || tokenType == LOOP
+	return tokenType == SET || tokenType == THEN || tokenType == IF || tokenType == ELSE || tokenType == END || tokenType == DEBUG || tokenType == RETURN || tokenType == LOOP || tokenType == BREAK || tokenType == CONTINUE
 }
 
 func isPrefixOp(tokenType TokenType) bool {

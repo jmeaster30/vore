@@ -510,6 +510,7 @@ func (i EndSubroutine) execute(current_state *SearchEngineState) *SearchEngineSt
 			pstate = stmt.execute(pstate)
 			if pstate.status == RETURNING {
 				final_value = pstate.currentValue
+				break
 			}
 		}
 

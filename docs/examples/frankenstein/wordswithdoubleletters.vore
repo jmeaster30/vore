@@ -1,0 +1,19 @@
+set doubleLetterWords to pattern
+    whole word
+begin
+    set txt to match
+    loop
+        set prev to curr
+        set curr to head txt
+        set txt to tail txt
+        if curr == '' then
+            break
+        end
+        if prev == curr then
+            return true
+        end        
+    end
+    return false
+end 
+
+find all doubleLetterWords
