@@ -38,6 +38,7 @@ func main() {
 	out_fjson_arg := flag.Bool("formatted-json", false, "Output formatted JSON to STDOUT")
 	json_file_arg := flag.String("json-file", "", "JSON output file")
 	fjson_file_arg := flag.String("formatted-json-file", "", "Formatted JSON output file")
+	no_output_arg := flag.Bool("no-output", false, "Do not output any results")
 	profile_arg := flag.String("profile", "", "CPU Profile")
 	flag.Func("replace-mode", "File mode for replace statements [NEW, NOTHING, OVERWRITE] (default: NEW)", replaceMode)
 	flag.Parse()
@@ -49,6 +50,7 @@ func main() {
 	fjson_file := *fjson_file_arg
 	out_json := *out_json_arg
 	out_fjson := *out_fjson_arg
+	no_output := *no_output_arg
 	profile_file := *profile_arg
 	command := *command_arg
 
@@ -98,9 +100,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	//vore.PrintTokens()
-	//vore.PrintAST()
 	results := vore.RunFiles([]string{*files_arg}, replaceModeArg, process_filenames)
+
+	if no_output { // skip all output
+		return
+	}
+
 	if len(results) == 0 {
 		fmt.Println("There were no matches :(")
 	} else {
