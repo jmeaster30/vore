@@ -94,12 +94,20 @@ func (v *VBufferedFile) Seek(offset int64, whence int) (int64, error) {
 			newStart = 0
 		}
 
-		if newStart >= v.fileSize-4096 {
+		fileBound := v.fileSize - 4096
+		if fileBound < 0 {
+			fileBound = v.fileSize
+		}
+		if newStart >= fileBound {
 			newStart = v.fileSize - 4096
+			if newStart < 0 {
+				newStart = 0
+			}
 		}
 
 		bytesRead, err := v.file.ReadAt(v.buffer, newStart)
-		if err != nil {
+		// it is actually expected to have an EOF error here when we are working with a file that is less than 4096 bytes
+		if err != nil && err != io.EOF {
 			return v.currentOffset, err
 		}
 		v.minOffset = newStart

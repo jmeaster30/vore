@@ -33,7 +33,7 @@ func findMatches(insts []SearchInstruction, all bool, skip int, take int, last i
 		for currentState.status == INPROCESS {
 			inst := insts[currentState.programCounter]
 			currentState = inst.execute(currentState)
-			//fmt.Printf("PC: %d INST: %+v MATCH: '%s'\n", currentState.programCounter, inst, currentState.currentMatch)
+			//fmt.Printf("PC: %d INST: %+v STATE: %+v\n", currentState.programCounter, inst, currentState)
 			if currentState.status == INPROCESS && currentState.programCounter >= len(insts) {
 				currentState.SUCCESS()
 			}
