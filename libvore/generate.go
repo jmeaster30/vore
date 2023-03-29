@@ -166,17 +166,37 @@ func (s AstSetMatches) generate(state *GenState, id string) (SetCommandBody, err
 }
 
 func (l *AstLoop) generate(offset int, state *GenState) ([]SearchInstruction, error) {
-	body, gen_error := l.body.generate(offset+1, state)
+	result := []SearchInstruction{}
+
+	current_offset := offset
+	if l.min > 0 && l.name == "" {
+		for i := 0; i < l.min; i++ {
+			// I kinda hate generating this everytime but I also hate the other way where we have to adjust offset values to keep pointers in the body lined up
+			body, gen_error := l.body.generate(current_offset, state)
+			if gen_error != nil {
+				return []SearchInstruction{}, gen_error
+			}
+			result = append(result, body...)
+			current_offset += len(body)
+		}
+	}
+
+	if l.min == l.max && l.name == "" {
+		return result, nil
+	}
+
+	body, gen_error := l.body.generate(current_offset+1, state)
 	if gen_error != nil {
 		return []SearchInstruction{}, gen_error
 	}
 
-	if l.min == l.max {
-		result := []SearchInstruction{}
-		for i := 0; i < l.max; i++ {
-			result = append(result, body...)
-		}
-		return result, nil
+	newMin := l.min
+	if l.min > 0 && l.name == "" {
+		newMin = 0
+	}
+	newMax := l.max
+	if l.max > 0 && l.name == "" {
+		newMax = l.max - l.min
 	}
 
 	id := rand.Int63()
@@ -184,22 +204,22 @@ func (l *AstLoop) generate(offset int, state *GenState) ([]SearchInstruction, er
 	start := StartLoop{
 		id:       id,
 		name:     l.name,
-		minLoops: l.min,
-		maxLoops: l.max,
-		exitLoop: offset + len(body) + 1,
+		minLoops: newMin,
+		maxLoops: newMax,
+		exitLoop: current_offset + len(body) + 1,
 		fewest:   l.fewest,
 	}
 
 	stop := StopLoop{
 		id:        id,
 		name:      l.name,
-		minLoops:  l.min,
-		maxLoops:  l.max,
-		startLoop: offset,
+		minLoops:  newMin,
+		maxLoops:  newMax,
+		startLoop: current_offset,
 		fewest:    l.fewest,
 	}
 
-	result := []SearchInstruction{start}
+	result = append(result, start)
 	result = append(result, body...)
 	result = append(result, stop)
 	return result, nil
