@@ -436,7 +436,10 @@ func (es *SearchEngineState) MATCHOPTIONS(options []string, not bool) {
 
 func (es *SearchEngineState) MATCH(value string, not bool) {
 	comp := es.READ(len(value))
-	if value == comp {
+	if !not && value == comp {
+		es.CONSUME(len(value))
+		es.NEXT()
+	} else if not && value != comp {
 		es.CONSUME(len(value))
 		es.NEXT()
 	} else {
