@@ -1,0 +1,372 @@
+M143	The provider must update license information with the payer.
+Start: 01/01/1997 | Last Modified: 12/01/2006
+Notes: (Modified 12/1/06)
+M144	Pre-/post-operative care payment is included in the allowance for the surgery/procedure.
+Start: 01/01/1997
+MA01	Alert: If you do not agree with what we approved for these services, you may appeal our decision. To make sure that we are fair to you, we require another individual that did not process your initial claim to conduct the appeal. However, in order to be eligible for an appeal, you must write to us within 120 days of the date you received this notice, unless you have a good reason for being late.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 10/31/02, 6/30/03, 8/1/05, 4/1/07)
+MA02	Alert: If you do not agree with this determination, you have the right to appeal. You must file a written request for an appeal within 180 days of the date you receive this notice.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 10/31/02, 6/30/03, 8/1/05, 12/29/05, 8/1/06, 4/1/07)
+MA03	If you do not agree with the approved amounts and $100 or more is in dispute (less deductible and coinsurance), you may ask for a hearing within six months of the date of this notice. To meet the $100, you may combine amounts on other claims that have been denied, including reopened appeals if you received a revised decision. You must appeal each claim on time.
+Start: 01/01/1997 | Stop: 10/01/2006 | Last Modified: 11/18/2005
+Notes: Consider using MA02 (Modified 10/31/02, 6/30/03, 8/1/05, 11/18/05)
+MA04	Secondary payment cannot be considered without the identity of or payment information from the primary payer. The information was either not reported or was illegible.
+Start: 01/01/1997
+MA05	Incorrect admission date patient status or type of bill entry on claim.
+Start: 01/01/1997 | Stop: 10/16/2003
+Notes: Consider using MA30, MA40 or MA43
+MA06	Missing/incomplete/invalid beginning and/or ending date(s).
+Start: 01/01/1997 | Stop: 08/01/2004
+Notes: Consider using MA31
+MA07	Alert: The claim information has also been forwarded to Medicaid for review.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA08	Alert: Claim information was not forwarded because the supplemental coverage is not with a Medigap plan, or you do not participate in Medicare.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA09	Alert: Claim submitted as unassigned but processed as assigned in accordance with our current assignment/participation agreement.
+Start: 01/01/1997 | Last Modified: 11/01/2015
+Notes: (Modified 11/1/2014, 11/1/2015)
+MA10	Alert: The patient's payment was in excess of the amount owed. You must refund the overpayment to the patient.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA11	Payment is being issued on a conditional basis. If no-fault insurance, liability insurance, Workers' Compensation, Department of Veterans Affairs, or a group health plan for employees and dependents also covers this claim, a refund may be due us. Please contact us if the patient is covered by any of these sources.
+Start: 01/01/1997 | Stop: 01/31/2004
+Notes: Consider using M32
+MA12	You have not established that you have the right under the law to bill for services furnished by the person(s) that furnished this (these) service(s).
+Start: 01/01/1997
+MA13	Alert: You may be subject to penalties if you bill the patient for amounts not reported with the PR (patient responsibility) group code.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA14	Alert: The patient is a member of an employer-sponsored prepaid health plan. Services from outside that health plan are not covered. However, as you were not previously notified of this, we are paying this time. In the future, we will not pay you for non-plan services.
+Start: 01/01/1997 | Last Modified: 08/01/2007
+Notes: (Modified 4/1/07, 8/1/07)
+MA15	Alert: Your claim has been separated to expedite handling. You will receive a separate notice for the other services reported.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA16	The patient is covered by the Black Lung Program. Send this claim to the Department of Labor, Federal Black Lung Program, P.O. Box 828, Lanham-Seabrook MD 20703.
+Start: 01/01/1997
+MA17	We are the primary payer and have paid at the primary rate. You must contact the patient's other insurer to refund any excess it may have paid due to its erroneous primary payment.
+Start: 01/01/1997
+MA18	Alert: The claim information is also being forwarded to the patient's supplemental insurer. Send any questions regarding supplemental benefits to them.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA19	Alert: Information was not sent to the Medigap insurer due to incorrect/invalid information you submitted concerning that insurer. Please verify your information and submit your secondary claim directly to that insurer.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA20	Skilled Nursing Facility (SNF) stay not covered when care is primarily related to the use of an urethral catheter for convenience or the control of incontinence.
+Start: 01/01/1997 | Last Modified: 06/30/2003
+Notes: (Modified 6/30/03)
+MA21	SSA records indicate mismatch with name and sex.
+Start: 01/01/1997
+MA22	Payment of less than $1.00 suppressed.
+Start: 01/01/1997
+MA23	Demand bill approved as result of medical review.
+Start: 01/01/1997
+MA24	Christian Science Sanitarium/ Skilled Nursing Facility (SNF) bill in the same benefit period.
+Start: 01/01/1997 | Last Modified: 06/30/2003
+Notes: (Modified 6/30/03)
+MA25	A patient may not elect to change a hospice provider more than once in a benefit period.
+Start: 01/01/1997
+MA26	Alert: Our records indicate that you were previously informed of this rule.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA27	Missing/incomplete/invalid entitlement number or name shown on the claim.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA28	Alert: Receipt of this notice by a physician or supplier who did not accept assignment is for information only and does not make the physician or supplier a party to the determination. No additional rights to appeal this decision, above those rights already provided for by regulation/instruction, are conferred by receipt of this notice.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA29	Missing/incomplete/invalid provider name, city, state, or zip code.
+Start: 01/01/1997 | Stop: 06/02/2005
+MA30	Missing/incomplete/invalid type of bill.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA31	Missing/incomplete/invalid beginning and ending dates of the period billed.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA32	Missing/incomplete/invalid number of covered days during the billing period.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA33	Missing/incomplete/invalid non-covered days during the billing period.
+Start: 01/01/1997 | Last Modified: 03/01/2022
+Notes: (Modified 2/28/03, 3/1/2022)
+MA34	Missing/incomplete/invalid number of coinsurance days during the billing period.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA35	Missing/incomplete/invalid number of lifetime reserve days.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA36	Missing/incomplete/invalid patient name.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA37	Missing/incomplete/invalid patient's address.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA38	Missing/incomplete/invalid birth date.
+Start: 01/01/1997 | Stop: 06/02/2005
+MA39	Missing/incomplete/invalid gender.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA40	Missing/incomplete/invalid admission date.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA41	Missing/incomplete/invalid admission type.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA42	Missing/incomplete/invalid admission source.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA43	Missing/incomplete/invalid patient status.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA44	Alert: No appeal rights. Adjudicative decision based on law.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA45	Alert: As previously advised, a portion or all of your payment is being held in a special account.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA46	Alert: The new information was considered but additional payment will not be issued.
+Start: 01/01/1997 | Last Modified: 11/01/2015
+Notes: (Modified 3/1/2009, 11/1/2015)
+MA47	Our records show you have opted out of Medicare, agreeing with the patient not to bill Medicare for services/tests/supplies furnished. As result, we cannot pay this claim. The patient is responsible for payment.
+Start: 01/01/1997
+MA48	Missing/incomplete/invalid name or address of responsible party or primary payer.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA49	Missing/incomplete/invalid six-digit provider identifier for home health agency or hospice for physician(s) performing care plan oversight services.
+Start: 01/01/1997 | Stop: 08/01/2004
+Notes: Consider using MA76
+MA50	Missing/incomplete/invalid Investigational Device Exemption number or Clinical Trial number.
+Start: 01/01/1997 | Last Modified: 03/01/2014
+Notes: (Modified 2/28/03, 3/1/2014)
+MA51	Missing/incomplete/invalid CLIA certification number for laboratory services billed by physician office laboratory.
+Start: 01/01/1997 | Stop: 02/05/2005
+Notes: Consider using MA120
+MA52	Missing/incomplete/invalid date.
+Start: 01/01/1997 | Stop: 06/02/2005
+MA53	Missing/incomplete/invalid Competitive Bidding Demonstration Project identification.
+Start: 01/01/1997 | Last Modified: 02/01/2004
+Notes: (Modified 2/1/04)
+MA54	Physician certification or election consent for hospice care not received timely.
+Start: 01/01/1997
+MA55	Not covered as patient received medical health care services, automatically revoking his/her election to receive religious non-medical health care services.
+Start: 01/01/1997
+MA56	Our records show you have opted out of Medicare, agreeing with the patient not to bill Medicare for services/tests/supplies furnished. As result, we cannot pay this claim. The patient is responsible for payment, but under Federal law, you cannot charge the patient more than the limiting charge amount.
+Start: 01/01/1997
+MA57	Patient submitted written request to revoke his/her election for religious non-medical health care services.
+Start: 01/01/1997
+MA58	Missing/incomplete/invalid release of information indicator.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA59	Alert: The patient overpaid you for these services. You must issue the patient a refund within 30 days for the difference between his/her payment and the total amount shown as patient responsibility on this notice.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA60	Missing/incomplete/invalid patient relationship to insured.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA61	Missing/incomplete/invalid social security number.
+Start: 01/01/1997 | Last Modified: 03/01/2018
+Notes: (Modified 2/28/03, 3/1/2018)
+MA62	Alert: This is a telephone review decision.
+Start: 01/01/1997 | Last Modified: 08/01/2007
+Notes: (Modified 4/1/07, 8/1/07)
+MA63	Missing/incomplete/invalid principal diagnosis.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA64	Our records indicate that we should be the third payer for this claim. We cannot process this claim until we have received payment information from the primary and secondary payers.
+Start: 01/01/1997
+MA65	Missing/incomplete/invalid admitting diagnosis.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA66	Missing/incomplete/invalid principal procedure code.
+Start: 01/01/1997 | Last Modified: 12/02/2004
+Notes: (Modified 12/2/04) Related to N303
+MA67	Alert: Correction to a prior claim.
+Start: 01/01/1997 | Last Modified: 11/01/2015
+Notes: (Modified 11/1/2015)
+MA68	Alert: We did not crossover this claim because the secondary insurance information on the claim was incomplete. Please supply complete information or use the PLANID of the insurer to assure correct and timely routing of the claim.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA69	Missing/incomplete/invalid remarks.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA70	Missing/incomplete/invalid provider representative signature.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA71	Missing/incomplete/invalid provider representative signature date.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA72	Alert: The patient overpaid you for these assigned services. You must issue the patient a refund within 30 days for the difference between his/her payment to you and the total of the amount shown as patient responsibility and as paid to the patient on this notice.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA73	Informational remittance associated with a Medicare demonstration. No payment issued under fee-for-service Medicare as patient has elected managed care.
+Start: 01/01/1997
+MA74	Alert: This payment replaces an earlier payment for this claim that was either lost, damaged or returned.
+Start: 01/01/1997 | Last Modified: 07/01/2015
+Notes: (Modified 7/1/15)
+MA75	Missing/incomplete/invalid patient or authorized representative signature.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA76	Missing/incomplete/invalid provider identifier for home health agency or hospice when physician is performing care plan oversight services.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03, 2/1/04)
+MA77	Alert: The patient overpaid you. You must issue the patient a refund within 30 days for the difference between the patient's payment less the total of our and other payer payments and the amount shown as patient responsibility on this notice.
+Start: 01/01/1997 | Last Modified: 04/01/2007
+Notes: (Modified 4/1/07)
+MA78	The patient overpaid you. You must issue the patient a refund within 30 days for the difference between our allowed amount total and the amount paid by the patient.
+Start: 01/01/1997 | Stop: 01/31/2004
+Notes: Consider using MA59
+MA79	Billed in excess of interim rate.
+Start: 01/01/1997
+MA80	Informational notice. No payment issued for this claim with this notice. Payment issued to the hospital by its intermediary for all services for this encounter under a demonstration project.
+Start: 01/01/1997
+MA81	Missing/incomplete/invalid provider/supplier signature.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA82	Missing/incomplete/invalid provider/supplier billing number/identifier or billing name, address, city, state, zip code, or phone number.
+Start: 01/01/1997 | Stop: 06/02/2005
+MA83	Did not indicate whether we are the primary or secondary payer.
+Start: 01/01/1997 | Last Modified: 08/01/2005
+Notes: (Modified 8/1/05)
+MA84	Patient identified as participating in the National Emphysema Treatment Trial but our records indicate that this patient is either not a participant, or has not yet been approved for this phase of the study. Contact Johns Hopkins University, the study coordinator, to resolve if there was a discrepancy.
+Start: 01/01/1997
+MA85	Our records indicate that a primary payer exists (other than ourselves); however, you did not complete or enter accurately the insurance plan/group/program name or identification number. Enter the PlanID when effective.
+Start: 01/01/1997 | Stop: 08/01/2004
+Notes: Consider using MA92
+MA86	Missing/incomplete/invalid group or policy number of the insured for the primary coverage.
+Start: 01/01/1997 | Stop: 08/01/2004
+Notes: Consider using MA92
+MA87	Missing/incomplete/invalid insured's name for the primary payer.
+Start: 01/01/1997 | Stop: 08/01/2004
+Notes: Consider using MA92
+MA88	Missing/incomplete/invalid insured's address and/or telephone number for the primary payer.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA89	Missing/incomplete/invalid patient's relationship to the insured for the primary payer.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA90	Missing/incomplete/invalid employment status code for the primary insured.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03).
+MA91	Alert: This determination is the result of the appeal you filed.
+Start: 01/01/1997 | Last Modified: 07/01/2015
+Notes: (Modified 7/1/15)
+MA92	Missing plan information for other insurance.
+Start: 01/01/1997 | Last Modified: 02/01/2004
+Notes: (Modified 2/1/04) Related to N245
+MA93	Non-PIP (Periodic Interim Payment) claim.
+Start: 01/01/1997 | Last Modified: 06/30/2003
+Notes: (Modified 6/30/03)
+MA94	Did not enter the statement 'Attending physician not hospice employee' on the claim form to certify that the rendering physician is not an employee of the hospice.
+Start: 01/01/1997 | Last Modified: 08/01/2005
+Notes: (Reactivated 4/1/04, Modified 8/1/05)
+MA95	A not otherwise classified or unlisted procedure code(s) was billed but a narrative description of the procedure was not entered on the claim. Refer to item 19 on the HCFA-1500.
+Start: 01/01/1997 | Stop: 01/01/2004 | Last Modified: 02/28/2003
+Notes: (Deactivated 2/28/2003) (Erroneous description corrected 9/2/2008) Consider using M51
+MA96	Claim rejected. Coded as a Medicare Managed Care Demonstration but patient is not enrolled in a Medicare managed care plan.
+Start: 01/01/1997
+MA97	Missing/incomplete/invalid Medicare Managed Care Demonstration contract number or clinical trial registry number.
+Start: 01/01/1997 | Last Modified: 02/29/2008
+Notes: (Modified 2/29/08)
+MA98	Claim Rejected. Does not contain the correct Medicare Managed Care Demonstration contract number for this beneficiary.
+Start: 01/01/1997 | Stop: 10/16/2003
+Notes: Consider using MA97
+MA99	Missing/incomplete/invalid Medigap information.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA100	Missing/incomplete/invalid date of current illness or symptoms.
+Start: 01/01/1997 | Last Modified: 03/14/2014
+Notes: (Modified 2/28/03, 3/30/05, 3/14/2014)
+MA101	A Skilled Nursing Facility (SNF) is responsible for payment of outside providers who furnish these services/supplies to residents.
+Start: 01/01/1997 | Stop: 01/01/2011 | Last Modified: 06/30/2003
+Notes: Consider using N538
+MA102	Missing/incomplete/invalid name or provider identifier for the rendering/referring/ ordering/ supervising provider.
+Start: 01/01/1997 | Stop: 08/01/2004
+Notes: Consider using M68
+MA103	Hemophilia Add On.
+Start: 01/01/1997
+MA104	Missing/incomplete/invalid date the patient was last seen or the provider identifier of the attending physician.
+Start: 01/01/1997 | Stop: 01/31/2004
+Notes: Consider using M128 or M57
+MA105	Missing/incomplete/invalid provider number for this place of service.
+Start: 01/01/1997 | Stop: 06/02/2005
+MA106	PIP (Periodic Interim Payment) claim.
+Start: 01/01/1997 | Last Modified: 06/30/2003
+Notes: (Modified 6/30/03)
+MA107	Paper claim contains more than three separate data items in field 19.
+Start: 01/01/1997
+MA108	Paper claim contains more than one data item in field 23.
+Start: 01/01/1997
+MA109	Claim processed in accordance with ambulatory surgical guidelines.
+Start: 01/01/1997
+MA110	Missing/incomplete/invalid information on whether the diagnostic test(s) were performed by an outside entity or if no purchased tests are included on the claim.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA111	Missing/incomplete/invalid purchase price of the test(s) and/or the performing laboratory's name and address.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA112	Missing/incomplete/invalid group practice information.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA113	Incomplete/invalid taxpayer identification number (TIN) submitted by you per the Internal Revenue Service. Your claims cannot be processed without your correct TIN, and you may not bill the patient pending correction of your TIN. There are no appeal rights for unprocessable claims, but you may resubmit this claim after you have notified this office of your correct TIN.
+Start: 01/01/1997
+MA114	Missing/incomplete/invalid information on where the services were furnished.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA115	Missing/incomplete/invalid physical location (name and address, or PIN) where the service(s) were rendered in a Health Professional Shortage Area (HPSA).
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA116	Did not complete the statement 'Homebound' on the claim to validate whether laboratory services were performed at home or in an institution.
+Start: 01/01/1997
+Notes: (Reactivated 4/1/04)
+MA117	This claim has been assessed a $1.00 user fee.
+Start: 01/01/1997
+MA118	Alert: No Medicare payment issued for this claim for services or supplies furnished to a Medicare-eligible veteran through a facility of the Department of Veterans Affairs. Coinsurance and/or deductible are applicable.
+Start: 01/01/1997 | Last Modified: 11/01/2014
+MA119	Provider level adjustment for late claim filing applies to this claim.
+Start: 01/01/1997 | Stop: 05/01/2008 | Last Modified: 11/05/2007
+Notes: Consider using Reason Code B4
+MA120	Missing/incomplete/invalid CLIA certification number.
+Start: 01/01/1997 | Last Modified: 02/28/2003
+Notes: (Modified 2/28/03)
+MA121	Missing/incomplete/invalid x-ray date.
+Start: 01/01/1997 | Last Modified: 12/02/2004
+Notes: (Modified 12/2/04)
+MA122	Missing/incomplete/invalid initial treatment date.
+Start: 01/01/1997 | Last Modified: 12/02/2004
+Notes: (Modified 12/2/04)
+MA123	Your center was not selected to participate in this study, therefore, we cannot pay for these services.
+Start: 01/01/1997
+MA124	Processed for IME only.
+Start: 01/01/1997 | Stop: 01/31/2004
+Notes: Consider using Reason Code 74
+MA125	Per legislation governing this program, payment constitutes payment in full.
+Start: 01/01/1997
+MA126	Pancreas transplant not covered unless kidney transplant performed.
+Start: 10/12/2001
+MA127	Reserved for future use.
+Start: 10/12/2001 | Stop: 06/02/2005
+MA128	Missing/incomplete/invalid FDA approval number.
+Start: 10/12/2001 | Last Modified: 03/30/2005
+Notes: (Modified 2/28/03, 3/30/05)
+MA129	This provider was not certified for this procedure on this date of service.
+Start: 10/12/2001 | Stop: 01/31/2004 | Last Modified: 01/31/2004
+Notes: Consider using MA120 and Reason Code B7
+MA130	Your claim contains incomplete and/or invalid information, and no appeal rights are afforded because the claim is unprocessable. Please submit a new claim with the complete/correct information.
+Start: 10/12/2001
+MA131	Physician already paid for services in conjunction with this demonstration claim. You must have the physician withdraw that claim and refund the payment before we can process your claim.
+Start: 10/12/2001
+MA132	Adjustment to the pre-demonstration rate.
+Start: 10/12/2001
+MA133	Claim overlaps inpatient stay. Rebill only those services rendered outside the inpatient stay.
+Start: 10/12/2001
+MA134	Missing/incomplete/invalid provider number of the facility where the patient resides.
+Start: 10/12/2001
+N1	Alert: You may appeal this decision in writing within the required time limits following receipt of this notice by following the instructions included in your contract, plan benefit documents or jurisdiction statutes. Refer to the URL provided in the ERA for the payer website to access the appeals process guidelines.
+Start: 01/01/2000 | Last Modified: 07/01/2018
+Notes: (Modified 2/28/03, 4/1/07, 7/15/13, 7/1/18)
+N2	This allowance has been made in accordance with the most appropriate course of treatment provision of the plan.
+Start: 01/01/2000

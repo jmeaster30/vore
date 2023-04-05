@@ -66,8 +66,9 @@ func (v *VBufferedFile) Read(p []byte) (int, error) {
 		panic("THIS SHOULDN'T HAPPEN I DON'T THINK... EOF?")
 	}
 
+	// This probably doesn't work if we are reading over 8kb in one go. Will need to make this more sophisticated
 	for v.currentOffset < v.maxOffset && outputOffset < outputSize {
-		p[outputOffset] = v.buffer[v.currentOffset]
+		p[outputOffset] = v.buffer[v.currentOffset-v.minOffset]
 		v.currentOffset += 1
 		outputOffset += 1
 	}

@@ -23,7 +23,7 @@ func findMatches(insts []SearchInstruction, all bool, skip int, take int, last i
 		return Matches{}
 	}
 
-	//fmt.Println("Find Commnad Instructions")
+	//fmt.Println("Find Command Instructions")
 	//for i, inst := range insts {
 	//	fmt.Printf("[%d] %+v\n", i, inst)
 	//}
