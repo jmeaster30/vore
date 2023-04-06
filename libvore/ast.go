@@ -118,13 +118,16 @@ type AstSetBody interface {
 }
 
 type AstSetPattern struct {
-	pattern AstExpression
+	pattern []AstExpression
 	body    []AstProcessStatement
 }
 
 func (b AstSetPattern) print() {
 	fmt.Print("(pattern ")
-	b.pattern.print()
+	for _, val := range b.pattern {
+		val.print()
+		fmt.Print(" ")
+	}
 	fmt.Print(") (predicate")
 	for _, stmt := range b.body {
 		fmt.Print(" ")

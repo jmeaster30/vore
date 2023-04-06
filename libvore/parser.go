@@ -189,14 +189,22 @@ func parse_set_transform(tokens []*Token, token_index int) (AstSetBody, int, err
 
 func parse_set_pattern(tokens []*Token, token_index int) (AstSetBody, int, error) {
 	current_index := consumeIgnoreableTokens(tokens, token_index+1)
-	expr, next_index, err := parse_expression(tokens, current_index)
-	if err != nil {
-		return nil, next_index, err
+
+	pattern := []AstExpression{}
+	for tokens[current_index].TokenType != FIND && tokens[current_index].TokenType != REPLACE &&
+		tokens[current_index].TokenType != SET && tokens[current_index].TokenType != EOF &&
+		tokens[current_index].TokenType != BEGIN {
+		expr, next_index, err := parse_expression(tokens, current_index)
+		if err != nil {
+			return nil, next_index, err
+		}
+		pattern = append(pattern, expr)
+		current_index = consumeIgnoreableTokens(tokens, next_index)
 	}
 
-	current_index = consumeIgnoreableTokens(tokens, next_index)
+	current_index = consumeIgnoreableTokens(tokens, current_index)
 	if tokens[current_index].TokenType != BEGIN {
-		return &AstSetPattern{expr, []AstProcessStatement{}}, current_index, err
+		return &AstSetPattern{pattern, []AstProcessStatement{}}, current_index, nil
 	}
 
 	statements, next_index, err := parse_process_statements(tokens, current_index+1)
@@ -208,7 +216,7 @@ func parse_set_pattern(tokens []*Token, token_index int) (AstSetBody, int, error
 		return nil, next_index, NewParseError(*tokens[next_index], "Unexpected token. Expected 'end'.")
 	}
 
-	return &AstSetPattern{expr, statements}, next_index + 1, err
+	return &AstSetPattern{pattern, statements}, next_index + 1, nil
 }
 
 func parse_set_matches(tokens []*Token, token_index int) (AstSetBody, int, error) {

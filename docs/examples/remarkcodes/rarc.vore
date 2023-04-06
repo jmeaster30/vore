@@ -1,6 +1,5 @@
--- TODO make it so we don't need the parentheses here
 set mmddyyyy to pattern
-    (exactly 2 digit '/' exactly 2 digit '/' exactly 4 digit)
+    exactly 2 digit '/' exactly 2 digit '/' exactly 4 digit
 
 replace all
     line start (letter at least 1 digit) = code '\t' (at least 1 not '\n' fewest) = desc '\n'

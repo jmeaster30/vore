@@ -121,9 +121,16 @@ func (s AstSetTransform) generate(state *GenState, id string) (SetCommandBody, e
 func (s AstSetPattern) generate(state *GenState, id string) (SetCommandBody, error) {
 	state.variables = make(map[string]int)
 
-	searchInstructions, err := s.pattern.generate(0, state)
-	if err != nil {
-		return nil, err
+	searchInstructions := []SearchInstruction{}
+	offset := 0
+	for _, val := range s.pattern {
+		part, err := val.generate(offset, state)
+		if err != nil {
+			return nil, err
+		}
+
+		offset += len(part)
+		searchInstructions = append(searchInstructions, part...)
 	}
 
 	state.globalSubroutines[id] = GeneratedPattern{searchInstructions, s.body}
