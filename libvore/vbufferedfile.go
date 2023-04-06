@@ -46,31 +46,21 @@ func (v *VBufferedFile) Read(p []byte) (int, error) {
 	// there is probably a fancier way to do this
 	outputOffset := 0
 	outputSize := len(p)
-	for v.currentOffset < v.maxOffset && outputOffset < outputSize {
-		p[outputOffset] = v.buffer[v.currentOffset-v.minOffset]
-		v.currentOffset += 1
-		outputOffset += 1
-	}
+	for {
+		for v.currentOffset < v.maxOffset && outputOffset < outputSize {
+			p[outputOffset] = v.buffer[v.currentOffset-v.minOffset]
+			v.currentOffset += 1
+			outputOffset += 1
+		}
 
-	if outputOffset == outputSize {
-		return outputOffset, nil
-	}
+		if outputOffset == outputSize {
+			break
+		}
 
-	// resizes buffer
-	_, err := v.Seek(0, io.SeekCurrent)
-	if err != nil {
-		return outputOffset, err
-	}
-
-	if v.currentOffset == v.maxOffset {
-		panic("THIS SHOULDN'T HAPPEN I DON'T THINK... EOF?")
-	}
-
-	// This probably doesn't work if we are reading over 8kb in one go. Will need to make this more sophisticated
-	for v.currentOffset < v.maxOffset && outputOffset < outputSize {
-		p[outputOffset] = v.buffer[v.currentOffset-v.minOffset]
-		v.currentOffset += 1
-		outputOffset += 1
+		_, err := v.Seek(0, io.SeekCurrent) // we seek to where we are now to recenter the buffer
+		if err != nil {
+			return outputOffset, err
+		}
 	}
 
 	return outputOffset, nil
