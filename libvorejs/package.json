@@ -1,6 +1,6 @@
 {
   "name": "@jmeaster30/libvorejs",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "libvore wrapper for JavaScript",
   "main": "dist/libvore.js",
   "types": "dist/libvore.d.ts",
@@ -35,9 +35,10 @@
     "clean-webpack-plugin": "^4.0.0",
     "copy-webpack-plugin": "^11.0.0",
     "prettier": "^2.8.3",
-    "webpack": "^5.75.0",
+    "webpack": "^5.76.0",
     "webpack-cli": "^5.0.1",
     "webpack-node-externals": "^3.0.0",
-    "webpack-watch-files-plugin": "^1.2.1"
+    "webpack-watch-files-plugin": "^1.2.1",
+    "which": "^3.0.0"
   }
 }

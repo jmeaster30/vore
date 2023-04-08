@@ -1,6 +1,7 @@
 const {readFileSync, unlinkSync} = require("fs");
 const {join} = require("path");
 const {execFile} = require("child_process");
+const which = require('which');
 
 const proxyBuilder = (wasmFile) => `
 require('../lib/wasm_exec.js');
@@ -71,7 +72,7 @@ function loadwasm(bytes) {
 export default loadwasm('${wasmFile}');
 `;
 
-module.exports = function loader(contents) {
+module.exports = async function loader(contents) {
   const cb = this.async();
 
   const opts = {
@@ -87,7 +88,9 @@ module.exports = function loader(contents) {
   const outFile = `${this.resourcePath}.wasm`;
   const args = ["build", "-o", outFile, this.resourcePath];
 
-  execFile("go", args, opts, (err) => {
+  execFile(which.sync('go'), args, opts, (err, stdout, stderr) => {
+    console.log(stdout)
+    console.log(stderr)
     console.log("compiled")
     if (err) {
       cb(err);
