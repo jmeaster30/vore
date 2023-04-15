@@ -1,10 +1,31 @@
 set mmddyyyy to pattern
     exactly 2 digit '/' exactly 2 digit '/' exactly 4 digit
 
+set fixDesc to function
+    set remaining to desc
+    if remaining == "" then
+        return desc
+    end
+    loop
+        set a to head remaining
+        set remaining to tail remaining
+        if a == "'" then 
+            set result to result + "'"
+        end
+        set result to result + a
+        if remaining == "" then 
+            break
+        end
+    end
+    return result
+end
+
 replace all
-    line start (letter at least 1 digit) = code '\t' (at least 1 not '\n' fewest) = desc '\n'
+    line start (between 1 and 2 letter at least 1 digit) = code '\t' (at least 1 not '\n' fewest) = desc '\n'
     'Start: ' mmddyyyy = startDate 
     maybe (' | Stop: ' mmddyyyy = stopDate)
     maybe (' | Last Modified: ' mmddyyyy = lastModified) '\n'
     maybe ('Notes: ' (at least 1 not '\n' fewest) = notes '\n')
-with code '\n'
+with 
+    "insert into remittanceadviceremarkcodes(code, desc, startdate, stopdate, lastmodifieddate, notes) \n\tvalues ('"
+    code "', '" fixDesc "', '" startDate "', '" stopDate "', '" lastModified "', '" notes "');\n"
