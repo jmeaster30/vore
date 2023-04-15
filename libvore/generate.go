@@ -406,8 +406,9 @@ func (l *AstRange) generate(offset int, state *GenState) ([]SearchInstruction, e
 
 func (l *AstString) generate(offset int, state *GenState) ([]SearchInstruction, error) {
 	result := MatchLiteral{
-		toFind: l.value,
-		not:    l.not,
+		toFind:   l.value,
+		not:      l.not,
+		caseless: l.caseless,
 	}
 	return []SearchInstruction{result}, nil
 }

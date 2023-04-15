@@ -191,8 +191,9 @@ type ReplaceInstruction interface {
 }
 
 type MatchLiteral struct {
-	not    bool
-	toFind string
+	not      bool
+	toFind   string
+	caseless bool
 }
 
 func (i MatchLiteral) adjust(offset int, state *GenState) SearchInstruction {
@@ -200,7 +201,7 @@ func (i MatchLiteral) adjust(offset int, state *GenState) SearchInstruction {
 }
 func (i MatchLiteral) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
-	next_state.MATCH(i.toFind, i.not)
+	next_state.MATCH(i.toFind, i.not, i.caseless)
 	return next_state
 }
 

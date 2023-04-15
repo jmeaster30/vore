@@ -364,3 +364,20 @@ x, y, z`)
 		}},
 	})
 }
+
+func TestCaseless(t *testing.T) {
+	vore, err := Compile("find all caseless 'test'")
+	checkNoError(t, err)
+	results := vore.Run(`
+		this is a test
+		this is a TEST
+		this is a Test
+		this is a tEsT
+	`)
+	matches(t, results, []TestMatch{
+		{13, "test", None[string](), []TestVar{}},
+		{30, "TEST", None[string](), []TestVar{}},
+		{47, "Test", None[string](), []TestVar{}},
+		{64, "tEsT", None[string](), []TestVar{}},
+	})
+}

@@ -199,4 +199,5 @@ func TestTokenTypePP(t *testing.T) {
 	ppMatch(t, TRUE, "TRUE")
 	ppMatch(t, FALSE, "FALSE")
 	ppMatch(t, WHOLE, "WHOLE")
+	ppMatch(t, CASELESS, "CASELESS")
 }

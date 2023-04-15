@@ -2,6 +2,7 @@ package libvore
 
 import (
 	"strconv"
+	"strings"
 )
 
 type Status int
@@ -434,12 +435,20 @@ func (es *SearchEngineState) MATCHOPTIONS(options []string, not bool) {
 	}
 }
 
-func (es *SearchEngineState) MATCH(value string, not bool) {
+func compare(a string, b string, caseless bool) bool {
+	if caseless {
+		return strings.EqualFold(a, b)
+	} else {
+		return a == b
+	}
+}
+
+func (es *SearchEngineState) MATCH(value string, not bool, caseless bool) {
 	comp := es.READ(len(value))
-	if !not && value == comp {
+	if !not && compare(value, comp, caseless) {
 		es.CONSUME(len(value))
 		es.NEXT()
-	} else if not && value != comp {
+	} else if not && !compare(value, comp, caseless) {
 		es.CONSUME(len(value))
 		es.NEXT()
 	} else {
@@ -455,7 +464,7 @@ func (es *SearchEngineState) MATCHVAR(name string) {
 		// TODO add syntax for indexing hash maps but also I want something a bit better than just failing here
 		es.BACKTRACK()
 	} else {
-		es.MATCH(value.String().Value, false)
+		es.MATCH(value.String().Value, false, false)
 	}
 }
 

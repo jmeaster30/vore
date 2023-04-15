@@ -310,7 +310,7 @@ func parse_expression(tokens []*Token, token_index int) (AstExpression, int, err
 		current_token.TokenType == UPPER || current_token.TokenType == LOWER ||
 		current_token.TokenType == LETTER || current_token.TokenType == LINE ||
 		current_token.TokenType == FILE || current_token.TokenType == WORD ||
-		current_token.TokenType == WHOLE {
+		current_token.TokenType == WHOLE || current_token.TokenType == CASELESS {
 		return parse_primary_or_dec(tokens, token_index)
 	}
 	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected 'at', 'between', 'exactly', 'maybe', 'in', '<string>', '<identifier>', or a character class ")
@@ -617,6 +617,8 @@ func parse_listable(tokens []*Token, token_index int) (AstListable, int, error) 
 		}
 		return &r, new_index, nil
 
+	} else if current_token.TokenType == CASELESS {
+		return parse_caseless(tokens, token_index)
 	} else if isListableClass(current_token.TokenType) {
 		return parse_character_class(tokens, token_index, false)
 	}
@@ -627,6 +629,8 @@ func parse_literal(tokens []*Token, token_index int) (AstLiteral, int, error) {
 	current_token := tokens[token_index]
 	if current_token.TokenType == STRING {
 		return parse_string(tokens, token_index, false)
+	} else if current_token.TokenType == CASELESS {
+		return parse_caseless(tokens, token_index)
 	} else if current_token.TokenType == IDENTIFIER {
 		return parse_variable(tokens, token_index)
 	} else if current_token.TokenType == OPENPAREN {
@@ -719,10 +723,27 @@ func parse_atom(tokens []*Token, token_index int) (AstAtom, int, error) {
 	current_token := tokens[token_index]
 	if current_token.TokenType == STRING {
 		return parse_string(tokens, token_index, false)
+	} else if current_token.TokenType == CASELESS {
+		return parse_caseless(tokens, token_index)
 	} else if current_token.TokenType == IDENTIFIER {
 		return parse_variable(tokens, token_index)
 	}
-	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected '<string>' or '<identifier>'.")
+	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected 'caseless', '<string>', or '<identifier>'.")
+}
+
+func parse_caseless(tokens []*Token, token_index int) (*AstString, int, error) {
+	next_index := consumeIgnoreableTokens(tokens, token_index+1)
+	if tokens[next_index].TokenType != STRING {
+		return nil, next_index, NewParseError(*tokens[next_index], "Unexpected token. Expected <string> after the 'caseless' keyword.")
+	}
+
+	s := AstString{
+		false,
+		tokens[next_index].Lexeme,
+		true,
+	}
+
+	return &s, next_index + 1, nil
 }
 
 func parse_string(tokens []*Token, token_index int, not bool) (*AstString, int, error) {

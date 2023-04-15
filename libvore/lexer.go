@@ -76,6 +76,7 @@ const (
 	BEGIN
 
 	// keywords
+	CASELESS
 	NOT
 	AT
 	LEAST
@@ -254,6 +255,8 @@ func (t TokenType) PP() string {
 		return "TRUE"
 	case FALSE:
 		return "FALSE"
+	case CASELESS:
+		return "CASELESS"
 	default:
 		panic("UNKNOWN TOKEN TYPE")
 	}
@@ -658,6 +661,8 @@ func (s *Lexer) getNextToken() (*Token, error) {
 			token.TokenType = FALSE
 		case "whole":
 			token.TokenType = WHOLE
+		case "caseless":
+			token.TokenType = CASELESS
 		}
 	case SWHITESPACE:
 		token.TokenType = WS

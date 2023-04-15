@@ -270,8 +270,9 @@ func (r AstRange) print() {
 }
 
 type AstString struct {
-	not   bool
-	value string
+	not      bool
+	value    string
+	caseless bool
 }
 
 func (s AstString) isLiteral()  {}
