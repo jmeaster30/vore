@@ -1,0 +1,16 @@
+-- Run on a text file of numbers and the resulting file will do FizzBuzz on all the numbers in the file
+
+set FizzBuzz to transform
+  if match % 15 == 0 then
+    return 'FizzBuzz'
+  end 
+  if match % 5 == 0 then
+    return 'Buzz'
+  end 
+  if match % 3 == 0 then
+    return 'Fizz'
+  end
+  return match
+end
+
+replace all at least 1 digit with FizzBuzz
