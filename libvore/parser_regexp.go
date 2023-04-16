@@ -118,7 +118,7 @@ func parse_regexp_pattern(regexp_token *Token, regexp string, index int) (AstExp
 		if comma_or_brace == ',' {
 			if regexp[idx+1] == '}' {
 				exp = &AstLoop{from, -1, false, &AstPrimary{start}, ""}
-				end_idx = idx + 1
+				end_idx = idx + 2
 			} else {
 				to, idx2, err := parse_regexp_number(regexp_token, regexp, idx+1)
 				if err != nil {
