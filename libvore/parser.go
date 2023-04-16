@@ -304,6 +304,8 @@ func parse_expression(tokens []*Token, token_index int) (AstExpression, int, err
 		return parse_subroutine(tokens, token_index)
 	} else if current_token.TokenType == NOT {
 		return parse_not_expression(tokens, token_index)
+	} else if current_token.TokenType == REGEXP {
+		return parse_regexp(tokens, token_index)
 	} else if current_token.TokenType == STRING || current_token.TokenType == IDENTIFIER ||
 		current_token.TokenType == OPENPAREN || current_token.TokenType == ANY ||
 		current_token.TokenType == WHITESPACE || current_token.TokenType == DIGIT ||

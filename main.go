@@ -100,6 +100,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	//vore.PrintAST()
+
 	results := vore.RunFiles([]string{*files_arg}, replaceModeArg, process_filenames)
 
 	if no_output { // skip all output

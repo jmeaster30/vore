@@ -381,3 +381,85 @@ func TestCaseless(t *testing.T) {
 		{64, "tEsT", None[string](), []TestVar{}},
 	})
 }
+
+func TestRegexp(t *testing.T) {
+	vore, err := Compile("find all @/a+b*/")
+	checkNoError(t, err)
+	results := vore.Run("aaabbb ab a")
+	matches(t, results, []TestMatch{
+		{0, "aaabbb", None[string](), []TestVar{}},
+		{7, "ab", None[string](), []TestVar{}},
+		{10, "a", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp2(t *testing.T) {
+	vore, err := Compile("find all @/a*?b/")
+	checkNoError(t, err)
+	results := vore.Run("aaabbb ab a")
+	matches(t, results, []TestMatch{
+		{0, "aaab", None[string](), []TestVar{}},
+		{4, "b", None[string](), []TestVar{}},
+		{5, "b", None[string](), []TestVar{}},
+		{7, "ab", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp3(t *testing.T) {
+	vore, err := Compile("find all @/a+?b?/")
+	checkNoError(t, err)
+	results := vore.Run("aaabbb ab a")
+	matches(t, results, []TestMatch{
+		{0, "a", None[string](), []TestVar{}},
+		{1, "a", None[string](), []TestVar{}},
+		{2, "ab", None[string](), []TestVar{}},
+		{7, "ab", None[string](), []TestVar{}},
+		{10, "a", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp4(t *testing.T) {
+	vore, err := Compile("find all @/a{4,7}/")
+	checkNoError(t, err)
+	results := vore.Run(`aaaaaaaa
+	aaa aaaaaa`)
+	matches(t, results, []TestMatch{
+		{0, "aaaaaaa", None[string](), []TestVar{}},
+		{14, "aaaaaa", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp5(t *testing.T) {
+	vore, err := Compile("find all @/a{4,}/")
+	checkNoError(t, err)
+	results := vore.Run(`aaaaaaaa
+	aaa aaaaaa`)
+	matches(t, results, []TestMatch{
+		{0, "aaaaaaaa", None[string](), []TestVar{}},
+		{14, "aaaaaa", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp6(t *testing.T) {
+	vore, err := Compile("find all @/a{4}/")
+	checkNoError(t, err)
+	results := vore.Run(`aaaaaaaa
+	aaa aaaaaa`)
+	matches(t, results, []TestMatch{
+		{0, "aaaa", None[string](), []TestVar{}},
+		{4, "aaaa", None[string](), []TestVar{}},
+		{14, "aaaa", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp7(t *testing.T) {
+	vore, err := Compile("find all @/a{4,}?/")
+	checkNoError(t, err)
+	results := vore.Run(`aaaaaaaa
+	aaa aaaaaa`)
+	matches(t, results, []TestMatch{
+		{0, "aaaa", None[string](), []TestVar{}},
+		{4, "aaaa", None[string](), []TestVar{}},
+		{14, "aaaa", None[string](), []TestVar{}},
+	})
+}

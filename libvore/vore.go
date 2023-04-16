@@ -293,7 +293,7 @@ func printString(str ValueString) {
 func (m Match) Print() {
 	fmt.Printf("Filename: %s\n", m.Filename)
 	fmt.Printf("MatchNumber: %d\n", m.MatchNumber)
-	fmt.Printf("Value: %s\n", m.Value)
+	fmt.Printf("Value: '%s'\n", m.Value)
 	if m.Replacement.HasValue() {
 		fmt.Printf("Replaced: %s\n", m.Replacement.GetValue())
 	}

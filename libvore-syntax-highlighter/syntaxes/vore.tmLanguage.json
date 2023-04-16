@@ -28,6 +28,9 @@
 		},
 		{
 			"include": "#sinstrings"
+		},
+		{ 
+			"include": "#regexp"
 		}
 	],
 	"repository": {
@@ -99,6 +102,11 @@
 					"match": "\\\\."
 				}
 			]
+		},
+		"regexp": {
+			"name": "constant.regexp",
+			"begin": "@/",
+			"end": "/"
 		}
 	},
 	"scopeName": "source.vore"

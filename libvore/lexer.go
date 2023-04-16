@@ -22,6 +22,7 @@ const (
 	IDENTIFIER
 	NUMBER
 	STRING
+	REGEXP
 
 	// misc
 	EQUAL
@@ -257,6 +258,8 @@ func (t TokenType) PP() string {
 		return "FALSE"
 	case CASELESS:
 		return "CASELESS"
+	case REGEXP:
+		return "REGEXP"
 	default:
 		panic("UNKNOWN TOKEN TYPE")
 	}
@@ -350,6 +353,7 @@ func (s *Lexer) getNextToken() (*Token, error) {
 		SDASH
 		SOPERATOR
 		SOPERATORSTART
+		SREGEXP
 		SERROR
 		SEND
 	)
@@ -527,8 +531,23 @@ func (s *Lexer) getNextToken() (*Token, error) {
 		} else if current_state == SCOMMENTSTART {
 			s.unread_last()
 			current_state = SCOMMENT
+		} else if current_state == SSTART && ch == '@' {
+			next_ch := s.read()
+			if next_ch != '/' {
+				s.unread_last()
+				current_state = SERROR
+				break
+			}
+			curr_ch := s.read()
+			for curr_ch != '/' {
+				buf.WriteRune(curr_ch)
+				curr_ch = s.read()
+			}
+
+			current_state = SREGEXP
+			break
 		} else {
-			if current_state != SSTART || unicode.IsDigit(ch) || unicode.IsLetter(ch) || unicode.IsSpace(ch) || ch == '(' || ch == ')' || ch == '{' || ch == '}' || ch == ',' || ch == ':' || ch == '=' || ch == '"' || ch == '\'' || ch == '-' || ch == '+' || ch == '<' || ch == '>' || ch == '*' || ch == '/' || ch == '%' {
+			if current_state != SSTART || unicode.IsDigit(ch) || unicode.IsLetter(ch) || unicode.IsSpace(ch) || ch == '(' || ch == ')' || ch == '{' || ch == '}' || ch == ',' || ch == ':' || ch == '=' || ch == '"' || ch == '\'' || ch == '-' || ch == '+' || ch == '<' || ch == '>' || ch == '*' || ch == '/' || ch == '%' || ch == '@' {
 				s.unread_last()
 			} else {
 				buf.WriteRune(ch)
@@ -555,6 +574,8 @@ func (s *Lexer) getNextToken() (*Token, error) {
 		token.TokenType = STRING
 	case SNUMBER:
 		token.TokenType = NUMBER
+	case SREGEXP:
+		token.TokenType = REGEXP
 	case SIDENTIFIER:
 		token.TokenType = IDENTIFIER
 		lexeme := strings.ToLower(buf.String())
