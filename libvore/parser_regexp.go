@@ -97,38 +97,24 @@ func parse_regexp_pattern(regexp_token *Token, regexp string, index int) (AstExp
 	}
 
 	op := regexp[next_index]
+	var end_idx int
+	var exp *AstLoop
 	if op == '*' {
-		fewest := next_index+1 < len(regexp) && regexp[next_index+1] == '?'
-		exp := &AstLoop{0, -1, fewest, &AstPrimary{start}, ""}
-		if fewest {
-			return exp, next_index + 2, nil
-		} else {
-			return exp, next_index + 1, nil
-		}
+		exp = &AstLoop{0, -1, false, &AstPrimary{start}, ""}
+		end_idx = next_index + 1
 	} else if op == '+' {
-		fewest := next_index+1 < len(regexp) && regexp[next_index+1] == '?'
-		exp := &AstLoop{1, -1, fewest, &AstPrimary{start}, ""}
-		if fewest {
-			return exp, next_index + 2, nil
-		} else {
-			return exp, next_index + 1, nil
-		}
+		exp = &AstLoop{1, -1, false, &AstPrimary{start}, ""}
+		end_idx = next_index + 1
 	} else if op == '?' {
-		fewest := next_index+1 < len(regexp) && regexp[next_index+1] == '?'
-		exp := &AstLoop{0, 1, fewest, &AstPrimary{start}, ""}
-		if fewest {
-			return exp, next_index + 2, nil
-		} else {
-			return exp, next_index + 1, nil
-		}
+		exp = &AstLoop{0, 1, false, &AstPrimary{start}, ""}
+		end_idx = next_index + 1
 	} else if op == '{' {
 		from, idx, err := parse_regexp_number(regexp_token, regexp, next_index+1)
 		if err != nil {
 			return nil, idx, err
 		}
 		comma_or_brace := regexp[idx]
-		var end_idx int
-		var exp *AstLoop
+
 		if comma_or_brace == ',' {
 			if regexp[idx+1] == '}' {
 				exp = &AstLoop{from, -1, false, &AstPrimary{start}, ""}
@@ -150,18 +136,27 @@ func parse_regexp_pattern(regexp_token *Token, regexp string, index int) (AstExp
 			exp = &AstLoop{from, from, false, &AstPrimary{start}, ""}
 			end_idx = idx + 1
 		}
-		exp.fewest = end_idx+1 < len(regexp) && regexp[end_idx+1] == '?'
-		if exp.fewest {
-			return exp, end_idx + 2, nil
-		} else {
-			return exp, end_idx + 1, nil
-		}
 	} else if op == '|' {
 		end, idx, err := parse_regexp_pattern(regexp_token, regexp, next_index+1)
 		return &AstBranch{start, end}, idx, err
+	} else {
+		return &AstPrimary{start}, next_index, nil
+	}
+	exp.fewest = end_idx < len(regexp) && regexp[end_idx] == '?'
+	if exp.fewest {
+		end_idx += 1
 	}
 
-	return &AstPrimary{start}, next_index, nil
+	if end_idx < len(regexp) {
+		if regexp[end_idx] == '|' {
+			end, idx, err := parse_regexp_pattern(regexp_token, regexp, end_idx+1)
+			return &AstBranch{&AstSubExpr{[]AstExpression{exp}}, end}, idx, err
+		} else {
+			return exp, end_idx, nil
+		}
+	} else {
+		return exp, end_idx, nil
+	}
 }
 
 func parse_regexp_number(regexp_token *Token, regexp string, index int) (int, int, error) {
