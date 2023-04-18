@@ -463,3 +463,14 @@ func TestRegexp7(t *testing.T) {
 		{14, "aaaa", None[string](), []TestVar{}},
 	})
 }
+
+func TestRegexp8(t *testing.T) {
+	vore, err := Compile("find all @/.{3}/")
+	checkNoError(t, err)
+	results := vore.Run(`12312312312`)
+	matches(t, results, []TestMatch{
+		{0, "123", None[string](), []TestVar{}},
+		{3, "123", None[string](), []TestVar{}},
+		{6, "123", None[string](), []TestVar{}},
+	})
+}

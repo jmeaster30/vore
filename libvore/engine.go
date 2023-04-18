@@ -445,10 +445,11 @@ func compare(a string, b string, caseless bool) bool {
 
 func (es *SearchEngineState) MATCH(value string, not bool, caseless bool) {
 	comp := es.READ(len(value))
+
 	if !not && compare(value, comp, caseless) {
 		es.CONSUME(len(value))
 		es.NEXT()
-	} else if not && !compare(value, comp, caseless) {
+	} else if not && !compare(value, comp, caseless) && len(comp) > 0 {
 		es.CONSUME(len(value))
 		es.NEXT()
 	} else {
