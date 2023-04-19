@@ -4,63 +4,11 @@ import (
 	"strconv"
 )
 
-// This is mostly built off of the ECMAScript spec for regular expressions
-// https://262.ecma-international.org/13.0/#sec-patterns
-// this was mostly because it was the easiest to find the grammar
-
 /*
+   This is mostly built off of the ECMAScript spec for regular expressions
+   https://262.ecma-international.org/13.0/#sec-patterns
 
-PATTERN :: DISJUNCTION
-
-DISJUNCTION :: ALTERNATIVE
-			:: ALTERNATIVE | DISJUNCTION
-
-ALTERNATIVE :: [empty]
-			:: ALTERNATIVE TERM
-
-TERM :: ASSERTION
-	 :: ATOM
-	 :: ATOM QUANTIFIER
-
-ASSERTION :: ^
-		  :: $
-		  :: \ b
-		  :: \ B
-		  :: ( ? = DISJUNCTION )
-		  :: ( ? ! DISJUNCTION )
-		  :: ( ? < = DISJUNCTION )
-		  :: ( ? < ! DISJUNCTION )
-
-QUANTIFIER :: QUANTIFIERPREFIX
-		   :: QUANTIFIERPREFIX ?
-
-QUANTIFIERPREFIX :: *
-			     :: +
-				 :: ?
-				 :: { DECIMALDIGITS }
-				 :: { DECIMALDIGITS , }
-				 :: { DECIMALDIGITS , DECIMALDIGITS }
-
-ATOM :: PATTERNCHARACTER
-	 :: .
-	 :: \ ATOMESCAPE
-	 :: CHARACTERCLASS
-	 :: ( GROUPSPECIFIER DISJUNCTION )
-	 :: ( ? : DISJUNCTION )
-
-SYNTAXCHARACTER :: one of ^ $ \ . * + ? ( ) [ ] { }
-
-PATTERNCHARACTER :: any single character except for SYNTAXCHARACTER
-
-ATOMESCAPE :: unimplemented
-
-CHARACTERCLASS :: unimplemented
-
-GROUPSPECIFIER :: [empty]
-			   :: ? GROUPNAME
-
-GROUPNAME :: < IDENTIFIER >     -- will break ECMAScript standard here and just do the same style identifiers in vore
-
+   I will be making some changes to the grammar but I do want it to be as close to the specification as possible
 */
 
 func parse_regexp(tokens []*Token, token_index int) (AstExpression, int, error) {
@@ -155,6 +103,20 @@ func parse_regexp_literal(regexp_token *Token, regexp string, index int) (AstExp
 		}
 		exp.body = &AstPrimary{start}
 		return exp, idx, nil
+	} else if c == '[' {
+		start, next_index, err := parse_regexp_character_class(regexp_token, regexp, index+1)
+		if err != nil {
+			return nil, next_index, err
+		}
+		exp, idx, err := parse_regexp_quantifier(regexp_token, regexp, next_index)
+		if err != nil {
+			return nil, idx, err
+		}
+		if exp == nil {
+			return start, idx, nil
+		}
+		exp.body = start
+		return exp, idx, nil
 	} else if c == '.' {
 		start = &AstString{true, "\n", false}
 		next_index += 1
@@ -180,6 +142,89 @@ func parse_regexp_literal(regexp_token *Token, regexp string, index int) (AstExp
 		exp.body = &AstPrimary{start}
 		return exp, idx, nil
 	}
+}
+
+func parse_regexp_character_class(regexp_token *Token, regexp string, index int) (AstExpression, int, error) {
+	if index >= len(regexp) {
+		return nil, index, NewParseError(*regexp_token, "Unexpected end of regexp")
+	}
+
+	next_index := index
+	notin := false
+	if regexp[next_index] == '^' {
+		notin = true
+		next_index += 1
+	}
+
+	if next_index >= len(regexp) {
+		return nil, index, NewParseError(*regexp_token, "Unexpected end of regexp")
+	}
+
+	results := []AstListable{}
+	for next_index < len(regexp) && regexp[next_index] != ']' {
+		listable, idx, err := parse_regexp_class_ranges(regexp_token, regexp, next_index)
+		if err != nil {
+			return nil, idx, err
+		}
+		results = append(results, listable)
+		next_index = idx
+	}
+
+	if next_index >= len(regexp) {
+		return nil, next_index, NewParseError(*regexp_token, "Unexpected end of regexp")
+	}
+
+	if len(results) == 0 {
+		results = append(results, &AstCharacterClass{true, ClassAny})
+	}
+
+	next_index += 1
+
+	return &AstList{notin, results}, next_index, nil
+}
+
+func parse_regexp_class_ranges(regexp_token *Token, regexp string, index int) (AstListable, int, error) {
+	if regexp[index] == '\\' {
+		return parse_regexp_class_atom_escape(regexp_token, regexp, index)
+	} else {
+		start, next_index, err := parse_regexp_class_atom_string(regexp_token, regexp, index)
+		if err != nil {
+			return nil, next_index, err
+		}
+
+		if next_index >= len(regexp) {
+			return start, next_index, err
+		}
+
+		if regexp[next_index] == '-' {
+			to, end_index, err := parse_regexp_class_atom_string(regexp_token, regexp, next_index+1)
+			if err != nil {
+				return nil, end_index, err
+			}
+
+			if to == nil {
+				return start, next_index, nil
+			}
+
+			return &AstRange{start, to}, end_index, nil
+		}
+
+		return start, next_index, err
+	}
+}
+
+func parse_regexp_class_atom_escape(regexp_token *Token, regexp string, index int) (AstListable, int, error) {
+	if index+1 >= len(regexp) {
+		return nil, index + 1, NewParseError(*regexp_token, "Unexpected end of regexp")
+	}
+	panic("PARSE ESCAPE CHARACTER")
+}
+
+func parse_regexp_class_atom_string(regexp_token *Token, regexp string, index int) (*AstString, int, error) {
+	if regexp[index] == ']' {
+		return nil, index, nil
+	}
+	return &AstString{false, string(regexp[index]), false}, index + 1, nil
 }
 
 func parse_regexp_quantifier(regexp_token *Token, regexp string, index int) (*AstLoop, int, error) {

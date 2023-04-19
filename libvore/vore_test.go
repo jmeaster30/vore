@@ -474,3 +474,44 @@ func TestRegexp8(t *testing.T) {
 		{6, "123", None[string](), []TestVar{}},
 	})
 }
+
+func TestRegexp9(t *testing.T) {
+	vore, err := Compile("find all @/[^]*/")
+	checkNoError(t, err)
+	results := vore.Run(`1231231
+	2312`)
+	matches(t, results, []TestMatch{
+		{0, `1231231
+	2312`, None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp10(t *testing.T) {
+	vore, err := Compile("find all @/[abc]*/")
+	checkNoError(t, err)
+	results := vore.Run(`123aabbcc986`)
+	matches(t, results, []TestMatch{
+		{3, `aabbcc`, None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp11(t *testing.T) {
+	vore, err := Compile("find all @/[a-z]{0,2}/")
+	checkNoError(t, err)
+	results := vore.Run("IT WILL CATCH this AND it WILL GET me")
+	matches(t, results, []TestMatch{
+		{14, "th", None[string](), []TestVar{}},
+		{16, "is", None[string](), []TestVar{}},
+		{23, "it", None[string](), []TestVar{}},
+		{35, "me", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp12(t *testing.T) {
+	vore, err := Compile("find all @/[a-]*/")
+	checkNoError(t, err)
+	results := vore.Run(`123aa--a-ac986`)
+	matches(t, results, []TestMatch{
+		{3, `aa--a-a`, None[string](), []TestVar{}},
+	})
+}
