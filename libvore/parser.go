@@ -520,29 +520,8 @@ func parse_not_expression(tokens []*Token, token_index int) (AstExpression, int,
 
 	if current_token.TokenType == IN {
 		return parse_in(tokens, new_index, true)
-
-		// TODO I think these 2 cases are unneccessary we can just call not_literal
-		// TODO calling not_literal will help resolve the bug with not parsing this part correctly
-		// I like adding comments :)
-	} else if current_token.TokenType == STRING {
-		ast_str, idx, err := parse_string(tokens, new_index, true)
-		if err != nil {
-			return nil, idx, err
-		}
-		return &AstPrimary{literal: ast_str}, idx, err
-	} else if current_token.TokenType == ANY ||
-		current_token.TokenType == WHITESPACE || current_token.TokenType == DIGIT ||
-		current_token.TokenType == UPPER || current_token.TokenType == LOWER ||
-		current_token.TokenType == LETTER || current_token.TokenType == LINE ||
-		current_token.TokenType == FILE || current_token.TokenType == WORD ||
-		current_token.TokenType == WHOLE {
-		ast_chclass, idx, err := parse_character_class(tokens, new_index, true)
-		if err != nil {
-			return nil, idx, err
-		}
-		return &AstPrimary{literal: ast_chclass}, idx, err
 	} else {
-		return nil, new_index, NewParseError(*current_token, "Unexpected token. Expected 'in', <string>, <character class>")
+		return parse_primary_or_dec(tokens, token_index)
 	}
 }
 

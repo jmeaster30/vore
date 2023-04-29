@@ -571,3 +571,16 @@ func TestRegexp18(t *testing.T) {
 	results := vore.Run("This is not a match")
 	matches(t, results, []TestMatch{})
 }
+
+func TestNotExpressionDeclaration(t *testing.T) {
+	vore, err := Compile("find all not letter = wow")
+	checkNoError(t, err)
+	results := vore.Run("123 &abc")
+	matches(t, results, []TestMatch{
+		{0, "1", None[string](), []TestVar{{"wow", "1"}}},
+		{1, "2", None[string](), []TestVar{{"wow", "2"}}},
+		{2, "3", None[string](), []TestVar{{"wow", "3"}}},
+		{3, " ", None[string](), []TestVar{{"wow", " "}}},
+		{4, "&", None[string](), []TestVar{{"wow", "&"}}},
+	})
+}
