@@ -515,3 +515,59 @@ func TestRegexp12(t *testing.T) {
 		{3, `aa--a-a`, None[string](), []TestVar{}},
 	})
 }
+
+func TestRegexp13(t *testing.T) {
+	vore, err := Compile("find all @/test/")
+	checkNoError(t, err)
+	results := vore.Run("this is a test")
+	matches(t, results, []TestMatch{
+		{10, "test", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp14(t *testing.T) {
+	vore, err := Compile("find all @/a|b/")
+	checkNoError(t, err)
+	results := vore.Run("abc")
+	matches(t, results, []TestMatch{
+		{0, "a", None[string](), []TestVar{}},
+		{1, "b", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp15(t *testing.T) {
+	vore, err := Compile("find all @/^test/")
+	checkNoError(t, err)
+	results := vore.Run("test a test")
+	matches(t, results, []TestMatch{
+		{0, "test", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp16(t *testing.T) {
+	vore, err := Compile("find all @/test$/")
+	checkNoError(t, err)
+	results := vore.Run("test a test")
+	matches(t, results, []TestMatch{
+		{7, "test", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp17(t *testing.T) {
+	vore, err := Compile("find all @/[^abc]*/")
+	checkNoError(t, err)
+	results := vore.Run("I really hate the abc's")
+	matches(t, results, []TestMatch{
+		{0, "I re", None[string](), []TestVar{}},
+		{5, "lly h", None[string](), []TestVar{}},
+		{11, "te the ", None[string](), []TestVar{}},
+		{21, "'s", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp18(t *testing.T) {
+	vore, err := Compile("find all @/[]/")
+	checkNoError(t, err)
+	results := vore.Run("This is not a match")
+	matches(t, results, []TestMatch{})
+}

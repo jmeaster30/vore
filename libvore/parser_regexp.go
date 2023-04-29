@@ -275,10 +275,14 @@ func parse_regexp_quantifier(regexp_token *Token, regexp string, index int) (*As
 		exp = nil
 		end_idx = index
 	}
-	exp.fewest = end_idx < len(regexp) && regexp[end_idx] == '?'
-	if exp.fewest {
-		end_idx += 1
+
+	if exp != nil {
+		exp.fewest = end_idx < len(regexp) && regexp[end_idx] == '?'
+		if exp.fewest {
+			end_idx += 1
+		}
 	}
+
 	return exp, end_idx, nil
 }
 
