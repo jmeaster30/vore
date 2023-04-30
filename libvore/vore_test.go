@@ -584,3 +584,77 @@ func TestNotExpressionDeclaration(t *testing.T) {
 		{4, "&", None[string](), []TestVar{{"wow", "&"}}},
 	})
 }
+
+func TestRegexp19(t *testing.T) {
+	vore, err := Compile("find all @/(?<test>a|b)/ test")
+	checkNoError(t, err)
+	results := vore.Run("aabaccabjjbb")
+	matches(t, results, []TestMatch{
+		{0, "aa", None[string](), []TestVar{{"test", "a"}}},
+		{10, "bb", None[string](), []TestVar{{"test", "b"}}},
+	})
+}
+
+func TestRegexp20(t *testing.T) {
+	vore, err := Compile("find all ('a' or 'b') = test @/\\k<test>/")
+	checkNoError(t, err)
+	results := vore.Run("aabaccabjjbb")
+	matches(t, results, []TestMatch{
+		{0, "aa", None[string](), []TestVar{{"test", "a"}}},
+		{10, "bb", None[string](), []TestVar{{"test", "b"}}},
+	})
+}
+
+func TestBranchVariable(t *testing.T) {
+	vore, err := Compile("find all ('a' or 'b') = test test")
+	checkNoError(t, err)
+	results := vore.Run("aabaccabjjbb")
+	matches(t, results, []TestMatch{
+		{0, "aa", None[string](), []TestVar{{"test", "a"}}},
+		{10, "bb", None[string](), []TestVar{{"test", "b"}}},
+	})
+}
+
+func TestRegexp21(t *testing.T) {
+	vore, err := Compile("find all at least 1 @/\\d/")
+	checkNoError(t, err)
+	results := vore.Run("1234abc567")
+	matches(t, results, []TestMatch{
+		{0, "1234", None[string](), []TestVar{}},
+		{7, "567", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp22(t *testing.T) {
+	vore, err := Compile("find all at least 1 @/\\D/")
+	checkNoError(t, err)
+	results := vore.Run("1234abc567")
+	matches(t, results, []TestMatch{
+		{4, "abc", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp23(t *testing.T) {
+	vore, err := Compile("find all at least 1 @/\\s/")
+	checkNoError(t, err)
+	results := vore.Run(`12 34a	bc
+567`)
+	matches(t, results, []TestMatch{
+		{2, " ", None[string](), []TestVar{}},
+		{6, "\t", None[string](), []TestVar{}},
+		{9, "\n", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp24(t *testing.T) {
+	vore, err := Compile("find all at least 1 @/\\S/")
+	checkNoError(t, err)
+	results := vore.Run(`12 34a	bc
+567`)
+	matches(t, results, []TestMatch{
+		{0, "12", None[string](), []TestVar{}},
+		{3, "34a", None[string](), []TestVar{}},
+		{7, "bc", None[string](), []TestVar{}},
+		{10, "567", None[string](), []TestVar{}},
+	})
+}

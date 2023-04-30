@@ -4,9 +4,11 @@ import (
 	"strconv"
 )
 
+var capture_group_number int = 0
+
 func parse(tokens []*Token) ([]AstCommand, error) {
 	commands := []AstCommand{}
-
+	capture_group_number = 0
 	token_index := 0
 	for token_index < len(tokens)-1 {
 		ws_index := consumeIgnoreableTokens(tokens, token_index)

@@ -377,7 +377,7 @@ func (es *SearchEngineState) MATCHRANGE(from string, to string, not bool) {
 
 	for i := max; i >= min; i-- {
 		value := es.READ(i)
-		if from <= value && value <= to {
+		if (from <= value && value <= to && !not) || ((from > value || value > to) && not) {
 			es.CONSUME(i)
 			es.NEXT()
 			return

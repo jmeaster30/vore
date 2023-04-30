@@ -1,7 +1,9 @@
 package libvore
 
 import (
+	"fmt"
 	"strconv"
+	"unicode"
 )
 
 /*
@@ -15,15 +17,9 @@ func parse_regexp(tokens []*Token, token_index int) (AstExpression, int, error) 
 	regexp_token := tokens[token_index]
 	regexp := regexp_token.Lexeme
 
-	index := 0
-	results := []AstExpression{}
-	for index < len(regexp) {
-		exp, next_index, err := parse_regexp_pattern(regexp_token, regexp, index)
-		if err != nil {
-			return nil, next_index, err
-		}
-		results = append(results, exp)
-		index = next_index
+	results, _, err := parse_regexp_disjunction(regexp_token, regexp, 0)
+	if err != nil {
+		return nil, token_index, err
 	}
 
 	s := &AstPrimary{
@@ -31,6 +27,20 @@ func parse_regexp(tokens []*Token, token_index int) (AstExpression, int, error) 
 	}
 
 	return s, token_index + 1, nil
+}
+
+func parse_regexp_disjunction(regexp_token *Token, regexp string, index int) ([]AstExpression, int, error) {
+	current_index := index
+	results := []AstExpression{}
+	for current_index < len(regexp) && regexp[current_index] != ')' {
+		exp, next_index, err := parse_regexp_pattern(regexp_token, regexp, current_index)
+		if err != nil {
+			return nil, next_index, err
+		}
+		results = append(results, exp)
+		current_index = next_index
+	}
+	return results, current_index, nil
 }
 
 func parse_regexp_pattern(regexp_token *Token, regexp string, index int) (AstExpression, int, error) {
@@ -287,9 +297,114 @@ func parse_regexp_quantifier(regexp_token *Token, regexp string, index int) (*As
 }
 
 func parse_regexp_escape_characters(regexp_token *Token, regexp string, index int) (AstLiteral, int, error) {
-	return nil, index, nil
+	c := regexp[index]
+	if c >= '1' && c <= '9' {
+		if index+1 >= len(regexp) {
+			return &AstVariable{fmt.Sprintf("_%c", c)}, index + 1, nil
+		}
+		d := regexp[index+1]
+		if d >= '0' && d <= '9' {
+			return &AstVariable{fmt.Sprintf("_%c%c", c, d)}, index + 2, nil
+		}
+		return &AstVariable{fmt.Sprintf("_%c", c)}, index + 1, nil
+	} else if c == 'd' {
+		return &AstCharacterClass{false, ClassDigit}, index + 1, nil
+	} else if c == 'D' {
+		return &AstCharacterClass{true, ClassDigit}, index + 1, nil
+	} else if c == 's' {
+		return &AstCharacterClass{false, ClassWhitespace}, index + 1, nil
+	} else if c == 'S' {
+		return &AstCharacterClass{true, ClassWhitespace}, index + 1, nil
+	} else if c == 'w' {
+		return &AstCharacterClass{false, ClassLetter}, index + 1, nil // This isn't the word class
+	} else if c == 'W' {
+		return &AstCharacterClass{true, ClassLetter}, index + 1, nil // This isn't the word class
+	} else if c == 'b' {
+		return &AstSubExpr{[]AstExpression{&AstBranch{&AstCharacterClass{false, ClassWordStart}, &AstPrimary{&AstCharacterClass{false, ClassWordEnd}}}}}, index + 1, nil
+	} else if c == 'B' {
+		return &AstSubExpr{[]AstExpression{&AstList{true, []AstListable{&AstCharacterClass{false, ClassWordStart}, &AstCharacterClass{false, ClassWordEnd}}}}}, index + 1, nil
+	} else if c == 'k' {
+		d := regexp[index+1]
+		if d != '<' {
+			return nil, index + 1, NewParseError(*regexp_token, "Expected a < character for named group reference")
+		}
+		// named capture group
+		current_index := index + 2
+		current := regexp[current_index]
+		identifier := ""
+		for unicode.IsDigit(rune(current)) || unicode.IsLetter(rune(current)) {
+			identifier += string(current)
+			current_index += 1
+			current = regexp[current_index]
+		}
+		if regexp[current_index] != '>' {
+			return nil, current_index, NewParseError(*regexp_token, "Unexpected charactrer in named capture group identifier.")
+		}
+		return &AstVariable{identifier}, current_index + 1, nil
+	} else {
+		return &AstString{false, string(c), false}, index + 1, nil
+	}
 }
 
 func parse_regexp_groups(regexp_token *Token, regexp string, index int) (AstLiteral, int, error) {
-	return nil, index, nil
+	// already consumed the parenthesis
+	c := regexp[index]
+	if c == '?' {
+		marker := regexp[index+1]
+		if marker == ':' {
+			// non capture group
+			subexpr, next_index, err := parse_regexp_disjunction(regexp_token, regexp, index+2)
+			if err != nil {
+				return nil, next_index, err
+			}
+			if regexp[next_index] != ')' {
+				return nil, next_index, NewParseError(*regexp_token, "Expected end parenthesis")
+			}
+			return &AstSubExpr{subexpr}, next_index + 1, nil
+		} else if marker == '=' {
+			panic("Positive lookahead unimplemented")
+		} else if marker == '!' {
+			panic("Negative lookahead unimplemented")
+		} else if marker == '<' {
+			// lookbehind or named capture group
+			a := regexp[index+2]
+			if a == '=' {
+				panic("Positive lookbehind unimplemented")
+			} else if a == '!' {
+				panic("Negative lookahead unimplemented")
+			} else {
+				// named capture group
+				current_index := index + 2
+				current := regexp[current_index]
+				identifier := ""
+				for unicode.IsDigit(rune(current)) || unicode.IsLetter(rune(current)) {
+					identifier += string(current)
+					current_index += 1
+					current = regexp[current_index]
+				}
+				if regexp[current_index] != '>' {
+					return nil, current_index, NewParseError(*regexp_token, "Unexpected charactrer in named capture group identifier.")
+				}
+				body, next_index, err := parse_regexp_disjunction(regexp_token, regexp, current_index+1)
+				if err != nil {
+					return nil, next_index, err
+				}
+				if regexp[next_index] != ')' {
+					return nil, next_index, NewParseError(*regexp_token, "Expected end parenthesis")
+				}
+				return &AstSubExpr{[]AstExpression{&AstDec{identifier, &AstSubExpr{body}}}}, next_index + 1, nil
+			}
+		}
+		panic("THIS IS A TEST WE SHOULDN'T HIT THIS")
+	}
+
+	subexpr, next_index, err := parse_regexp_disjunction(regexp_token, regexp, index)
+	if err != nil {
+		return nil, next_index, err
+	}
+	if regexp[next_index] != ')' {
+		return nil, next_index, NewParseError(*regexp_token, "Expected end parenthesis")
+	}
+	capture_group_number += 1
+	return &AstSubExpr{[]AstExpression{&AstDec{fmt.Sprintf("_%d", capture_group_number), &AstSubExpr{subexpr}}}}, next_index + 1, nil
 }
