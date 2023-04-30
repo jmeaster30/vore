@@ -50,7 +50,7 @@ In the above example you can see the functionality of replacing text but it also
 
 >Vore find statement:
 >
->```find all line start (at least zero any) = myLine line end```
+>```find all line start (at least 0 any) = myLine line end```
 >
 >Equivalent regular expression
 >
