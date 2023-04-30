@@ -25,10 +25,11 @@ View some examples of vore code and some examples of converting regex to vore
     1. [Transform Functions](TODO.md)
     1. [Matches](TODO.md)
 
-## Operators
+## Search Operations
 
 1. [Literals](TODO.md)
     1. [Strings](TODO.md)
+    1. [Caseless](TODO.md)
     1. [Character Classes](TODO.md)
     1. [Not](TODO.md)
 1. [List](TODO.md)

@@ -109,6 +109,17 @@ command -> FIND amount search_operations
         |  SET IDENTIFIER TO set_follow
         .
 
+amount -> all
+       | skip NUMBER amount_follow
+       | top NUMBER
+       | take NUMBER
+       | last NUMBER
+       .
+
+amount_follow -> take NUMBER 
+              | 
+              .
+
 search_operations -> search_operation search_operations
                   |  search_operation
                   .
@@ -122,6 +133,7 @@ search_operation -> AT LEAST NUMBER search_operation
                  |  NOT follow_not
                  |  subroutine
                  |  primary
+                 |  @/ regexp /
                  .
 
 list -> list_item follow_list .
@@ -176,10 +188,116 @@ character_class_anchor -> ANY
                        |  WHOLE WORD
                        .
 
-##### TODO set_follow replace_operations
+regexp -> <https://262.ecma-international.org/13.0/#sec-patterns>
+        .
+
+set_follow -> PATTERN set_pattern
+           |  MATCHES command
+           |  TRANSFORM set_function
+           |  FUNCTION set_function
+           . 
+
+set_pattern -> search_operations
+            |  search_operations BEGIN process_statements END
+            .
+
+set_function -> BEGIN process_statements END
+             |  process_statements END
+             .
+
+replace_operations -> replace_operation replace_operations
+                   |  
+                   .
+
+replace_operation -> STRING
+                  |  IDENTIFIER
+                  .
+
+process_statements -> process_statement process_statements
+                   |  
+                   .
+
+process_statement -> SET IDENTIFIER TO 
+                  |  IF process_expression THEN process_statements END
+                  |  IF process_expression THEN process_statements ELSE process_statements END
+                  |  RETURN process_expression
+                  |  DEBUG process_expression
+                  |  LOOP process_statements END
+                  |  BREAK
+                  |  CONTINUE
+                  .
+
+process_expression -> <pratt parser>
+                   .
 
 ```
 
 ## Typechecking
 
-TODO
+There are 3 types in Vore: strings, numbers, and booleans. The goal is you don't really need to think about types so Vore uses type inferrence and type coersion in order to make the type system nearly invisible.
+
+### Type Coersion
+
+Type coersion will coerse types to make a sensible result. As stated above the idea is that the resulting types makes the most sense.
+
+In the following table, italicized types are coerced.
+
+| LH Operand   | Operator | RH Operand     | Result |
+|--------------|----------|----------------|--------|
+| string       | +        | **_string_**   | string |
+| string       | ==       | **_string_**   | bool   |
+| string       | !=       | **_string_**   | bool   |
+| string       | <        | **_string_**   | bool   |
+| string       | >        | **_string_**   | bool   |
+| string       | <=       | **_string_**   | bool   |
+| string       | >=       | **_string_**   | bool   |
+|              | head     | string         | string |
+|              | tail     | string         | string |
+|              | not      | bool           | bool   |
+| bool         | and      | **_bool_**     | bool   |
+| bool         | or       | **_bool_**     | bool   |
+| bool         | ==       | **_bool_**     | bool   |
+| bool         | !=       | **_bool_**     | bool   |
+| bool         | <        | **_bool_**     | bool   |
+| bool         | >        | **_bool_**     | bool   |
+| bool         | <=       | **_bool_**     | bool   |
+| bool         | >=       | **_bool_**     | bool   |
+| number       | ==       | **_number_**   | bool   |
+| number       | !=       | **_number_**   | bool   |
+| number       | <        | **_number_**   | bool   |
+| number       | >        | **_number_**   | bool   |
+| number       | <=       | **_number_**   | bool   |
+| number       | >=       | **_number_**   | bool   |
+| number       | +        | **_number_**   | number |
+| number       | -        | **_number_**   | number |
+| number       | *        | **_number_**   | number |
+| number       | /        | **_number_**   | number |
+| number       | %        | **_number_**   | number |
+| **_number_** | -        | number         | number |
+| **_number_** | *        | number         | number |
+| **_number_** | /        | number         | number |
+| **_number_** | %        | number         | number |
+
+If an operand/type combination is not shown in this then a semantic error occurs saying that the operator is not defined for the provided type.
+
+The coersion logic that transforms the value from one type to another was also designed to be as sensible as possible. This is really similar to other programming language's coersion style and I chose to mimic this style since it makes a lot of sense to me.
+
+|        | string | number | bool |
+|--------|--------|--------|------|
+| string |        | `strconv.Itoa(number)` | `if bool then return "true" else return "false"` |
+| number | `strconv.Atoi(string) (on error returns 0)` | | `if bool then return 1 else return 0` |
+| bool   | `len(string) != 0` | `number != 0` | |
+
+### Statement Type Requirements
+
+Some of the statements that require an expression have some constraints on what the result can be that are not coerced. I may decide to change this behavior in the future.
+
+| Statement | Part              | Required Type    |
+|-----------|-------------------|------------------|
+| if        | condition         | bool             |
+| return    | function          | string or number |
+| return    | pattern predicate | bool             |
+
+Every other use of the expressions will have their type inferred or coerced.
+
+
