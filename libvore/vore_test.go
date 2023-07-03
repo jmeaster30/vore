@@ -677,3 +677,65 @@ func TestRegexp26(t *testing.T) {
 		{4, "abc", None[string](), []TestVar{}},
 	})
 }
+
+func TestRegexp27(t *testing.T) {
+	vore, err := Compile("find all @/\\D{0,2}?/")
+	checkNoError(t, err)
+	results := vore.Run(`1234abc567`)
+	matches(t, results, []TestMatch{})
+}
+
+func TestRegexp28(t *testing.T) {
+	vore, err := Compile("find all @/\\D{2,}?/")
+	checkNoError(t, err)
+	results := vore.Run(`1234abc567`)
+	matches(t, results, []TestMatch{
+		{4, "ab", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp29(t *testing.T) {
+	vore, err := Compile("find all @/(test)\\1/")
+	checkNoError(t, err)
+	results := vore.Run(`testtest`)
+	matches(t, results, []TestMatch{
+		{0, "testtest", None[string](), []TestVar{
+			{"_1", "test"},
+		}},
+	})
+}
+
+func TestRegexp30(t *testing.T) {
+	vore, err := Compile("find all @/(t)(e)(s)(t)(e)(x)(p)(r)(e)(s)(s)(i)(o)(n)\\14\\13/")
+	checkNoError(t, err)
+	results := vore.Run(`testexpressionno`)
+	matches(t, results, []TestMatch{
+		{0, "testexpressionno", None[string](), []TestVar{
+			{"_1", "t"},
+			{"_2", "e"},
+			{"_3", "s"},
+			{"_4", "t"},
+			{"_5", "e"},
+			{"_6", "x"},
+			{"_7", "p"},
+			{"_8", "r"},
+			{"_9", "e"},
+			{"_10", "s"},
+			{"_11", "s"},
+			{"_12", "i"},
+			{"_13", "o"},
+			{"_14", "n"},
+		}},
+	})
+}
+
+func TestRegexp31(t *testing.T) {
+	vore, err := Compile("find all @/(test)\\1test/")
+	checkNoError(t, err)
+	results := vore.Run(`testtesttest`)
+	matches(t, results, []TestMatch{
+		{0, "testtesttest", None[string](), []TestVar{
+			{"_1", "test"},
+		}},
+	})
+}
