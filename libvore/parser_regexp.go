@@ -94,11 +94,19 @@ func parse_regexp_literal(regexp_token *Token, regexp string, index int) (AstExp
 		next_index += 1
 		return &AstPrimary{start}, next_index, nil
 	} else if c == '\\' {
-		exp, idx, err := parse_regexp_escape_characters(regexp_token, regexp, index+1)
+		start, next_index, err := parse_regexp_escape_characters(regexp_token, regexp, index+1)
 		if err != nil {
-			return nil, index, err
+			return nil, next_index, err
 		}
-		return &AstPrimary{exp}, idx, nil
+		exp, idx, err := parse_regexp_quantifier(regexp_token, regexp, next_index)
+		if err != nil {
+			return nil, idx, err
+		}
+		if exp == nil {
+			return &AstPrimary{start}, idx, nil
+		}
+		exp.body = &AstPrimary{start}
+		return exp, idx, nil
 	} else if c == '(' {
 		start, next_index, err := parse_regexp_groups(regexp_token, regexp, index+1)
 		if err != nil {
@@ -316,9 +324,9 @@ func parse_regexp_escape_characters(regexp_token *Token, regexp string, index in
 	} else if c == 'S' {
 		return &AstCharacterClass{true, ClassWhitespace}, index + 1, nil
 	} else if c == 'w' {
-		return &AstCharacterClass{false, ClassLetter}, index + 1, nil // This isn't the word class
+		return &AstCharacterClass{false, ClassLetter}, index + 1, nil // FIXME This isn't the word class
 	} else if c == 'W' {
-		return &AstCharacterClass{true, ClassLetter}, index + 1, nil // This isn't the word class
+		return &AstCharacterClass{true, ClassLetter}, index + 1, nil // FIXME This isn't the word class
 	} else if c == 'b' {
 		return &AstSubExpr{[]AstExpression{&AstBranch{&AstCharacterClass{false, ClassWordStart}, &AstPrimary{&AstCharacterClass{false, ClassWordEnd}}}}}, index + 1, nil
 	} else if c == 'B' {

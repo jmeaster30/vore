@@ -658,3 +658,22 @@ func TestRegexp24(t *testing.T) {
 		{10, "567", None[string](), []TestVar{}},
 	})
 }
+
+func TestRegexp25(t *testing.T) {
+	vore, err := Compile("find all @/\\D{0,2}/")
+	checkNoError(t, err)
+	results := vore.Run(`1234abc567`)
+	matches(t, results, []TestMatch{
+		{4, "ab", None[string](), []TestVar{}},
+		{6, "c", None[string](), []TestVar{}},
+	})
+}
+
+func TestRegexp26(t *testing.T) {
+	vore, err := Compile("find all @/\\D{2,}/")
+	checkNoError(t, err)
+	results := vore.Run(`1234abc567`)
+	matches(t, results, []TestMatch{
+		{4, "abc", None[string](), []TestVar{}},
+	})
+}
