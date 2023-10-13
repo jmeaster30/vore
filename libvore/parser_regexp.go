@@ -391,7 +391,7 @@ func parse_regexp_groups(regexp_token *Token, regexp string, index int) (AstLite
 					current = regexp[current_index]
 				}
 				if regexp[current_index] != '>' {
-					return nil, current_index, NewParseError(*regexp_token, "Unexpected charactrer in named capture group identifier.")
+					return nil, current_index, NewParseError(*regexp_token, "Unexpected character in named capture group identifier.")
 				}
 				body, next_index, err := parse_regexp_disjunction(regexp_token, regexp, current_index+1)
 				if err != nil {
@@ -403,7 +403,7 @@ func parse_regexp_groups(regexp_token *Token, regexp string, index int) (AstLite
 				return &AstSubExpr{[]AstExpression{&AstDec{identifier, &AstSubExpr{body}}}}, next_index + 1, nil
 			}
 		}
-		panic("THIS IS A TEST WE SHOULDN'T HIT THIS")
+		return nil, index, NewParseError(*regexp_token, "Invalid marker for group")
 	}
 
 	subexpr, next_index, err := parse_regexp_disjunction(regexp_token, regexp, index)
