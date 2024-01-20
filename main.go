@@ -109,6 +109,10 @@ func main() {
 	}
 
 	searchFiles := libvore.ParsePath(*files_arg).GetFileList(currentDir)
+	if len(searchFiles) == 0 {
+		fmt.Println("No files to search :(")
+		return
+	}
 
 	results := vore.RunFiles(searchFiles, replaceModeArg, process_filenames)
 

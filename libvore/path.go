@@ -120,11 +120,7 @@ func (path *Path) GetFileList(currentDirectory string) []string {
 	var results []string
 
 	if strings.Trim(path.entries[0].value, "*") == "" {
-		for _, e := range entries {
-			if !e.IsDir() && pathMatches(e.Name(), path.entries[len(path.entries)-1].value) {
-				results = append(results, currentDirectory+"/"+e.Name())
-			}
-		}
+		results = append(results, path.shrink().GetFileList(currentDirectory)...)
 	}
 
 	if path.entries[0].entryType == WildcardDirectory {
