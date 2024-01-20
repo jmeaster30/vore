@@ -390,6 +390,7 @@ func (v *Vore) RunFiles(filenames []string, mode ReplaceMode, processFilenames b
 				actualFiles = append(actualFiles, fixedFilename)
 			}
 			for _, actualFilename := range actualFiles {
+				fmt.Printf("Processing file '%s'...\n", actualFilename)
 				var reader *VReader
 				if processFilenames {
 					reader = VReaderFromString(actualFilename)

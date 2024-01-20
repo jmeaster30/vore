@@ -11,7 +11,7 @@ import (
 	"github.com/jmeaster30/vore/libvore"
 )
 
-var replaceModeArg libvore.ReplaceMode = libvore.NEW
+var replaceModeArg = libvore.NEW
 
 func replaceMode(value string) error {
 	switch value {
@@ -59,7 +59,10 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		pprof.StartCPUProfile(f)
+		err = pprof.StartCPUProfile(f)
+		if err != nil {
+			log.Fatal(err)
+		}
 		defer pprof.StopCPUProfile()
 	}
 
@@ -88,21 +91,26 @@ func main() {
 	}
 
 	var vore *libvore.Vore
-	var comp_error error
+	var compError error
 	if len(source) != 0 {
-		vore, comp_error = libvore.CompileFile(source)
+		vore, compError = libvore.CompileFile(source)
 	} else {
-		vore, comp_error = libvore.Compile(command)
+		vore, compError = libvore.Compile(command)
 	}
 
-	if comp_error != nil {
-		fmt.Printf("%s\n", comp_error.Error())
-		os.Exit(1)
+	if compError != nil {
+		log.Fatal(compError)
 	}
 
 	//vore.PrintAST()
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	results := vore.RunFiles([]string{*files_arg}, replaceModeArg, process_filenames)
+	searchFiles := libvore.ParsePath(*files_arg).GetFileList(currentDir)
+
+	results := vore.RunFiles(searchFiles, replaceModeArg, process_filenames)
 
 	if no_output { // skip all output
 		return
