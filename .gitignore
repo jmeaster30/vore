@@ -10,3 +10,5 @@ libvorejs/.gocache
 
 *.prof
 *.png
+
+.idea
