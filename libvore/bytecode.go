@@ -2,6 +2,7 @@ package libvore
 
 type Command interface {
 	execute(string, *VReader, ReplaceMode) Matches
+	ToMap() map[string]any
 }
 
 type FindCommand struct {
@@ -152,6 +153,7 @@ func (c SetCommand) execute(filename string, reader *VReader, mode ReplaceMode) 
 
 type SetCommandBody interface {
 	execute(state *GlobalState, id string) *GlobalState
+	ToMap() map[string]any
 }
 
 type SetCommandExpression struct {
@@ -184,10 +186,12 @@ func (s SetCommandTransform) execute(state *GlobalState, id string) *GlobalState
 type SearchInstruction interface {
 	execute(*SearchEngineState) *SearchEngineState
 	adjust(offset int, state *GenState) SearchInstruction
+	ToMap() map[string]any
 }
 
 type ReplaceInstruction interface {
 	execute(*ReplacerState) *ReplacerState
+	ToMap() map[string]any
 }
 
 type MatchLiteral struct {

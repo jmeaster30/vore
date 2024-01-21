@@ -315,6 +315,14 @@ type Vore struct {
 	bytecode []Command
 }
 
+func Build(bytecode []Command) *Vore {
+	return &Vore{bytecode: bytecode}
+}
+
+func (v *Vore) Bytecode() []Command {
+	return v.bytecode
+}
+
 func Compile(command string) (*Vore, error) {
 	return compile("source", strings.NewReader(command))
 }

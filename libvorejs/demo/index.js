@@ -11,3 +11,37 @@ const doVoreSearch = () => {
       document.getElementById("results").innerHTML = JSON.stringify(err, null, 4);
     });
 }
+
+let compiledSource = null;
+
+const doVoreCompile = () => {
+    const sourceCode = document.getElementById("sourceCode").value;
+    libvorejs.compile(sourceCode)
+        .then(value => {
+            console.log(value);
+            compiledSource = value;
+            document.getElementById("results").innerHTML = JSON.stringify(compiledSource, null, 4);
+        })
+        .catch(err => {
+            console.log("ERROR ERROR ERROR");
+            document.getElementById("results").innerHTML = JSON.stringify(err, null, 4);
+        })
+}
+
+const doVoreCompiledSearch = () => {
+    const searchText = document.getElementById("searchText").value;
+    if (compiledSource == null) {
+        console.log("source not compiled :(");
+        return;
+    }
+
+    libvorejs.search(compiledSource, searchText)
+        .then(value => {
+            console.log(value);
+            document.getElementById("results").innerHTML = JSON.stringify(value, null, 4);
+        })
+        .catch(err => {
+            console.log("ERROR ERROR ERROR");
+            document.getElementById("results").innerHTML = JSON.stringify(err, null, 4);
+        });
+}
