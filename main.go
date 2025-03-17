@@ -32,6 +32,7 @@ func replaceMode(value string) error {
 func main() {
 	source_arg := flag.String("src", "", "Vore source file to run on search files")
 	command_arg := flag.String("com", "", "Vore command to run on search files")
+	debug_arg := flag.Bool("debug", false, "Prints the AST of the supplied command or source file")
 	files_arg := flag.String("files", "", "Files to search")
 	filenames_arg := flag.Bool("filenames", false, "Process filenames instead of file contents")
 	out_json_arg := flag.Bool("json", false, "Output JSON to STDOUT")
@@ -53,6 +54,34 @@ func main() {
 	no_output := *no_output_arg
 	profile_file := *profile_arg
 	command := *command_arg
+	debug := *debug_arg
+
+	if debug {
+		fmt.Printf("source: '%s'\n", source)
+		fmt.Printf("command: '%s'\n", command)
+		fmt.Printf("files: '%s'\n", files)
+		fmt.Printf("replace mode: '%s'\n", replaceModeArg)
+		if debug {
+			fmt.Print("D ")
+		}
+		if len(profile_file) != 0 {
+			fmt.Print("P ")
+		}
+		if process_filenames {
+			fmt.Print("F ")
+		}
+		if out_json {
+			fmt.Print("j ")
+		}
+		if out_fjson {
+			fmt.Print("J ")
+		}
+		if no_output {
+			fmt.Print("N")
+		}
+		fmt.Print("\n")
+
+	}
 
 	if profile_file != "" {
 		f, err := os.Create(profile_file)
@@ -66,8 +95,8 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	if len(files) == 0 {
-		fmt.Println("Please supply some files to search.")
+	if len(files) == 0 && !debug {
+		fmt.Println("Please supply some files to search O.O")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -102,11 +131,14 @@ func main() {
 		log.Fatal(compError)
 	}
 
-	//vore.PrintAST()
+  if debug {
+    vore.PrintAST()
+  }
+
 	currentDir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
-	}
+  }
 
 	searchFiles := libvore.ParsePath(*files_arg).GetFileList(currentDir)
 	if len(searchFiles) == 0 {

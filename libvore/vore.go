@@ -18,6 +18,20 @@ const (
 	NOTHING
 )
 
+func (r ReplaceMode) String() string {
+	switch r {
+	case OVERWRITE:
+		return "OVERWRITE"
+	case CONFIRM:
+		return "CONFIRM"
+	case NEW:
+		return "NEW"
+	case NOTHING:
+		return "NOTHING"
+	}
+	return ""
+}
+
 type Match struct {
 	Filename    string
 	MatchNumber int
@@ -367,7 +381,7 @@ func (v *Vore) RunFiles(filenames []string, mode ReplaceMode, processFilenames b
 	}
 	result := Matches{}
 	for _, command := range v.bytecode {
-		//command.print()
+		// command.print()
 		for _, filename := range filenames {
 			actualFiles := []string{}
 			info, err := os.Stat(filename)
