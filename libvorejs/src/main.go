@@ -78,7 +78,7 @@ func buildMatches(input string, matches libvore.Matches) map[string]interface{} 
 	}
 
 	if inputIndex < len(input) {
-		resultString += input[inputIndex:len(input)]
+		resultString += input[inputIndex:]
 	}
 
 	return map[string]interface{}{

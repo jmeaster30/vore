@@ -26,15 +26,16 @@ func parse(tokens []*Token) ([]AstCommand, error) {
 }
 
 func parse_command(tokens []*Token, token_index int) (AstCommand, int, error) {
-	if tokens[token_index].TokenType == FIND {
+	switch tokens[token_index].TokenType {
+	case FIND:
 		return parse_find(tokens, token_index)
-	} else if tokens[token_index].TokenType == REPLACE {
+	case REPLACE:
 		return parse_replace(tokens, token_index)
-	} else if tokens[token_index].TokenType == SET {
+	case SET:
 		return parse_set(tokens, token_index)
-	} else if tokens[token_index].TokenType == EOF {
+	case EOF:
 		return nil, token_index, nil
-	} else {
+	default:
 		return nil, token_index, NewParseError(*tokens[token_index], "Unexpected token. Expected 'find', 'replace', or 'set'.")
 	}
 }
@@ -53,8 +54,8 @@ func parse_find(tokens []*Token, token_index int) (*AstFind, int, error) {
 		body: []AstExpression{},
 	}
 
-	var current_token = tokens[new_index]
-	var current_index = new_index
+	current_token := tokens[new_index]
+	current_index := new_index
 	for current_token.TokenType != FIND && current_token.TokenType != REPLACE && current_token.TokenType != SET && current_token.TokenType != EOF {
 		ws_index := consumeIgnoreableTokens(tokens, current_index)
 		expr, new_index, parseError := parse_expression(tokens, ws_index)
@@ -84,8 +85,8 @@ func parse_replace(tokens []*Token, token_index int) (*AstReplace, int, error) {
 		body: []AstExpression{},
 	}
 
-	var current_token = tokens[new_index]
-	var current_index = new_index
+	current_token := tokens[new_index]
+	current_index := new_index
 	for current_token.TokenType != WITH && current_token.TokenType != FIND && current_token.TokenType != REPLACE && current_token.TokenType != SET && current_token.TokenType != EOF {
 		ws_index := consumeIgnoreableTokens(tokens, current_index)
 		expr, new_index, parseError := parse_expression(tokens, ws_index)
@@ -119,8 +120,8 @@ func parse_replace(tokens []*Token, token_index int) (*AstReplace, int, error) {
 }
 
 func parse_set(tokens []*Token, token_index int) (*AstSet, int, error) {
-	var current_index = consumeIgnoreableTokens(tokens, token_index+1)
-	var current_token = tokens[current_index]
+	current_index := consumeIgnoreableTokens(tokens, token_index+1)
+	current_token := tokens[current_index]
 
 	if current_token.TokenType != IDENTIFIER {
 		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected identifier")
@@ -936,8 +937,8 @@ func parse_process_statement(tokens []*Token, index int) (AstProcessStatement, i
 }
 
 func parse_process_set(tokens []*Token, index int) (AstProcessStatement, int, error) {
-	var current_index = consumeIgnoreableTokens(tokens, index+1)
-	var current_token = tokens[current_index]
+	current_index := consumeIgnoreableTokens(tokens, index+1)
+	current_token := tokens[current_index]
 
 	if current_token.TokenType != IDENTIFIER {
 		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected identifier")

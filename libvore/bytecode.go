@@ -1,7 +1,10 @@
 package libvore
 
+import "fmt"
+
 type Command interface {
 	execute(string, *VReader, ReplaceMode) Matches
+	String() string
 }
 
 type FindCommand struct {
@@ -10,6 +13,10 @@ type FindCommand struct {
 	take int
 	last int
 	body []SearchInstruction
+}
+
+func (f FindCommand) String() string {
+	return fmt.Sprintf("(find (%t %d %d %d) %s)", f.all, f.skip, f.take, f.last, f.body)
 }
 
 func findMatches(insts []SearchInstruction, all bool, skip int, take int, last int, filename string, reader *VReader) Matches {
@@ -33,14 +40,14 @@ func findMatches(insts []SearchInstruction, all bool, skip int, take int, last i
 		for currentState.status == INPROCESS {
 			inst := insts[currentState.programCounter]
 			currentState = inst.execute(currentState)
-			//fmt.Printf("PC: %d INST: %+v STATE: %+v\n", currentState.programCounter, inst, currentState)
+			// fmt.Printf("PC: %d INST: %+v STATE: %+v\n", currentState.programCounter, inst, currentState)
 			if currentState.status == INPROCESS && currentState.programCounter >= len(insts) {
 				currentState.SUCCESS()
 			}
 		}
 
 		if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 && matchNumber >= skip {
-			//fmt.Println("====== SUCCESS ======")
+			// fmt.Println("====== SUCCESS ======")
 			foundMatch := currentState.MakeMatch(matchNumber + 1)
 			matches.PushBack(foundMatch)
 			if last != 0 {
@@ -51,7 +58,7 @@ func findMatches(insts []SearchInstruction, all bool, skip int, take int, last i
 			columnNumber = currentState.currentColumnNum
 			matchNumber += 1
 		} else {
-			//fmt.Println("====== FAILED  ======")
+			// fmt.Println("====== FAILED  ======")
 			if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 {
 				matchNumber += 1
 			}
@@ -86,6 +93,10 @@ type ReplaceCommand struct {
 	last     int
 	body     []SearchInstruction
 	replacer []ReplaceInstruction
+}
+
+func (r ReplaceCommand) String() string {
+	return fmt.Sprintf("(replace (%t %d %d %d))", r.all, r.skip, r.take, r.last)
 }
 
 func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
@@ -146,6 +157,10 @@ type SetCommand struct {
 	id   string
 }
 
+func (s SetCommand) String() string {
+	return fmt.Sprintf("(set (id %s) (%v)", s.id, s.body)
+}
+
 func (c SetCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
 	return Matches{}
 }
@@ -184,6 +199,7 @@ func (s SetCommandTransform) execute(state *GlobalState, id string) *GlobalState
 type SearchInstruction interface {
 	execute(*SearchEngineState) *SearchEngineState
 	adjust(offset int, state *GenState) SearchInstruction
+	String() string
 }
 
 type ReplaceInstruction interface {
@@ -196,9 +212,14 @@ type MatchLiteral struct {
 	caseless bool
 }
 
+func (i MatchLiteral) String() string {
+	return fmt.Sprintf("(literal (not %t) (caseless %t) '%s')", i.not, i.caseless, i.toFind)
+}
+
 func (i MatchLiteral) adjust(offset int, state *GenState) SearchInstruction {
 	return i
 }
+
 func (i MatchLiteral) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.MATCH(i.toFind, i.not, i.caseless)
@@ -210,9 +231,14 @@ type MatchCharClass struct {
 	class AstCharacterClassType
 }
 
+func (i MatchCharClass) String() string {
+	return fmt.Sprintf("(class (not %t) %s)", i.not, i.class)
+}
+
 func (i MatchCharClass) adjust(offset int, state *GenState) SearchInstruction {
 	return i
 }
+
 func (i MatchCharClass) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	switch i.class {
@@ -256,9 +282,14 @@ type MatchVariable struct {
 	name string
 }
 
+func (i MatchVariable) String() string {
+	return fmt.Sprintf("(var '%s')", i.name)
+}
+
 func (i MatchVariable) adjust(offset int, state *GenState) SearchInstruction {
 	return i
 }
+
 func (i MatchVariable) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.MATCHVAR(i.name)
@@ -271,9 +302,14 @@ type MatchRange struct {
 	to   string
 }
 
+func (i MatchRange) String() string {
+	return fmt.Sprintf("(range (not %t) (from '%s') (to '%s'))", i.not, i.from, i.to)
+}
+
 func (i MatchRange) adjust(offset int, state *GenState) SearchInstruction {
 	return i
 }
+
 func (i MatchRange) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.MATCHRANGE(i.from, i.to, i.not)
@@ -285,10 +321,15 @@ type CallSubroutine struct {
 	toPC int
 }
 
+func (i CallSubroutine) String() string {
+	return fmt.Sprintf("(call '%s' %d)", i.name, i.toPC)
+}
+
 func (i CallSubroutine) adjust(offset int, state *GenState) SearchInstruction {
 	i.toPC += offset
 	return i
 }
+
 func (i CallSubroutine) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.CALL(i.toPC, next_state.programCounter+1)
@@ -300,12 +341,17 @@ type Branch struct {
 	branches []int
 }
 
+func (i Branch) String() string {
+	return fmt.Sprintf("(branch %v)", i.branches)
+}
+
 func (i Branch) adjust(offset int, state *GenState) SearchInstruction {
 	for idx := range i.branches {
 		i.branches[idx] += offset
 	}
 	return i
 }
+
 func (i Branch) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	flipped := []int{}
@@ -326,10 +372,15 @@ type StartNotIn struct {
 	nextCheckpointPC int
 }
 
+func (i StartNotIn) String() string {
+	return fmt.Sprintf("(startNotIn %d)", i.nextCheckpointPC)
+}
+
 func (i StartNotIn) adjust(offset int, state *GenState) SearchInstruction {
 	i.nextCheckpointPC += offset
 	return i
 }
+
 func (i StartNotIn) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.JUMP(i.nextCheckpointPC)
@@ -340,9 +391,14 @@ func (i StartNotIn) execute(current_state *SearchEngineState) *SearchEngineState
 
 type FailNotIn struct{}
 
+func (i FailNotIn) String() string {
+	return "(failNotIn)"
+}
+
 func (i FailNotIn) adjust(offset int, state *GenState) SearchInstruction {
 	return i
 }
+
 func (i FailNotIn) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.BACKTRACK()
@@ -354,9 +410,14 @@ type EndNotIn struct {
 	maxSize int
 }
 
+func (i EndNotIn) String() string {
+	return fmt.Sprintf("(endNotIn %d)", i.maxSize)
+}
+
 func (i EndNotIn) adjust(offset int, state *GenState) SearchInstruction {
 	return i
 }
+
 func (i EndNotIn) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	// TODO this should actually let the rest of the expression backtrack from max size to min size (could just be to 1 since things less than the min are not in)
@@ -381,10 +442,15 @@ type StartLoop struct {
 	name     string
 }
 
+func (i StartLoop) String() string {
+	return fmt.Sprintf("(startLoop '%s' (min %d max %d) (lazy %t) %d %d)", i.name, i.minLoops, i.maxLoops, i.fewest, i.id, i.exitLoop)
+}
+
 func (i StartLoop) adjust(offset int, state *GenState) SearchInstruction {
 	i.exitLoop += offset
 	return i
 }
+
 func (i StartLoop) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 
@@ -428,10 +494,15 @@ type StopLoop struct {
 	name      string
 }
 
+func (i StopLoop) String() string {
+	return fmt.Sprintf("(stopLoop '%s' (min %d max %d) (lazy %t) %d %d)", i.name, i.minLoops, i.maxLoops, i.fewest, i.id, i.startLoop)
+}
+
 func (i StopLoop) adjust(offset int, state *GenState) SearchInstruction {
 	i.startLoop += offset
 	return i
 }
+
 func (i StopLoop) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.JUMP(i.startLoop)
@@ -442,9 +513,14 @@ type StartVarDec struct {
 	name string
 }
 
+func (i StartVarDec) String() string {
+	return fmt.Sprintf("(startVarDec '%s')", i.name)
+}
+
 func (i StartVarDec) adjust(offset int, state *GenState) SearchInstruction {
 	return i
 }
+
 func (i StartVarDec) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.STARTVAR(i.name)
@@ -455,9 +531,14 @@ type EndVarDec struct {
 	name string
 }
 
+func (i EndVarDec) String() string {
+	return fmt.Sprintf("(endVarDec '%s')", i.name)
+}
+
 func (i EndVarDec) adjust(offset int, state *GenState) SearchInstruction {
 	return i
 }
+
 func (i EndVarDec) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.ENDVAR(i.name)
@@ -470,10 +551,15 @@ type StartSubroutine struct {
 	endOffset int
 }
 
+func (i StartSubroutine) String() string {
+	return fmt.Sprintf("(startSub '%s' %d %d)", i.name, i.id, i.endOffset)
+}
+
 func (i StartSubroutine) adjust(offset int, state *GenState) SearchInstruction {
 	i.endOffset += offset
 	return i
 }
+
 func (i StartSubroutine) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.VALIDATECALL(i.id, i.endOffset+1)
@@ -486,9 +572,14 @@ type EndSubroutine struct {
 	validate []AstProcessStatement
 }
 
+func (i EndSubroutine) String() string {
+	return fmt.Sprintf("(endSub '%s')", i.name)
+}
+
 func (i EndSubroutine) adjust(offset int, state *GenState) SearchInstruction {
 	return i
 }
+
 func (i EndSubroutine) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 
@@ -529,10 +620,15 @@ type Jump struct {
 	newProgramCounter int
 }
 
+func (i Jump) String() string {
+	return fmt.Sprintf("(jump %d)", i.newProgramCounter)
+}
+
 func (i Jump) adjust(offset int, state *GenState) SearchInstruction {
 	i.newProgramCounter += offset
 	return i
 }
+
 func (i Jump) execute(current_state *SearchEngineState) *SearchEngineState {
 	next_state := current_state.Copy()
 	next_state.JUMP(i.newProgramCounter)

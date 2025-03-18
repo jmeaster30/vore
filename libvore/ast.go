@@ -231,6 +231,7 @@ func (l AstList) getMaxSize() int {
 	}
 	return max
 }
+
 func (l AstList) print() {
 	fmt.Print("(in ")
 	for _, expr := range l.contents {
@@ -261,6 +262,7 @@ func (r AstRange) getMaxSize() int {
 	//? Can we guarantee that "from" is going to be greater than "to"??
 	return len(r.to.value)
 }
+
 func (r AstRange) print() {
 	fmt.Print("(range ")
 	r.from.print()
@@ -329,6 +331,42 @@ const (
 	ClassWholeWord
 )
 
+func (a AstCharacterClassType) String() string {
+	switch a {
+	case ClassAny:
+		return "ANY"
+	case ClassWhitespace:
+		return "WS"
+	case ClassDigit:
+		return "DIGIT"
+	case ClassUpper:
+		return "UPPER"
+	case ClassLower:
+		return "LOWER"
+	case ClassLetter:
+		return "LETTER"
+	case ClassLineStart:
+		return "LStart"
+	case ClassFileStart:
+		return "FStart"
+	case ClassWordStart:
+		return "WStart"
+	case ClassLineEnd:
+		return "LEnd"
+	case ClassFileEnd:
+		return "FEnd"
+	case ClassWordEnd:
+		return "WEnd"
+	case ClassWholeLine:
+		return "WLine"
+	case ClassWholeFile:
+		return "WFile"
+	case ClassWholeWord:
+		return "WWord"
+	}
+	return "MISSING CHAR CLASS"
+}
+
 type AstCharacterClass struct {
 	not       bool
 	classType AstCharacterClassType
@@ -371,6 +409,7 @@ func (c AstCharacterClass) getMaxSize() int {
 	}
 	panic("shouldn't get here")
 }
+
 func (c AstCharacterClass) print() {
 	fmt.Printf("(class ")
 	switch c.classType {

@@ -131,14 +131,15 @@ func main() {
 		log.Fatal(compError)
 	}
 
-  if debug {
-    vore.PrintAST()
-  }
+	if debug {
+		vore.PrintAST()
+		vore.PrintBytecode()
+	}
 
 	currentDir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
-  }
+	}
 
 	searchFiles := libvore.ParsePath(*files_arg).GetFileList(currentDir)
 	if len(searchFiles) == 0 {

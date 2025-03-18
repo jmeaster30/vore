@@ -330,18 +330,18 @@ type Vore struct {
 }
 
 func Compile(command string) (*Vore, error) {
-	return compile("source", strings.NewReader(command))
+	return compile(strings.NewReader(command))
 }
 
 func CompileFile(source string) (*Vore, error) {
-	dat, err := os.Open(source)
+	source_file, err := os.Open(source)
 	if err != nil {
 		return nil, NewFileError(err)
 	}
-	return compile(source, dat)
+	return compile(source_file)
 }
 
-func compile(filename string, reader io.Reader) (*Vore, error) {
+func compile(reader io.Reader) (*Vore, error) {
 	lexer := initLexer(reader)
 
 	tokens, lexError := lexer.getTokens()
@@ -445,4 +445,10 @@ func (v *Vore) PrintAST() {
 		command.print()
 	}
 	fmt.Println()
+}
+
+func (v *Vore) PrintBytecode() {
+	for _, command := range v.bytecode {
+		fmt.Printf("%s\n", command)
+	}
 }
