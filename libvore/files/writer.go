@@ -1,32 +1,32 @@
-package libvore
+package files
 
 import (
 	"io"
 	"os"
 )
 
-type VWriter struct {
+type Writer struct {
 	contents WriteSeekCloser
 }
 
-func VWriterFromFile(filename string) *VWriter {
+func WriterFromFile(filename string) *Writer {
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(0666))
 	if err != nil {
 		panic(err)
 	}
 
-	return &VWriter{
+	return &Writer{
 		contents: file,
 	}
 }
 
-func VWriterFromMemory() *VWriter {
-	return &VWriter{
+func WriterFromMemory() *Writer {
+	return &Writer{
 		contents: NewMemoryStream(),
 	}
 }
 
-func (vw *VWriter) WriteAt(offset int, data string) {
+func (vw *Writer) WriteAt(offset int, data string) {
 	_, serr := vw.contents.Seek(int64(offset), io.SeekStart)
 	if serr != nil {
 		panic(serr)
@@ -37,7 +37,7 @@ func (vw *VWriter) WriteAt(offset int, data string) {
 	}
 }
 
-func (vw *VWriter) Close() {
+func (vw *Writer) Close() {
 	err := vw.contents.Close()
 	if err != nil {
 		panic(err)

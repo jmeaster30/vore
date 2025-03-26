@@ -1,4 +1,4 @@
-package libvore
+package ds
 
 type Range struct {
 	Start int

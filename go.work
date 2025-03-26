@@ -3,5 +3,8 @@ go 1.19
 use (
 	.
 	./libvore
+	./libvore/ds
+	./libvore/files
+	./libvore/testutils
 	./libvorejs/src
 )

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/jmeaster30/vore/libvore/ds"
 )
 
 type TokenType int
@@ -267,9 +269,9 @@ func (t TokenType) PP() string {
 
 type Token struct {
 	TokenType TokenType
-	Offset    *Range
-	Line      *Range
-	Column    *Range
+	Offset    *ds.Range
+	Line      *ds.Range
+	Column    *ds.Range
 	Lexeme    string
 }
 
@@ -289,11 +291,11 @@ type PositionInfo struct {
 type Lexer struct {
 	r           *bufio.Reader
 	currentChar rune
-	position    *Stack[PositionInfo]
+	position    *ds.Stack[PositionInfo]
 }
 
 func initLexer(r io.Reader) *Lexer {
-	stack := NewStack[PositionInfo]()
+	stack := ds.NewStack[PositionInfo]()
 	stack.Push(PositionInfo{
 		offset:   0,
 		line:     1,
@@ -365,7 +367,7 @@ func (s *Lexer) getNextToken() (*Token, error) {
 
 	for {
 		ch := s.read()
-		//fmt.Printf("%d - %d\n", int(ch), current_state)
+		// fmt.Printf("%d - %d\n", int(ch), current_state)
 		if ch == 0 && current_state == SSTART {
 			current_state = SEND
 			break
@@ -750,9 +752,9 @@ func (s *Lexer) getNextToken() (*Token, error) {
 	}
 
 	endPosInfo := s.get_position()
-	token.Offset = NewRange(startPosInfo.offset, endPosInfo.offset)
-	token.Column = NewRange(startPosInfo.column, endPosInfo.column)
-	token.Line = NewRange(startPosInfo.line, endPosInfo.line)
+	token.Offset = ds.NewRange(startPosInfo.offset, endPosInfo.offset)
+	token.Column = ds.NewRange(startPosInfo.column, endPosInfo.column)
+	token.Line = ds.NewRange(startPosInfo.line, endPosInfo.line)
 	token.Lexeme = buf.String()
 
 	if token.TokenType == ERROR && unendingBlockComment {
@@ -835,6 +837,6 @@ func HexToAscii(ch1 rune, ch2 rune) rune {
 	if err != nil {
 		panic("COULDN'T CONVERT")
 	}
-	//fmt.Printf("FOUND HEX RUNE (%s): %s\n", input, string(rune(value)))
+	// fmt.Printf("FOUND HEX RUNE (%s): %s\n", input, string(rune(value)))
 	return rune(value)
 }

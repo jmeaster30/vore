@@ -1,4 +1,4 @@
-package libvore
+package files
 
 import "strings"
 

@@ -1,4 +1,4 @@
-package libvore
+package ds
 
 type Optional[T any] struct {
 	data     T

@@ -1,6 +1,10 @@
-package libvore
+package ds
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/jmeaster30/vore/libvore/testutils"
+)
 
 func TestOptionalNoneHasValue(t *testing.T) {
 	value := None[string]()
@@ -17,7 +21,7 @@ func TestOptionalNoneHasValueGetValue(t *testing.T) {
 		t.Errorf("None optional had value when it was supposed to have no value.")
 	}
 
-	mustPanic(t, "Expected None value to panic when reading value.",
+	testutils.MustPanic(t, "Expected None value to panic when reading value.",
 		func(t *testing.T) {
 			value.GetValue()
 		})

@@ -1,4 +1,4 @@
-package libvore
+package ds
 
 type Stack[T any] struct {
 	store []T

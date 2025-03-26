@@ -1,204 +1,209 @@
 package libvore
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/jmeaster30/vore/libvore/ds"
+	"github.com/jmeaster30/vore/libvore/testutils"
+)
 
 func TestFindString(t *testing.T) {
 	vore, err := Compile("find all 'yay'")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("OMG yay :)")
 	singleMatch(t, results, 4, "yay")
 }
 
 func TestFindDigit(t *testing.T) {
 	vore, err := Compile("find all digit")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("please 1234567890 wow")
 	matches(t, results, []TestMatch{
-		{7, "1", None[string](), []TestVar{}},
-		{8, "2", None[string](), []TestVar{}},
-		{9, "3", None[string](), []TestVar{}},
-		{10, "4", None[string](), []TestVar{}},
-		{11, "5", None[string](), []TestVar{}},
-		{12, "6", None[string](), []TestVar{}},
-		{13, "7", None[string](), []TestVar{}},
-		{14, "8", None[string](), []TestVar{}},
-		{15, "9", None[string](), []TestVar{}},
-		{16, "0", None[string](), []TestVar{}},
+		{7, "1", ds.None[string](), []TestVar{}},
+		{8, "2", ds.None[string](), []TestVar{}},
+		{9, "3", ds.None[string](), []TestVar{}},
+		{10, "4", ds.None[string](), []TestVar{}},
+		{11, "5", ds.None[string](), []TestVar{}},
+		{12, "6", ds.None[string](), []TestVar{}},
+		{13, "7", ds.None[string](), []TestVar{}},
+		{14, "8", ds.None[string](), []TestVar{}},
+		{15, "9", ds.None[string](), []TestVar{}},
+		{16, "0", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestFindAtLeast1Digit(t *testing.T) {
 	vore, err := Compile("find all at least 1 digit")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("please 1234567890 wow")
 	singleMatch(t, results, 7, "1234567890")
 }
 
 func TestFindEscapedCharacters(t *testing.T) {
 	vore, err := Compile("find all '\\x77\\x6f\\x77\\x20\\x3B\\x29'")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("does this work? wow ;)")
 	singleMatch(t, results, 16, "wow ;)")
 }
 
 func TestFindWhitespace(t *testing.T) {
 	vore, err := Compile("find all whitespace 'source' whitespace")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("you must provide a source for your claims.")
 	singleMatch(t, results, 18, " source ")
 }
 
 func TestFindLetter(t *testing.T) {
 	vore, err := Compile("find all letter")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("345A98(&$(#*%")
 	singleMatch(t, results, 3, "A")
 }
 
 func TestFindAny(t *testing.T) {
 	vore, err := Compile("find all between 3 and 5 any")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("omg this is cool :)")
 	matches(t, results, []TestMatch{
-		{0, "omg t", None[string](), []TestVar{}},
-		{5, "his i", None[string](), []TestVar{}},
-		{10, "s coo", None[string](), []TestVar{}},
-		{15, "l :)", None[string](), []TestVar{}},
+		{0, "omg t", ds.None[string](), []TestVar{}},
+		{5, "his i", ds.None[string](), []TestVar{}},
+		{10, "s coo", ds.None[string](), []TestVar{}},
+		{15, "l :)", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestFindAnyFewest(t *testing.T) {
 	vore, err := Compile("find all between 3 and 5 any fewest")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("omg this is")
 	matches(t, results, []TestMatch{
-		{0, "omg", None[string](), []TestVar{}},
-		{3, " th", None[string](), []TestVar{}},
-		{6, "is ", None[string](), []TestVar{}},
+		{0, "omg", ds.None[string](), []TestVar{}},
+		{3, " th", ds.None[string](), []TestVar{}},
+		{6, "is ", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestFindFewest(t *testing.T) {
 	vore, err := Compile("find all at least 3 letter fewest ' '")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("oh wow geez nice")
 	matches(t, results, []TestMatch{
-		{3, "wow ", None[string](), []TestVar{}},
-		{7, "geez ", None[string](), []TestVar{}},
+		{3, "wow ", ds.None[string](), []TestVar{}},
+		{7, "geez ", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestFindAtLeast3Upper(t *testing.T) {
 	vore, err := Compile("find all at least 3 upper")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("it SHOULD get THIS but THis")
 	matches(t, results, []TestMatch{
-		{3, "SHOULD", None[string](), []TestVar{}},
-		{14, "THIS", None[string](), []TestVar{}},
+		{3, "SHOULD", ds.None[string](), []TestVar{}},
+		{14, "THIS", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestFindAtMost2Lower(t *testing.T) {
 	vore, err := Compile("find all at most 2 lower")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("IT WILL CATCH this AND it WILL GET me")
 	matches(t, results, []TestMatch{
-		{14, "th", None[string](), []TestVar{}},
-		{16, "is", None[string](), []TestVar{}},
-		{23, "it", None[string](), []TestVar{}},
-		{35, "me", None[string](), []TestVar{}},
+		{14, "th", ds.None[string](), []TestVar{}},
+		{16, "is", ds.None[string](), []TestVar{}},
+		{23, "it", ds.None[string](), []TestVar{}},
+		{35, "me", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestSkipTest(t *testing.T) {
 	vore, err := Compile("find skip 1 take 1 'here'")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("here >here< here")
 	singleMatch(t, results, 6, "here")
 }
 
 func TestTopTest(t *testing.T) {
 	vore, err := Compile("find top 1 'here'")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(">here< here here")
 	singleMatch(t, results, 1, "here")
 }
 
 func TestLastTest(t *testing.T) {
 	vore, err := Compile("find last 2 'here'")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("here >here< >here<")
 	matches(t, results, []TestMatch{
-		{6, "here", None[string](), []TestVar{}},
-		{13, "here", None[string](), []TestVar{}},
+		{6, "here", ds.None[string](), []TestVar{}},
+		{13, "here", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRecursion1(t *testing.T) {
 	vore, err := Compile("find all {'a' maybe mySub 'b'} = mySub")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("aaaabbbb")
 	singleMatch(t, results, 0, "aaaabbbb")
 }
 
 func TestRecursion2(t *testing.T) {
 	vore, err := Compile("find all {'a' maybe mySub 'b'} = mySub")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("aabbb")
 	singleMatch(t, results, 0, "aabb")
 }
 
 func TestRecursion3(t *testing.T) {
 	vore, err := Compile("find all {'a' maybe mySub 'b'} = mySub")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("aaaaab")
 	singleMatch(t, results, 4, "ab")
 }
 
 func TestOrBranch(t *testing.T) {
 	vore, err := Compile("find all 'this' or 'that'")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("this and that")
 	matches(t, results, []TestMatch{
-		{0, "this", None[string](), []TestVar{}},
-		{9, "that", None[string](), []TestVar{}},
+		{0, "this", ds.None[string](), []TestVar{}},
+		{9, "that", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestInBranch(t *testing.T) {
 	vore, err := Compile("find all in 'a', 'b', 'c'")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("abcdefghijklmnopqrstuvwxyz")
 	matches(t, results, []TestMatch{
-		{0, "a", None[string](), []TestVar{}},
-		{1, "b", None[string](), []TestVar{}},
-		{2, "c", None[string](), []TestVar{}},
+		{0, "a", ds.None[string](), []TestVar{}},
+		{1, "b", ds.None[string](), []TestVar{}},
+		{2, "c", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestInBranchRange(t *testing.T) {
 	vore, err := Compile("find all in 'a' to 'c', 'x' to 'z'")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("abcdefghijklmnopqrstuvwxyz")
 	matches(t, results, []TestMatch{
-		{0, "a", None[string](), []TestVar{}},
-		{1, "b", None[string](), []TestVar{}},
-		{2, "c", None[string](), []TestVar{}},
-		{23, "x", None[string](), []TestVar{}},
-		{24, "y", None[string](), []TestVar{}},
-		{25, "z", None[string](), []TestVar{}},
+		{0, "a", ds.None[string](), []TestVar{}},
+		{1, "b", ds.None[string](), []TestVar{}},
+		{2, "c", ds.None[string](), []TestVar{}},
+		{23, "x", ds.None[string](), []TestVar{}},
+		{24, "y", ds.None[string](), []TestVar{}},
+		{25, "z", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestVariables(t *testing.T) {
 	vore, err := Compile("find all (at least 1 in 'a' to 'c', 'x' to 'z') = test")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("abcdefghijklmnopqrstuvwxyz")
 	matches(t, results, []TestMatch{
-		{0, "abc", None[string](), []TestVar{
+		{0, "abc", ds.None[string](), []TestVar{
 			{"test", "abc"},
 		}},
-		{23, "xyz", None[string](), []TestVar{
+		{23, "xyz", ds.None[string](), []TestVar{
 			{"test", "xyz"},
 		}},
 	})
@@ -214,18 +219,18 @@ func TestNameIdMatches(t *testing.T) {
 			'\t'
 			(at least 1 any fewest) = name
 			line end`)
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`US123456	lilith
 tx555555	martha
 FR420420	celeste`)
 	matches(t, results, []TestMatch{
-		{0, "US123456\tlilith", None[string](), []TestVar{
+		{0, "US123456\tlilith", ds.None[string](), []TestVar{
 			{"country", "US"},
 			{"department", "123456"},
 			{"id", "US123456"},
 			{"name", "lilith"},
 		}},
-		{32, "FR420420\tceleste", None[string](), []TestVar{
+		{32, "FR420420\tceleste", ds.None[string](), []TestVar{
 			{"country", "FR"},
 			{"department", "420420"},
 			{"id", "FR420420"},
@@ -236,10 +241,10 @@ FR420420	celeste`)
 
 func TestVariableMatch(t *testing.T) {
 	vore, err := Compile("find all 'wow' = wow wow")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("wow wowwow")
 	matches(t, results, []TestMatch{
-		{4, "wowwow", None[string](), []TestVar{
+		{4, "wowwow", ds.None[string](), []TestVar{
 			{"wow", "wow"},
 		}},
 	})
@@ -247,16 +252,16 @@ func TestVariableMatch(t *testing.T) {
 
 func TestReplaceStatement(t *testing.T) {
 	vore, err := Compile("replace all 'wow' = wow with '>' wow wow '<'")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("wow wowwow")
 	matches(t, results, []TestMatch{
-		{0, "wow", Some(">wowwow<"), []TestVar{
+		{0, "wow", ds.Some(">wowwow<"), []TestVar{
 			{"wow", "wow"},
 		}},
-		{4, "wow", Some(">wowwow<"), []TestVar{
+		{4, "wow", ds.Some(">wowwow<"), []TestVar{
 			{"wow", "wow"},
 		}},
-		{7, "wow", Some(">wowwow<"), []TestVar{
+		{7, "wow", ds.Some(">wowwow<"), []TestVar{
 			{"wow", "wow"},
 		}},
 	})
@@ -264,43 +269,43 @@ func TestReplaceStatement(t *testing.T) {
 
 func TestNot(t *testing.T) {
 	vore, err := Compile("find all at least 1 not whitespace")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("this \tfinds all  \nnon-whitespace!")
 	matches(t, results, []TestMatch{
-		{0, "this", None[string](), []TestVar{}},
-		{6, "finds", None[string](), []TestVar{}},
-		{12, "all", None[string](), []TestVar{}},
-		{18, "non-whitespace!", None[string](), []TestVar{}},
+		{0, "this", ds.None[string](), []TestVar{}},
+		{6, "finds", ds.None[string](), []TestVar{}},
+		{12, "all", ds.None[string](), []TestVar{}},
+		{18, "non-whitespace!", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestNotInBasic(t *testing.T) {
 	vore, err := Compile("find all not in 'a' to 'c', 'x' to 'z'")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("abcdefxyzghi")
 	matches(t, results, []TestMatch{
-		{3, "d", None[string](), []TestVar{}},
-		{4, "e", None[string](), []TestVar{}},
-		{5, "f", None[string](), []TestVar{}},
-		{9, "g", None[string](), []TestVar{}},
-		{10, "h", None[string](), []TestVar{}},
-		{11, "i", None[string](), []TestVar{}},
+		{3, "d", ds.None[string](), []TestVar{}},
+		{4, "e", ds.None[string](), []TestVar{}},
+		{5, "f", ds.None[string](), []TestVar{}},
+		{9, "g", ds.None[string](), []TestVar{}},
+		{10, "h", ds.None[string](), []TestVar{}},
+		{11, "i", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestNotInInLoop(t *testing.T) {
 	vore, err := Compile("find all at least 1 (not in 'a' to 'c', 'x' to 'z')")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("abcdefxyzghi")
 	matches(t, results, []TestMatch{
-		{3, "def", None[string](), []TestVar{}},
-		{9, "ghi", None[string](), []TestVar{}},
+		{3, "def", ds.None[string](), []TestVar{}},
+		{9, "ghi", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestBlockComment(t *testing.T) {
 	vore, err := Compile("--(find all at least))- 1 (not in 'a' to 'c', 'x' to 'z'))--")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("oh wow a test!")
 	matches(t, results, []TestMatch{})
 }
@@ -339,27 +344,27 @@ find all
     (("25" in "0" to "5") or (("2" in "0" to "4" digit) or (maybe ("0" or "1") digit maybe digit)))
       or (maybe (at least 0 ldd ld) ":" at least 1 (hexPart1 or ("\\" hexPart2)))
   "]")`)
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("jhneasterday09@gmail.com")
 	matches(t, results, []TestMatch{
-		{0, "jhneasterday09@gmail.com", None[string](), []TestVar{}},
+		{0, "jhneasterday09@gmail.com", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestCSV(t *testing.T) {
 	vore, err := CompileFile("../docs/examples/csv.vore")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`a, b, c
 1, 2, 3
 x, y, z`)
 	matches(t, results, []TestMatch{
-		{0, "a, b, c\n", None[string](), []TestVar{
+		{0, "a, b, c\n", ds.None[string](), []TestVar{
 			{"row", "[ValueHashMap]"}, // TODO check the nested structure
 		}},
-		{8, "1, 2, 3\n", None[string](), []TestVar{
+		{8, "1, 2, 3\n", ds.None[string](), []TestVar{
 			{"row", "[ValueHashMap]"}, // TODO check the nested structure
 		}},
-		{16, "x, y, z", None[string](), []TestVar{
+		{16, "x, y, z", ds.None[string](), []TestVar{
 			{"row", "[ValueHashMap]"}, // TODO check the nested structure
 		}},
 	})
@@ -367,7 +372,7 @@ x, y, z`)
 
 func TestCaseless(t *testing.T) {
 	vore, err := Compile("find all caseless 'test'")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`
 		this is a test
 		this is a TEST
@@ -375,331 +380,331 @@ func TestCaseless(t *testing.T) {
 		this is a tEsT
 	`)
 	matches(t, results, []TestMatch{
-		{13, "test", None[string](), []TestVar{}},
-		{30, "TEST", None[string](), []TestVar{}},
-		{47, "Test", None[string](), []TestVar{}},
-		{64, "tEsT", None[string](), []TestVar{}},
+		{13, "test", ds.None[string](), []TestVar{}},
+		{30, "TEST", ds.None[string](), []TestVar{}},
+		{47, "Test", ds.None[string](), []TestVar{}},
+		{64, "tEsT", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp(t *testing.T) {
 	vore, err := Compile("find all @/a+b*/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("aaabbb ab a")
 	matches(t, results, []TestMatch{
-		{0, "aaabbb", None[string](), []TestVar{}},
-		{7, "ab", None[string](), []TestVar{}},
-		{10, "a", None[string](), []TestVar{}},
+		{0, "aaabbb", ds.None[string](), []TestVar{}},
+		{7, "ab", ds.None[string](), []TestVar{}},
+		{10, "a", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp2(t *testing.T) {
 	vore, err := Compile("find all @/a*?b/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("aaabbb ab a")
 	matches(t, results, []TestMatch{
-		{0, "aaab", None[string](), []TestVar{}},
-		{4, "b", None[string](), []TestVar{}},
-		{5, "b", None[string](), []TestVar{}},
-		{7, "ab", None[string](), []TestVar{}},
+		{0, "aaab", ds.None[string](), []TestVar{}},
+		{4, "b", ds.None[string](), []TestVar{}},
+		{5, "b", ds.None[string](), []TestVar{}},
+		{7, "ab", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp3(t *testing.T) {
 	vore, err := Compile("find all @/a+?b?/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("aaabbb ab a")
 	matches(t, results, []TestMatch{
-		{0, "a", None[string](), []TestVar{}},
-		{1, "a", None[string](), []TestVar{}},
-		{2, "ab", None[string](), []TestVar{}},
-		{7, "ab", None[string](), []TestVar{}},
-		{10, "a", None[string](), []TestVar{}},
+		{0, "a", ds.None[string](), []TestVar{}},
+		{1, "a", ds.None[string](), []TestVar{}},
+		{2, "ab", ds.None[string](), []TestVar{}},
+		{7, "ab", ds.None[string](), []TestVar{}},
+		{10, "a", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp4(t *testing.T) {
 	vore, err := Compile("find all @/a{4,7}/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`aaaaaaaa
 	aaa aaaaaa`)
 	matches(t, results, []TestMatch{
-		{0, "aaaaaaa", None[string](), []TestVar{}},
-		{14, "aaaaaa", None[string](), []TestVar{}},
+		{0, "aaaaaaa", ds.None[string](), []TestVar{}},
+		{14, "aaaaaa", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp5(t *testing.T) {
 	vore, err := Compile("find all @/a{4,}/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`aaaaaaaa
 	aaa aaaaaa`)
 	matches(t, results, []TestMatch{
-		{0, "aaaaaaaa", None[string](), []TestVar{}},
-		{14, "aaaaaa", None[string](), []TestVar{}},
+		{0, "aaaaaaaa", ds.None[string](), []TestVar{}},
+		{14, "aaaaaa", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp6(t *testing.T) {
 	vore, err := Compile("find all @/a{4}/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`aaaaaaaa
 	aaa aaaaaa`)
 	matches(t, results, []TestMatch{
-		{0, "aaaa", None[string](), []TestVar{}},
-		{4, "aaaa", None[string](), []TestVar{}},
-		{14, "aaaa", None[string](), []TestVar{}},
+		{0, "aaaa", ds.None[string](), []TestVar{}},
+		{4, "aaaa", ds.None[string](), []TestVar{}},
+		{14, "aaaa", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp7(t *testing.T) {
 	vore, err := Compile("find all @/a{4,}?/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`aaaaaaaa
 	aaa aaaaaa`)
 	matches(t, results, []TestMatch{
-		{0, "aaaa", None[string](), []TestVar{}},
-		{4, "aaaa", None[string](), []TestVar{}},
-		{14, "aaaa", None[string](), []TestVar{}},
+		{0, "aaaa", ds.None[string](), []TestVar{}},
+		{4, "aaaa", ds.None[string](), []TestVar{}},
+		{14, "aaaa", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp8(t *testing.T) {
 	vore, err := Compile("find all @/.{3}/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`12312312312`)
 	matches(t, results, []TestMatch{
-		{0, "123", None[string](), []TestVar{}},
-		{3, "123", None[string](), []TestVar{}},
-		{6, "123", None[string](), []TestVar{}},
+		{0, "123", ds.None[string](), []TestVar{}},
+		{3, "123", ds.None[string](), []TestVar{}},
+		{6, "123", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp9(t *testing.T) {
 	vore, err := Compile("find all @/[^]*/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`1231231
 	2312`)
 	matches(t, results, []TestMatch{
 		{0, `1231231
-	2312`, None[string](), []TestVar{}},
+	2312`, ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp10(t *testing.T) {
 	vore, err := Compile("find all @/[abc]*/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`123aabbcc986`)
 	matches(t, results, []TestMatch{
-		{3, `aabbcc`, None[string](), []TestVar{}},
+		{3, `aabbcc`, ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp11(t *testing.T) {
 	vore, err := Compile("find all @/[a-z]{0,2}/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("IT WILL CATCH this AND it WILL GET me")
 	matches(t, results, []TestMatch{
-		{14, "th", None[string](), []TestVar{}},
-		{16, "is", None[string](), []TestVar{}},
-		{23, "it", None[string](), []TestVar{}},
-		{35, "me", None[string](), []TestVar{}},
+		{14, "th", ds.None[string](), []TestVar{}},
+		{16, "is", ds.None[string](), []TestVar{}},
+		{23, "it", ds.None[string](), []TestVar{}},
+		{35, "me", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp12(t *testing.T) {
 	vore, err := Compile("find all @/[a-]*/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`123aa--a-ac986`)
 	matches(t, results, []TestMatch{
-		{3, `aa--a-a`, None[string](), []TestVar{}},
+		{3, `aa--a-a`, ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp13(t *testing.T) {
 	vore, err := Compile("find all @/test/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("this is a test")
 	matches(t, results, []TestMatch{
-		{10, "test", None[string](), []TestVar{}},
+		{10, "test", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp14(t *testing.T) {
 	vore, err := Compile("find all @/a|b/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("abc")
 	matches(t, results, []TestMatch{
-		{0, "a", None[string](), []TestVar{}},
-		{1, "b", None[string](), []TestVar{}},
+		{0, "a", ds.None[string](), []TestVar{}},
+		{1, "b", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp15(t *testing.T) {
 	vore, err := Compile("find all @/^test/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("test a test")
 	matches(t, results, []TestMatch{
-		{0, "test", None[string](), []TestVar{}},
+		{0, "test", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp16(t *testing.T) {
 	vore, err := Compile("find all @/test$/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("test a test")
 	matches(t, results, []TestMatch{
-		{7, "test", None[string](), []TestVar{}},
+		{7, "test", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp17(t *testing.T) {
 	vore, err := Compile("find all @/[^abc]*/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("I really hate the abc's")
 	matches(t, results, []TestMatch{
-		{0, "I re", None[string](), []TestVar{}},
-		{5, "lly h", None[string](), []TestVar{}},
-		{11, "te the ", None[string](), []TestVar{}},
-		{21, "'s", None[string](), []TestVar{}},
+		{0, "I re", ds.None[string](), []TestVar{}},
+		{5, "lly h", ds.None[string](), []TestVar{}},
+		{11, "te the ", ds.None[string](), []TestVar{}},
+		{21, "'s", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp18(t *testing.T) {
 	vore, err := Compile("find all @/[]/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("This is not a match")
 	matches(t, results, []TestMatch{})
 }
 
 func TestNotExpressionDeclaration(t *testing.T) {
 	vore, err := Compile("find all not letter = wow")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("123 &abc")
 	matches(t, results, []TestMatch{
-		{0, "1", None[string](), []TestVar{{"wow", "1"}}},
-		{1, "2", None[string](), []TestVar{{"wow", "2"}}},
-		{2, "3", None[string](), []TestVar{{"wow", "3"}}},
-		{3, " ", None[string](), []TestVar{{"wow", " "}}},
-		{4, "&", None[string](), []TestVar{{"wow", "&"}}},
+		{0, "1", ds.None[string](), []TestVar{{"wow", "1"}}},
+		{1, "2", ds.None[string](), []TestVar{{"wow", "2"}}},
+		{2, "3", ds.None[string](), []TestVar{{"wow", "3"}}},
+		{3, " ", ds.None[string](), []TestVar{{"wow", " "}}},
+		{4, "&", ds.None[string](), []TestVar{{"wow", "&"}}},
 	})
 }
 
 func TestRegexp19(t *testing.T) {
 	vore, err := Compile("find all @/(?<test>a|b)/ test")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("aabaccabjjbb")
 	matches(t, results, []TestMatch{
-		{0, "aa", None[string](), []TestVar{{"test", "a"}}},
-		{10, "bb", None[string](), []TestVar{{"test", "b"}}},
+		{0, "aa", ds.None[string](), []TestVar{{"test", "a"}}},
+		{10, "bb", ds.None[string](), []TestVar{{"test", "b"}}},
 	})
 }
 
 func TestRegexp20(t *testing.T) {
 	vore, err := Compile("find all ('a' or 'b') = test @/\\k<test>/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("aabaccabjjbb")
 	matches(t, results, []TestMatch{
-		{0, "aa", None[string](), []TestVar{{"test", "a"}}},
-		{10, "bb", None[string](), []TestVar{{"test", "b"}}},
+		{0, "aa", ds.None[string](), []TestVar{{"test", "a"}}},
+		{10, "bb", ds.None[string](), []TestVar{{"test", "b"}}},
 	})
 }
 
 func TestBranchVariable(t *testing.T) {
 	vore, err := Compile("find all ('a' or 'b') = test test")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("aabaccabjjbb")
 	matches(t, results, []TestMatch{
-		{0, "aa", None[string](), []TestVar{{"test", "a"}}},
-		{10, "bb", None[string](), []TestVar{{"test", "b"}}},
+		{0, "aa", ds.None[string](), []TestVar{{"test", "a"}}},
+		{10, "bb", ds.None[string](), []TestVar{{"test", "b"}}},
 	})
 }
 
 func TestRegexp21(t *testing.T) {
 	vore, err := Compile("find all at least 1 @/\\d/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("1234abc567")
 	matches(t, results, []TestMatch{
-		{0, "1234", None[string](), []TestVar{}},
-		{7, "567", None[string](), []TestVar{}},
+		{0, "1234", ds.None[string](), []TestVar{}},
+		{7, "567", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp22(t *testing.T) {
 	vore, err := Compile("find all at least 1 @/\\D/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("1234abc567")
 	matches(t, results, []TestMatch{
-		{4, "abc", None[string](), []TestVar{}},
+		{4, "abc", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp23(t *testing.T) {
 	vore, err := Compile("find all at least 1 @/\\s/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`12 34a	bc
 567`)
 	matches(t, results, []TestMatch{
-		{2, " ", None[string](), []TestVar{}},
-		{6, "\t", None[string](), []TestVar{}},
-		{9, "\n", None[string](), []TestVar{}},
+		{2, " ", ds.None[string](), []TestVar{}},
+		{6, "\t", ds.None[string](), []TestVar{}},
+		{9, "\n", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp24(t *testing.T) {
 	vore, err := Compile("find all at least 1 @/\\S/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`12 34a	bc
 567`)
 	matches(t, results, []TestMatch{
-		{0, "12", None[string](), []TestVar{}},
-		{3, "34a", None[string](), []TestVar{}},
-		{7, "bc", None[string](), []TestVar{}},
-		{10, "567", None[string](), []TestVar{}},
+		{0, "12", ds.None[string](), []TestVar{}},
+		{3, "34a", ds.None[string](), []TestVar{}},
+		{7, "bc", ds.None[string](), []TestVar{}},
+		{10, "567", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp25(t *testing.T) {
 	vore, err := Compile("find all @/\\D{0,2}/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`1234abc567`)
 	matches(t, results, []TestMatch{
-		{4, "ab", None[string](), []TestVar{}},
-		{6, "c", None[string](), []TestVar{}},
+		{4, "ab", ds.None[string](), []TestVar{}},
+		{6, "c", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp26(t *testing.T) {
 	vore, err := Compile("find all @/\\D{2,}/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`1234abc567`)
 	matches(t, results, []TestMatch{
-		{4, "abc", None[string](), []TestVar{}},
+		{4, "abc", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp27(t *testing.T) {
 	vore, err := Compile("find all @/\\D{0,2}?/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`1234abc567`)
 	matches(t, results, []TestMatch{})
 }
 
 func TestRegexp28(t *testing.T) {
 	vore, err := Compile("find all @/\\D{2,}?/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`1234abc567`)
 	matches(t, results, []TestMatch{
-		{4, "ab", None[string](), []TestVar{}},
+		{4, "ab", ds.None[string](), []TestVar{}},
 	})
 }
 
 func TestRegexp29(t *testing.T) {
 	vore, err := Compile("find all @/(test)\\1/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`testtest`)
 	matches(t, results, []TestMatch{
-		{0, "testtest", None[string](), []TestVar{
+		{0, "testtest", ds.None[string](), []TestVar{
 			{"_1", "test"},
 		}},
 	})
@@ -707,10 +712,10 @@ func TestRegexp29(t *testing.T) {
 
 func TestRegexp30(t *testing.T) {
 	vore, err := Compile("find all @/(t)(e)(s)(t)(e)(x)(p)(r)(e)(s)(s)(i)(o)(n)\\14\\13/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`testexpressionno`)
 	matches(t, results, []TestMatch{
-		{0, "testexpressionno", None[string](), []TestVar{
+		{0, "testexpressionno", ds.None[string](), []TestVar{
 			{"_1", "t"},
 			{"_2", "e"},
 			{"_3", "s"},
@@ -731,10 +736,10 @@ func TestRegexp30(t *testing.T) {
 
 func TestRegexp31(t *testing.T) {
 	vore, err := Compile("find all @/(test)\\1test/")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run(`testtesttest`)
 	matches(t, results, []TestMatch{
-		{0, "testtesttest", None[string](), []TestVar{
+		{0, "testtesttest", ds.None[string](), []TestVar{
 			{"_1", "test"},
 		}},
 	})

@@ -39,6 +39,7 @@ I will also start by defining some helpers to make this more readable
 
 )--
 
+--(
 set localPart to pattern
   in letter, digit, "!", "#", "$", "%", 
     "&", "'", "*", "+", "/", "=", "?", 
@@ -79,3 +80,5 @@ find all
       (maybe (at least 0 ldd ld) ":" at least 1 (hexPart1 or ("\\" hexPart2)))
     )
   "]")
+)--
+

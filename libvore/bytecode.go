@@ -1,9 +1,14 @@
 package libvore
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/jmeaster30/vore/libvore/ds"
+	"github.com/jmeaster30/vore/libvore/files"
+)
 
 type Command interface {
-	execute(string, *VReader, ReplaceMode) Matches
+	execute(string, *files.Reader, ReplaceMode) Matches
 	String() string
 }
 
@@ -16,24 +21,19 @@ type FindCommand struct {
 }
 
 func (f FindCommand) String() string {
-	return fmt.Sprintf("(find (%t %d %d %d) %s)", f.all, f.skip, f.take, f.last, f.body)
+	return fmt.Sprintf("(find (all %t) (min %d max %d) (last %d) %s)", f.all, f.skip, f.take, f.last, f.body)
 }
 
-func findMatches(insts []SearchInstruction, all bool, skip int, take int, last int, filename string, reader *VReader) Matches {
-	matches := NewQueue[Match]()
+func findMatches(insts []SearchInstruction, all bool, skip int, take int, last int, filename string, reader *files.Reader) Matches {
+	matches := ds.NewQueue[Match]()
 	matchNumber := 0
 	fileOffset := 0
 	lineNumber := 1
 	columnNumber := 1
 
-	if reader.size == 0 {
+	if reader.Size() == 0 {
 		return Matches{}
 	}
-
-	//fmt.Println("Find Command Instructions")
-	//for i, inst := range insts {
-	//	fmt.Printf("[%d] %+v\n", i, inst)
-	//}
 
 	for all || matchNumber < skip+take {
 		currentState := CreateState(filename, reader, fileOffset, lineNumber, columnNumber)
@@ -74,7 +74,7 @@ func findMatches(insts []SearchInstruction, all bool, skip int, take int, last i
 			}
 		}
 
-		if fileOffset >= reader.size {
+		if fileOffset >= reader.Size() {
 			break
 		}
 	}
@@ -82,7 +82,7 @@ func findMatches(insts []SearchInstruction, all bool, skip int, take int, last i
 	return matches.Contents()
 }
 
-func (c FindCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
+func (c FindCommand) execute(filename string, reader *files.Reader, mode ReplaceMode) Matches {
 	return findMatches(c.body, c.all, c.skip, c.take, c.last, filename, reader)
 }
 
@@ -99,7 +99,7 @@ func (r ReplaceCommand) String() string {
 	return fmt.Sprintf("(replace (%t %d %d %d))", r.all, r.skip, r.take, r.last)
 }
 
-func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
+func (c ReplaceCommand) execute(filename string, reader *files.Reader, mode ReplaceMode) Matches {
 	foundMatches := findMatches(c.body, c.all, c.skip, c.take, c.last, filename, reader)
 
 	replacedMatches := Matches{}
@@ -112,18 +112,18 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 		replacedMatches = append(replacedMatches, current_state.match)
 	}
 
-	var writer *VWriter
+	var writer *files.Writer
 	replaceReader := reader
 	if mode == NEW {
-		writer = VWriterFromFile(filename + ".vored")
+		writer = files.WriterFromFile(filename + ".vored")
 	} else if mode == OVERWRITE {
 		// If we are overwriting the file we have to load the original
 		// into memory since we will be writing over areas of text that
 		// we need to read from
-		replaceReader = VReaderFromFileToMemory(filename)
-		writer = VWriterFromFile(filename)
+		replaceReader = files.ReaderFromFileToMemory(filename)
+		writer = files.WriterFromFile(filename)
 	} else if mode == NOTHING {
-		writer = VWriterFromMemory()
+		writer = files.WriterFromMemory()
 	}
 
 	lastReaderOffset := 0
@@ -141,8 +141,8 @@ func (c ReplaceCommand) execute(filename string, reader *VReader, mode ReplaceMo
 		currentWriterOffset += len(replacedMatches[i].Replacement.GetValueOrDefault(""))
 		lastReaderOffset += len(replacedMatches[i].Value)
 	}
-	if lastReaderOffset < replaceReader.size {
-		outputValue := replaceReader.ReadAt(reader.size-lastReaderOffset, lastReaderOffset)
+	if lastReaderOffset < replaceReader.Size() {
+		outputValue := replaceReader.ReadAt(reader.Size()-lastReaderOffset, lastReaderOffset)
 		writer.WriteAt(currentWriterOffset, outputValue)
 	}
 
@@ -161,7 +161,7 @@ func (s SetCommand) String() string {
 	return fmt.Sprintf("(set (id %s) (%v)", s.id, s.body)
 }
 
-func (c SetCommand) execute(filename string, reader *VReader, mode ReplaceMode) Matches {
+func (c SetCommand) execute(filename string, reader *files.Reader, mode ReplaceMode) Matches {
 	return Matches{}
 }
 

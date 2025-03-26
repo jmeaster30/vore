@@ -1,6 +1,11 @@
 package libvore
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/jmeaster30/vore/libvore/ds"
+	"github.com/jmeaster30/vore/libvore/testutils"
+)
 
 func TestDivisibleBy3Check(t *testing.T) {
 	vore, err := Compile(`
@@ -11,12 +16,12 @@ begin
 end
 
 find all divisibleBy3`)
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("123 4 6 51 52")
 	matches(t, results, []TestMatch{
-		{0, "123", None[string](), []TestVar{}},
-		{6, "6", None[string](), []TestVar{}},
-		{8, "51", None[string](), []TestVar{}},
+		{0, "123", ds.None[string](), []TestVar{}},
+		{6, "6", ds.None[string](), []TestVar{}},
+		{8, "51", ds.None[string](), []TestVar{}},
 	})
 }
 
@@ -30,10 +35,10 @@ set check to function
 end
 
 replace all 'test' with check`)
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("this is a test")
 	matches(t, results, []TestMatch{
-		{10, "test", Some("oh yeah"), []TestVar{}},
+		{10, "test", ds.Some("oh yeah"), []TestVar{}},
 	})
 }
 
@@ -48,10 +53,10 @@ begin
 end
 
 replace all 'test' with check`)
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("this is a test")
 	matches(t, results, []TestMatch{
-		{10, "test", Some("test"), []TestVar{}},
+		{10, "test", ds.Some("test"), []TestVar{}},
 	})
 }
 
@@ -193,21 +198,21 @@ set matchRepeater to transform
 end
 
 replace all word start at least 1 any fewest word end with ">" matchRepeater "<"`)
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("this is a test")
 	matches(t, results, []TestMatch{
-		{0, "this", Some(">this<"), []TestVar{}},
-		{5, "is", Some(">isis<"), []TestVar{}},
-		{8, "a", Some(">aaa<"), []TestVar{}},
-		{10, "test", Some(">testtesttesttest<"), []TestVar{}},
+		{0, "this", ds.Some(">this<"), []TestVar{}},
+		{5, "is", ds.Some(">isis<"), []TestVar{}},
+		{8, "a", ds.Some(">aaa<"), []TestVar{}},
+		{10, "test", ds.Some(">testtesttesttest<"), []TestVar{}},
 	})
 }
 
 func TestTheDarknessInsideMe(t *testing.T) {
 	vore, err := Compile("replace all 'hello' with 'goodbye'")
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	results := vore.Run("this is it. hello world")
 	matches(t, results, []TestMatch{
-		{12, "hello", Some("goodbye"), []TestVar{}},
+		{12, "hello", ds.Some("goodbye"), []TestVar{}},
 	})
 }

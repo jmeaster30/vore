@@ -1,30 +1,30 @@
-package libvore
+package files
 
 import (
 	"io"
 	"os"
 )
 
-type VReader struct {
+type Reader struct {
 	contents ReadSeekCloser
 	offset   int
 	size     int
 }
 
-func VReaderFromFileToMemory(filename string) *VReader {
+func ReaderFromFileToMemory(filename string) *Reader {
 	contents, err := os.ReadFile(filename)
 	if err != nil {
 		panic(err)
 	}
 
-	return &VReader{
+	return &Reader{
 		contents: NewStringReadCloser(string(contents)),
 		offset:   0,
 		size:     len(contents),
 	}
 }
 
-func VReaderFromFile(filename string) *VReader {
+func ReaderFromFile(filename string) *Reader {
 	file, err := os.Open(filename)
 	if err != nil {
 		panic(err)
@@ -35,22 +35,26 @@ func VReaderFromFile(filename string) *VReader {
 		panic(err)
 	}
 
-	return &VReader{
-		contents: NewVBufferedFile(file, fileinfo.Size()),
+	return &Reader{
+		contents: NewBufferedFile(file, fileinfo.Size()),
 		offset:   0,
 		size:     int(fileinfo.Size()),
 	}
 }
 
-func VReaderFromString(contents string) *VReader {
-	return &VReader{
+func ReaderFromString(contents string) *Reader {
+	return &Reader{
 		contents: NewStringReadCloser(contents),
 		offset:   0,
 		size:     len(contents),
 	}
 }
 
-func (v *VReader) Seek(offset int) {
+func (v *Reader) Size() int {
+	return v.size
+}
+
+func (v *Reader) Seek(offset int) {
 	v.offset = offset
 	_, err := v.contents.Seek(int64(offset), io.SeekStart)
 	if err != nil {
@@ -58,7 +62,7 @@ func (v *VReader) Seek(offset int) {
 	}
 }
 
-func (v *VReader) Read(length int) string {
+func (v *Reader) Read(length int) string {
 	if v.offset+length-1 >= v.size {
 		return ""
 	}
@@ -73,7 +77,7 @@ func (v *VReader) Read(length int) string {
 	return string(currentString)
 }
 
-func (v *VReader) ReadAt(length int, offset int) string {
+func (v *Reader) ReadAt(length int, offset int) string {
 	if offset+length-1 >= v.size {
 		return ""
 	}
@@ -89,7 +93,7 @@ func (v *VReader) ReadAt(length int, offset int) string {
 	return string(currentString)
 }
 
-func (v *VReader) Close() {
+func (v *Reader) Close() {
 	err := v.contents.Close()
 	if err != nil {
 		panic(err)

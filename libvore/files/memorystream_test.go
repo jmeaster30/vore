@@ -1,8 +1,10 @@
-package libvore
+package files
 
 import (
 	"io"
 	"testing"
+
+	"github.com/jmeaster30/vore/libvore/testutils"
 )
 
 func TestWriteMemoryStream(t *testing.T) {
@@ -46,7 +48,7 @@ func TestSeekStartMemoryStream(t *testing.T) {
 	}
 
 	pos, err := stream.Seek(3, io.SeekStart)
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	if pos != 3 {
 		t.Errorf("Returned pos was expected to be 3 but was %d", pos)
 	}
@@ -114,7 +116,7 @@ func TestSeekCurrentMemoryStream(t *testing.T) {
 	}
 
 	pos, err := stream.Seek(3, io.SeekCurrent)
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	if pos != 13 {
 		t.Errorf("Returned pos was expected to be 13 but was %d", pos)
 	}
@@ -147,10 +149,10 @@ func TestSeekCurrent2MemoryStream(t *testing.T) {
 	}
 
 	_, err := stream.Seek(3, io.SeekStart)
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 
 	pos, err := stream.Seek(4, io.SeekCurrent)
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	if pos != 7 {
 		t.Errorf("Returned pos was expected to be 7 but was %d", pos)
 	}
@@ -183,7 +185,7 @@ func TestSeekEndMemoryStream(t *testing.T) {
 	}
 
 	pos, err := stream.Seek(3, io.SeekEnd)
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	if pos != 13 {
 		t.Errorf("Returned pos was expected to be 13 but was %d", pos)
 	}

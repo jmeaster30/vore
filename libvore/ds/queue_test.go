@@ -1,4 +1,4 @@
-package libvore
+package ds
 
 import "testing"
 

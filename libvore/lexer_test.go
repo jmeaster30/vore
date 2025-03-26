@@ -3,6 +3,9 @@ package libvore
 import (
 	"strings"
 	"testing"
+
+	"github.com/jmeaster30/vore/libvore/ds"
+	"github.com/jmeaster30/vore/libvore/testutils"
 )
 
 func tokenList(t *testing.T, results []*Token, expected []*Token) {
@@ -28,48 +31,48 @@ func tokenList(t *testing.T, results []*Token, expected []*Token) {
 func TestLexerBasic(t *testing.T) {
 	lexer := initLexer(strings.NewReader("ident 'string1' \"string2\""))
 	actual, err := lexer.getTokens()
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	tokenList(t, actual, []*Token{
-		{IDENTIFIER, NewRange(0, 5), NewRange(1, 1), NewRange(0, 5), "ident"},
-		{WS, NewRange(5, 6), NewRange(1, 1), NewRange(5, 6), " "},
-		{STRING, NewRange(6, 15), NewRange(1, 1), NewRange(6, 15), "string1"},
-		{WS, NewRange(15, 16), NewRange(1, 1), NewRange(15, 16), " "},
-		{STRING, NewRange(16, 25), NewRange(1, 1), NewRange(16, 25), "string2"},
-		{EOF, NewRange(25, 25), NewRange(1, 1), NewRange(25, 25), ""},
+		{IDENTIFIER, ds.NewRange(0, 5), ds.NewRange(1, 1), ds.NewRange(0, 5), "ident"},
+		{WS, ds.NewRange(5, 6), ds.NewRange(1, 1), ds.NewRange(5, 6), " "},
+		{STRING, ds.NewRange(6, 15), ds.NewRange(1, 1), ds.NewRange(6, 15), "string1"},
+		{WS, ds.NewRange(15, 16), ds.NewRange(1, 1), ds.NewRange(15, 16), " "},
+		{STRING, ds.NewRange(16, 25), ds.NewRange(1, 1), ds.NewRange(16, 25), "string2"},
+		{EOF, ds.NewRange(25, 25), ds.NewRange(1, 1), ds.NewRange(25, 25), ""},
 	})
 }
 
 func TestLexerTransformAlias(t *testing.T) {
 	lexer := initLexer(strings.NewReader("transform function"))
 	actual, err := lexer.getTokens()
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	tokenList(t, actual, []*Token{
-		{TRANSFORM, NewRange(0, 9), NewRange(1, 1), NewRange(0, 9), "transform"},
-		{WS, NewRange(9, 10), NewRange(1, 1), NewRange(9, 10), " "},
-		{TRANSFORM, NewRange(10, 17), NewRange(1, 1), NewRange(10, 17), "function"},
-		{EOF, NewRange(17, 17), NewRange(1, 1), NewRange(17, 17), ""},
+		{TRANSFORM, ds.NewRange(0, 9), ds.NewRange(1, 1), ds.NewRange(0, 9), "transform"},
+		{WS, ds.NewRange(9, 10), ds.NewRange(1, 1), ds.NewRange(9, 10), " "},
+		{TRANSFORM, ds.NewRange(10, 17), ds.NewRange(1, 1), ds.NewRange(10, 17), "function"},
+		{EOF, ds.NewRange(17, 17), ds.NewRange(1, 1), ds.NewRange(17, 17), ""},
 	})
 }
 
 func TestLexerTrueFalse(t *testing.T) {
 	lexer := initLexer(strings.NewReader("true false"))
 	actual, err := lexer.getTokens()
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	tokenList(t, actual, []*Token{
-		{TRUE, NewRange(0, 4), NewRange(1, 1), NewRange(0, 4), "true"},
-		{WS, NewRange(4, 5), NewRange(1, 1), NewRange(4, 5), " "},
-		{FALSE, NewRange(5, 9), NewRange(1, 1), NewRange(5, 9), "false"},
-		{EOF, NewRange(9, 9), NewRange(1, 1), NewRange(9, 9), ""},
+		{TRUE, ds.NewRange(0, 4), ds.NewRange(1, 1), ds.NewRange(0, 4), "true"},
+		{WS, ds.NewRange(4, 5), ds.NewRange(1, 1), ds.NewRange(4, 5), " "},
+		{FALSE, ds.NewRange(5, 9), ds.NewRange(1, 1), ds.NewRange(5, 9), "false"},
+		{EOF, ds.NewRange(9, 9), ds.NewRange(1, 1), ds.NewRange(9, 9), ""},
 	})
 }
 
 func TestLexerWhole(t *testing.T) {
 	lexer := initLexer(strings.NewReader("whole"))
 	actual, err := lexer.getTokens()
-	checkNoError(t, err)
+	testutils.CheckNoError(t, err)
 	tokenList(t, actual, []*Token{
-		{WHOLE, NewRange(0, 4), NewRange(1, 1), NewRange(0, 4), "whole"},
-		{EOF, NewRange(4, 4), NewRange(1, 1), NewRange(4, 4), ""},
+		{WHOLE, ds.NewRange(0, 4), ds.NewRange(1, 1), ds.NewRange(0, 4), "whole"},
+		{EOF, ds.NewRange(4, 4), ds.NewRange(1, 1), ds.NewRange(4, 4), ""},
 	})
 }
 

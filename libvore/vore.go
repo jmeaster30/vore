@@ -7,6 +7,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/jmeaster30/vore/libvore/ds"
+	"github.com/jmeaster30/vore/libvore/files"
 )
 
 type ReplaceMode int
@@ -35,11 +38,11 @@ func (r ReplaceMode) String() string {
 type Match struct {
 	Filename    string
 	MatchNumber int
-	Offset      Range
-	Line        Range
-	Column      Range
+	Offset      ds.Range
+	Line        ds.Range
+	Column      ds.Range
 	Value       string
-	Replacement Optional[string]
+	Replacement ds.Optional[string]
 	Variables   ValueHashMap
 }
 
@@ -404,12 +407,11 @@ func (v *Vore) RunFiles(filenames []string, mode ReplaceMode, processFilenames b
 				actualFiles = append(actualFiles, fixedFilename)
 			}
 			for _, actualFilename := range actualFiles {
-				fmt.Printf("Processing file '%s'...\n", actualFilename)
-				var reader *VReader
+				var reader *files.Reader
 				if processFilenames {
-					reader = VReaderFromString(actualFilename)
+					reader = files.ReaderFromString(actualFilename)
 				} else {
-					reader = VReaderFromFile(actualFilename)
+					reader = files.ReaderFromFile(actualFilename)
 				}
 				foundMatches := command.execute(actualFilename, reader, actualMode)
 				result = append(result, foundMatches...)
@@ -428,7 +430,7 @@ func (v *Vore) RunFiles(filenames []string, mode ReplaceMode, processFilenames b
 func (v *Vore) Run(searchText string) Matches {
 	result := Matches{}
 	for _, command := range v.bytecode {
-		reader := VReaderFromString(searchText)
+		reader := files.ReaderFromString(searchText)
 		result = append(result, command.execute("text", reader, NOTHING)...)
 	}
 	return result

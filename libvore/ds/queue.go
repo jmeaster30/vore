@@ -1,4 +1,4 @@
-package libvore
+package ds
 
 type Queue[T any] struct {
 	store []T

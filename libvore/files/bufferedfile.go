@@ -1,4 +1,4 @@
-package libvore
+package files
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-type VBufferedFile struct {
+type BufferedFile struct {
 	closed        bool
 	file          *os.File
 	fileSize      int64
@@ -17,10 +17,10 @@ type VBufferedFile struct {
 	currentOffset int64
 }
 
-func NewVBufferedFile(file *os.File, fileSize int64) *VBufferedFile {
+func NewBufferedFile(file *os.File, fileSize int64) *BufferedFile {
 	bufferSize := int64(4096)
 
-	bufferedFile := &VBufferedFile{
+	bufferedFile := &BufferedFile{
 		closed:        false,
 		file:          file,
 		fileSize:      fileSize,
@@ -39,7 +39,7 @@ func NewVBufferedFile(file *os.File, fileSize int64) *VBufferedFile {
 	return bufferedFile
 }
 
-func (v *VBufferedFile) Read(p []byte) (int, error) {
+func (v *BufferedFile) Read(p []byte) (int, error) {
 	if v.closed {
 		return 0, io.ErrClosedPipe
 	}
@@ -66,7 +66,7 @@ func (v *VBufferedFile) Read(p []byte) (int, error) {
 	return outputOffset, nil
 }
 
-func (v *VBufferedFile) Seek(offset int64, whence int) (int64, error) {
+func (v *BufferedFile) Seek(offset int64, whence int) (int64, error) {
 	if v.closed {
 		return 0, io.ErrClosedPipe
 	}
@@ -113,7 +113,7 @@ func (v *VBufferedFile) Seek(offset int64, whence int) (int64, error) {
 	return v.currentOffset, nil
 }
 
-func (v *VBufferedFile) Close() error {
+func (v *BufferedFile) Close() error {
 	if v.closed {
 		return io.ErrClosedPipe
 	}

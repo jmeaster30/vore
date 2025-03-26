@@ -3,6 +3,9 @@ package libvore
 import (
 	"strconv"
 	"strings"
+
+	"github.com/jmeaster30/vore/libvore/ds"
+	"github.com/jmeaster30/vore/libvore/files"
 )
 
 type Status int
@@ -34,10 +37,10 @@ type CallState struct {
 }
 
 type SearchEngineState struct {
-	loopStack     *Stack[LoopState]
-	backtrack     *Stack[SearchEngineState]
-	variableStack *Stack[VariableRecord]
-	callStack     *Stack[CallState]
+	loopStack     *ds.Stack[LoopState]
+	backtrack     *ds.Stack[SearchEngineState]
+	variableStack *ds.Stack[VariableRecord]
+	callStack     *ds.Stack[CallState]
 	environment   ValueHashMap
 
 	status            Status
@@ -49,7 +52,7 @@ type SearchEngineState struct {
 	startFileOffset   int
 	startLineNum      int
 	startColumnNum    int
-	reader            *VReader
+	reader            *files.Reader
 	filename          string
 }
 
@@ -118,7 +121,7 @@ func (es *SearchEngineState) MATCHFILESTART(not bool) {
 }
 
 func (es *SearchEngineState) MATCHFILEEND(not bool) {
-	if es.currentFileOffset == es.reader.size {
+	if es.currentFileOffset == es.reader.Size() {
 		if not {
 			es.BACKTRACK()
 		} else {
@@ -162,7 +165,7 @@ func (es *SearchEngineState) MATCHLINESTART(not bool) {
 func (es *SearchEngineState) MATCHLINEEND(not bool) {
 	nextChar := es.READ(1)
 	nextTwoChar := es.READ(2)
-	if nextChar == "\n" || nextTwoChar == "\r\n" || es.currentFileOffset == es.reader.size {
+	if nextChar == "\n" || nextTwoChar == "\r\n" || es.currentFileOffset == es.reader.Size() {
 		if not {
 			es.BACKTRACK()
 		} else {
@@ -182,7 +185,7 @@ func IsLetter(value string) bool {
 }
 
 func (es *SearchEngineState) MATCHWORDSTART(not bool) {
-	if es.currentFileOffset == es.reader.size {
+	if es.currentFileOffset == es.reader.Size() {
 		if not {
 			es.BACKTRACK()
 		} else {
@@ -236,7 +239,7 @@ func (es *SearchEngineState) MATCHWORDEND(not bool) {
 	}
 
 	current := es.READ(1)
-	if es.currentFileOffset == es.reader.size {
+	if es.currentFileOffset == es.reader.Size() {
 		if !IsLetter(current) {
 			if not {
 				es.BACKTRACK()
@@ -288,12 +291,12 @@ func (es *SearchEngineState) MATCHWHOLEFILE(not bool) {
 	}
 
 	// TODO This is probably going to be a performance concern
-	es.CONSUME(es.reader.size)
+	es.CONSUME(es.reader.Size())
 	es.NEXT()
 }
 
 func (es *SearchEngineState) MATCHWHOLELINE(not bool) {
-	if (es.currentFileOffset != 0 && es.READAT(es.currentFileOffset-1, 1) != "\n") || es.currentFileOffset == es.reader.size {
+	if (es.currentFileOffset != 0 && es.READAT(es.currentFileOffset-1, 1) != "\n") || es.currentFileOffset == es.reader.Size() {
 		if not {
 			es.NEXT()
 		} else {
@@ -310,13 +313,13 @@ func (es *SearchEngineState) MATCHWHOLELINE(not bool) {
 	// we know we are at the start of a line and we can read a character
 	for {
 		es.CONSUME(1)
-		if es.currentFileOffset == es.reader.size {
+		if es.currentFileOffset == es.reader.Size() {
 			break
 		}
 
 		nextChar := es.READ(1)
 		nextTwoChar := es.READ(2)
-		if nextChar == "\n" || nextTwoChar == "\r\n" || es.currentFileOffset == es.reader.size {
+		if nextChar == "\n" || nextTwoChar == "\r\n" || es.currentFileOffset == es.reader.Size() {
 			break
 		}
 	}
@@ -325,7 +328,7 @@ func (es *SearchEngineState) MATCHWHOLELINE(not bool) {
 }
 
 func (es *SearchEngineState) MATCHWHOLEWORD(not bool) {
-	if (es.currentFileOffset != 0 && (!IsLetter(es.READ(1)) || IsLetter(es.READAT(es.currentFileOffset-1, 1)))) || es.currentFileOffset == es.reader.size {
+	if (es.currentFileOffset != 0 && (!IsLetter(es.READ(1)) || IsLetter(es.READAT(es.currentFileOffset-1, 1)))) || es.currentFileOffset == es.reader.Size() {
 		if not {
 			es.NEXT()
 		} else {
@@ -342,7 +345,7 @@ func (es *SearchEngineState) MATCHWHOLEWORD(not bool) {
 	// we know we are at the start of a line and we can read a character
 	for {
 		es.CONSUME(1)
-		if es.currentFileOffset == es.reader.size {
+		if es.currentFileOffset == es.reader.Size() {
 			break
 		}
 
@@ -615,12 +618,12 @@ func (es *SearchEngineState) CHECKPOINT() {
 	es.backtrack.Push(*checkpoint)
 }
 
-func CreateState(filename string, reader *VReader, fileOffset int, lineNumber int, columnNumber int) *SearchEngineState {
+func CreateState(filename string, reader *files.Reader, fileOffset int, lineNumber int, columnNumber int) *SearchEngineState {
 	return &SearchEngineState{
-		loopStack:         NewStack[LoopState](),
-		backtrack:         NewStack[SearchEngineState](),
-		variableStack:     NewStack[VariableRecord](),
-		callStack:         NewStack[CallState](),
+		loopStack:         ds.NewStack[LoopState](),
+		backtrack:         ds.NewStack[SearchEngineState](),
+		variableStack:     ds.NewStack[VariableRecord](),
+		callStack:         ds.NewStack[CallState](),
 		environment:       NewValueHashMap(),
 		status:            INPROCESS,
 		programCounter:    0,
@@ -679,9 +682,9 @@ func (es *SearchEngineState) MakeMatch(matchNumber int) Match {
 	return Match{
 		Filename:    es.filename,
 		MatchNumber: matchNumber,
-		Offset:      *NewRange(es.startFileOffset, es.currentFileOffset),
-		Line:        *NewRange(es.startLineNum, es.currentLineNum),
-		Column:      *NewRange(es.startColumnNum, es.currentColumnNum),
+		Offset:      *ds.NewRange(es.startFileOffset, es.currentFileOffset),
+		Line:        *ds.NewRange(es.startLineNum, es.currentLineNum),
+		Column:      *ds.NewRange(es.startColumnNum, es.currentColumnNum),
 		Value:       es.currentMatch,
 		Variables:   es.environment,
 	}
@@ -716,13 +719,13 @@ func (rs *ReplacerState) NEXT() {
 }
 
 func (rs *ReplacerState) WRITESTRING(value string) {
-	rs.match.Replacement = Some(rs.match.Replacement.GetValueOrDefault("") + value)
+	rs.match.Replacement = ds.Some(rs.match.Replacement.GetValueOrDefault("") + value)
 }
 
 func (rs *ReplacerState) WRITEVAR(name string) {
 	value, found := rs.variables.Get(name)
 	if found && value.getType() == ValueStringType {
-		rs.match.Replacement = Some(rs.match.Replacement.GetValueOrDefault("") + value.String().Value)
+		rs.match.Replacement = ds.Some(rs.match.Replacement.GetValueOrDefault("") + value.String().Value)
 	}
 }
 
@@ -741,6 +744,6 @@ func (rs *ReplacerState) Set(from *ReplacerState) {
 }
 
 type GlobalState struct {
-	//subroutines map[string][]SearchInstruction
-	//matches     map[string]Matches
+	// subroutines map[string][]SearchInstruction
+	// matches     map[string]Matches
 }
