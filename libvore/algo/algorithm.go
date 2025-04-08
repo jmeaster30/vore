@@ -1,4 +1,4 @@
-package libvore
+package algo
 
 import (
 	"strings"
@@ -20,7 +20,7 @@ func Min(x int, y int) int {
 
 func Window[T any](array []T, size int) [][]T {
 	var results [][]T
-	for idx, _ := range array {
+	for idx := range array {
 		results = append(results, array[idx:Min(idx+size, len(array))])
 	}
 	return results
@@ -28,10 +28,7 @@ func Window[T any](array []T, size int) [][]T {
 
 func SplitKeep(target string, split string) []string {
 	var results []string
-	for {
-		if len(target) == 0 {
-			break
-		}
+	for len(target) != 0 {
 		splitStart := strings.Index(target, split)
 		if splitStart == 0 {
 			target = target[len(split):]

@@ -1,4 +1,4 @@
-package libvore
+package algo
 
 import (
 	"reflect"

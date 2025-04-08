@@ -3,6 +3,8 @@ package libvore
 import (
 	"os"
 	"strings"
+
+	"github.com/jmeaster30/vore/libvore/algo"
 )
 
 type PathEntryType int
@@ -53,7 +55,7 @@ func pathMatches(target string, matches string) bool {
 		return target == matches
 	}
 
-	matchParts := Window(SplitKeep(matches, "*"), 2)
+	matchParts := algo.Window(algo.SplitKeep(matches, "*"), 2)
 
 	result := true
 	for _, part := range matchParts {

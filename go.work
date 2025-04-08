@@ -3,6 +3,7 @@ go 1.19
 use (
 	.
 	./libvore
+	./libvore/algo
 	./libvore/ds
 	./libvore/files
 	./libvore/testutils
