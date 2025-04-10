@@ -1,4 +1,4 @@
-package libvore
+package bytecode
 
 type ProcessType int
 

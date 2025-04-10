@@ -1,4 +1,4 @@
-package libvore
+package engine
 
 import (
 	"fmt"
@@ -28,6 +28,7 @@ type ProcessValueString struct {
 func (v ProcessValueString) getString() string {
 	return v.value
 }
+
 func (v ProcessValueString) getNumber() int {
 	intval, err := strconv.Atoi(v.value)
 	if err != nil {
@@ -35,9 +36,11 @@ func (v ProcessValueString) getNumber() int {
 	}
 	return intval
 }
+
 func (v ProcessValueString) getBoolean() bool {
 	return len(v.value) != 0
 }
+
 func (v ProcessValueString) getType() ProcessType {
 	return PTSTRING
 }
@@ -49,12 +52,15 @@ type ProcessValueNumber struct {
 func (v ProcessValueNumber) getString() string {
 	return strconv.Itoa(v.value)
 }
+
 func (v ProcessValueNumber) getNumber() int {
 	return v.value
 }
+
 func (v ProcessValueNumber) getBoolean() bool {
 	return v.value != 0
 }
+
 func (v ProcessValueNumber) getType() ProcessType {
 	return PTNUMBER
 }
@@ -69,15 +75,18 @@ func (v ProcessValueBoolean) getString() string {
 	}
 	return "false"
 }
+
 func (v ProcessValueBoolean) getNumber() int {
 	if v.value {
 		return 1
 	}
 	return 0
 }
+
 func (v ProcessValueBoolean) getBoolean() bool {
 	return v.value
 }
+
 func (v ProcessValueBoolean) getType() ProcessType {
 	return PTBOOLEAN
 }

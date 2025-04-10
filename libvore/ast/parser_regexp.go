@@ -1,4 +1,4 @@
-package libvore
+package ast
 
 import (
 	"fmt"
@@ -44,7 +44,6 @@ func parse_regexp_disjunction(regexp_token *Token, regexp string, index int) ([]
 }
 
 func parse_regexp_pattern(regexp_token *Token, regexp string, index int) (AstExpression, int, error) {
-
 	start, next_index, err := parse_regexp_literal(regexp_token, regexp, index)
 	if err != nil {
 		return nil, next_index, err
@@ -72,11 +71,11 @@ func parse_regexp_number(regexp_token *Token, regexp string, index int) (int, in
 		c = regexp[idx]
 	}
 	if result == "" {
-		return -1, index, NewParseError(*regexp_token, "Unexpected Token. Expected number")
+		return -1, index, NewParseError(regexp_token, "Unexpected Token. Expected number")
 	}
 	value, err := strconv.Atoi(result)
 	if err != nil {
-		return value, idx, NewParseError(*regexp_token, "Error converting string to number")
+		return value, idx, NewParseError(regexp_token, "Error converting string to number")
 	}
 	return value, idx, nil
 }
@@ -105,7 +104,7 @@ func parse_regexp_literal(regexp_token *Token, regexp string, index int) (AstExp
 		if exp == nil {
 			return &AstPrimary{start}, idx, nil
 		}
-		exp.body = &AstPrimary{start}
+		exp.Body = &AstPrimary{start}
 		return exp, idx, nil
 	} else if c == '(' {
 		start, next_index, err := parse_regexp_groups(regexp_token, regexp, index+1)
@@ -119,7 +118,7 @@ func parse_regexp_literal(regexp_token *Token, regexp string, index int) (AstExp
 		if exp == nil {
 			return &AstPrimary{start}, idx, nil
 		}
-		exp.body = &AstPrimary{start}
+		exp.Body = &AstPrimary{start}
 		return exp, idx, nil
 	} else if c == '[' {
 		start, next_index, err := parse_regexp_character_class(regexp_token, regexp, index+1)
@@ -133,7 +132,7 @@ func parse_regexp_literal(regexp_token *Token, regexp string, index int) (AstExp
 		if exp == nil {
 			return start, idx, nil
 		}
-		exp.body = start
+		exp.Body = start
 		return exp, idx, nil
 	} else if c == '.' {
 		start = &AstString{true, "\n", false}
@@ -145,7 +144,7 @@ func parse_regexp_literal(regexp_token *Token, regexp string, index int) (AstExp
 		if exp == nil {
 			return &AstPrimary{start}, idx, nil
 		}
-		exp.body = &AstPrimary{start}
+		exp.Body = &AstPrimary{start}
 		return exp, idx, nil
 	} else {
 		start = &AstString{false, string(c), false}
@@ -157,14 +156,14 @@ func parse_regexp_literal(regexp_token *Token, regexp string, index int) (AstExp
 		if exp == nil {
 			return &AstPrimary{start}, idx, nil
 		}
-		exp.body = &AstPrimary{start}
+		exp.Body = &AstPrimary{start}
 		return exp, idx, nil
 	}
 }
 
 func parse_regexp_character_class(regexp_token *Token, regexp string, index int) (AstExpression, int, error) {
 	if index >= len(regexp) {
-		return nil, index, NewParseError(*regexp_token, "Unexpected end of regexp")
+		return nil, index, NewParseError(regexp_token, "Unexpected end of regexp")
 	}
 
 	next_index := index
@@ -175,7 +174,7 @@ func parse_regexp_character_class(regexp_token *Token, regexp string, index int)
 	}
 
 	if next_index >= len(regexp) {
-		return nil, index, NewParseError(*regexp_token, "Unexpected end of regexp")
+		return nil, index, NewParseError(regexp_token, "Unexpected end of regexp")
 	}
 
 	results := []AstListable{}
@@ -189,7 +188,7 @@ func parse_regexp_character_class(regexp_token *Token, regexp string, index int)
 	}
 
 	if next_index >= len(regexp) {
-		return nil, next_index, NewParseError(*regexp_token, "Unexpected end of regexp")
+		return nil, next_index, NewParseError(regexp_token, "Unexpected end of regexp")
 	}
 
 	if len(results) == 0 {
@@ -233,7 +232,7 @@ func parse_regexp_class_ranges(regexp_token *Token, regexp string, index int) (A
 
 func parse_regexp_class_atom_escape(regexp_token *Token, regexp string, index int) (AstListable, int, error) {
 	if index+1 >= len(regexp) {
-		return nil, index + 1, NewParseError(*regexp_token, "Unexpected end of regexp")
+		return nil, index + 1, NewParseError(regexp_token, "Unexpected end of regexp")
 	}
 	panic("PARSE ESCAPE CHARACTER")
 }
@@ -279,7 +278,7 @@ func parse_regexp_quantifier(regexp_token *Token, regexp string, index int) (*As
 				}
 				brace := regexp[idx2]
 				if brace != '}' {
-					return nil, idx2, NewParseError(*regexp_token, "Unexpected character. Expected '}'")
+					return nil, idx2, NewParseError(regexp_token, "Unexpected character. Expected '}'")
 				}
 
 				exp = &AstLoop{from, to, false, nil, ""}
@@ -295,8 +294,8 @@ func parse_regexp_quantifier(regexp_token *Token, regexp string, index int) (*As
 	}
 
 	if exp != nil {
-		exp.fewest = end_idx < len(regexp) && regexp[end_idx] == '?'
-		if exp.fewest {
+		exp.Fewest = end_idx < len(regexp) && regexp[end_idx] == '?'
+		if exp.Fewest {
 			end_idx += 1
 		}
 	}
@@ -334,7 +333,7 @@ func parse_regexp_escape_characters(regexp_token *Token, regexp string, index in
 	} else if c == 'k' {
 		d := regexp[index+1]
 		if d != '<' {
-			return nil, index + 1, NewParseError(*regexp_token, "Expected a < character for named group reference")
+			return nil, index + 1, NewParseError(regexp_token, "Expected a < character for named group reference")
 		}
 		// named capture group
 		current_index := index + 2
@@ -346,7 +345,7 @@ func parse_regexp_escape_characters(regexp_token *Token, regexp string, index in
 			current = regexp[current_index]
 		}
 		if regexp[current_index] != '>' {
-			return nil, current_index, NewParseError(*regexp_token, "Unexpected charactrer in named capture group identifier.")
+			return nil, current_index, NewParseError(regexp_token, "Unexpected charactrer in named capture group identifier.")
 		}
 		return &AstVariable{identifier}, current_index + 1, nil
 	} else {
@@ -366,7 +365,7 @@ func parse_regexp_groups(regexp_token *Token, regexp string, index int) (AstLite
 				return nil, next_index, err
 			}
 			if regexp[next_index] != ')' {
-				return nil, next_index, NewParseError(*regexp_token, "Expected end parenthesis")
+				return nil, next_index, NewParseError(regexp_token, "Expected end parenthesis")
 			}
 			return &AstSubExpr{subexpr}, next_index + 1, nil
 		} else if marker == '=' {
@@ -391,19 +390,19 @@ func parse_regexp_groups(regexp_token *Token, regexp string, index int) (AstLite
 					current = regexp[current_index]
 				}
 				if regexp[current_index] != '>' {
-					return nil, current_index, NewParseError(*regexp_token, "Unexpected character in named capture group identifier.")
+					return nil, current_index, NewParseError(regexp_token, "Unexpected character in named capture group identifier.")
 				}
 				body, next_index, err := parse_regexp_disjunction(regexp_token, regexp, current_index+1)
 				if err != nil {
 					return nil, next_index, err
 				}
 				if regexp[next_index] != ')' {
-					return nil, next_index, NewParseError(*regexp_token, "Expected end parenthesis")
+					return nil, next_index, NewParseError(regexp_token, "Expected end parenthesis")
 				}
 				return &AstSubExpr{[]AstExpression{&AstDec{identifier, &AstSubExpr{body}}}}, next_index + 1, nil
 			}
 		}
-		return nil, index, NewParseError(*regexp_token, "Invalid marker for group")
+		return nil, index, NewParseError(regexp_token, "Invalid marker for group")
 	}
 
 	subexpr, next_index, err := parse_regexp_disjunction(regexp_token, regexp, index)
@@ -411,7 +410,7 @@ func parse_regexp_groups(regexp_token *Token, regexp string, index int) (AstLite
 		return nil, next_index, err
 	}
 	if regexp[next_index] != ')' {
-		return nil, next_index, NewParseError(*regexp_token, "Expected end parenthesis")
+		return nil, next_index, NewParseError(regexp_token, "Expected end parenthesis")
 	}
 	capture_group_number += 1
 	return &AstSubExpr{[]AstExpression{&AstDec{fmt.Sprintf("_%d", capture_group_number), &AstSubExpr{subexpr}}}}, next_index + 1, nil

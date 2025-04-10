@@ -1,4 +1,4 @@
-package libvore
+package ast
 
 import (
 	"strconv"
@@ -36,7 +36,7 @@ func parse_command(tokens []*Token, token_index int) (AstCommand, int, error) {
 	case EOF:
 		return nil, token_index, nil
 	default:
-		return nil, token_index, NewParseError(*tokens[token_index], "Unexpected token. Expected 'find', 'replace', or 'set'.")
+		return nil, token_index, NewParseError(tokens[token_index], "Unexpected token. Expected 'find', 'replace', or 'set'.")
 	}
 }
 
@@ -47,11 +47,11 @@ func parse_find(tokens []*Token, token_index int) (*AstFind, int, error) {
 	}
 
 	findCommand := AstFind{
-		all:  all,
-		skip: skipValue,
-		take: takeValue,
-		last: lastValue,
-		body: []AstExpression{},
+		All:  all,
+		Skip: skipValue,
+		Take: takeValue,
+		Last: lastValue,
+		Body: []AstExpression{},
 	}
 
 	current_token := tokens[new_index]
@@ -63,7 +63,7 @@ func parse_find(tokens []*Token, token_index int) (*AstFind, int, error) {
 			return nil, new_index, parseError
 		}
 
-		findCommand.body = append(findCommand.body, expr)
+		findCommand.Body = append(findCommand.Body, expr)
 		current_index = consumeIgnoreableTokens(tokens, new_index)
 		current_token = tokens[current_index]
 	}
@@ -78,11 +78,11 @@ func parse_replace(tokens []*Token, token_index int) (*AstReplace, int, error) {
 	}
 
 	replaceCommand := AstReplace{
-		all:  all,
-		skip: skipValue,
-		take: takeValue,
-		last: lastValue,
-		body: []AstExpression{},
+		All:  all,
+		Skip: skipValue,
+		Take: takeValue,
+		Last: lastValue,
+		Body: []AstExpression{},
 	}
 
 	current_token := tokens[new_index]
@@ -94,13 +94,13 @@ func parse_replace(tokens []*Token, token_index int) (*AstReplace, int, error) {
 			return nil, new_index, parseError
 		}
 
-		replaceCommand.body = append(replaceCommand.body, expr)
+		replaceCommand.Body = append(replaceCommand.Body, expr)
 		current_index = consumeIgnoreableTokens(tokens, new_index)
 		current_token = tokens[current_index]
 	}
 
 	if current_token.TokenType != WITH {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'with'.")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected 'with'.")
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
@@ -111,7 +111,7 @@ func parse_replace(tokens []*Token, token_index int) (*AstReplace, int, error) {
 			return nil, new_index, parseError
 		}
 
-		replaceCommand.result = append(replaceCommand.result, expr)
+		replaceCommand.Result = append(replaceCommand.Result, expr)
 		current_index = consumeIgnoreableTokens(tokens, new_index)
 		current_token = tokens[current_index]
 	}
@@ -124,7 +124,7 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, error) {
 	current_token := tokens[current_index]
 
 	if current_token.TokenType != IDENTIFIER {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected identifier")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected identifier")
 	}
 
 	name := current_token.Lexeme
@@ -133,7 +133,7 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, error) {
 	current_token = tokens[current_index]
 
 	if current_token.TokenType != TO {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'to'")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected 'to'")
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
@@ -161,12 +161,12 @@ func parse_set(tokens []*Token, token_index int) (*AstSet, int, error) {
 		body = expr
 		current_index = next_index
 	} else {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'pattern', 'transform', or 'matches'")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected 'pattern', 'transform', or 'matches'")
 	}
 
 	setCommand := AstSet{
-		id:   name,
-		body: body,
+		Id:   name,
+		Body: body,
 	}
 	return &setCommand, current_index, nil
 }
@@ -184,7 +184,7 @@ func parse_set_transform(tokens []*Token, token_index int) (AstSetBody, int, err
 	}
 
 	if tokens[next_index].TokenType != END {
-		return nil, next_index, NewParseError(*tokens[next_index], "Unexpected token. Expected 'end'.")
+		return nil, next_index, NewParseError(tokens[next_index], "Unexpected token. Expected 'end'.")
 	}
 
 	return &AstSetTransform{statements}, next_index + 1, err
@@ -216,7 +216,7 @@ func parse_set_pattern(tokens []*Token, token_index int) (AstSetBody, int, error
 	}
 
 	if tokens[next_index].TokenType != END {
-		return nil, next_index, NewParseError(*tokens[next_index], "Unexpected token. Expected 'end'.")
+		return nil, next_index, NewParseError(tokens[next_index], "Unexpected token. Expected 'end'.")
 	}
 
 	return &AstSetPattern{pattern, statements}, next_index + 1, nil
@@ -242,7 +242,7 @@ func parse_amount(tokens []*Token, token_index int) (bool, int, int, int, int, e
 		if tokens[new_index].TokenType == NUMBER {
 			skipValue, skipValueError := strconv.Atoi(tokens[new_index].Lexeme)
 			if skipValueError != nil {
-				return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Error converting to int value")
+				return false, 0, 0, 0, new_index, NewParseError(tokens[new_index], "Error converting to int value")
 			}
 
 			new_index = consumeIgnoreableTokens(tokens, new_index+1)
@@ -251,44 +251,44 @@ func parse_amount(tokens []*Token, token_index int) (bool, int, int, int, int, e
 				if tokens[new_index].TokenType == NUMBER {
 					takeValue, takeValueError := strconv.Atoi(tokens[new_index].Lexeme)
 					if takeValueError != nil {
-						return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Error converting to int value")
+						return false, 0, 0, 0, new_index, NewParseError(tokens[new_index], "Error converting to int value")
 					}
 					new_index++
 					return false, skipValue, takeValue, 0, new_index, nil
 				} else {
-					return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected a number")
+					return false, 0, 0, 0, new_index, NewParseError(tokens[new_index], "Unexpected token. Expected a number")
 				}
 			}
 			return true, skipValue, 0, 0, new_index, nil
 		} else {
-			return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected a number")
+			return false, 0, 0, 0, new_index, NewParseError(tokens[new_index], "Unexpected token. Expected a number")
 		}
 	} else if tokens[new_index].TokenType == TAKE || tokens[new_index].TokenType == TOP {
 		new_index = consumeIgnoreableTokens(tokens, new_index+1)
 		if tokens[new_index].TokenType == NUMBER {
 			takeValue, takeValueError := strconv.Atoi(tokens[new_index].Lexeme)
 			if takeValueError != nil {
-				return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Error converting to int value")
+				return false, 0, 0, 0, new_index, NewParseError(tokens[new_index], "Error converting to int value")
 			}
 			new_index++
 			return false, 0, takeValue, 0, new_index, nil
 		} else {
-			return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected a number")
+			return false, 0, 0, 0, new_index, NewParseError(tokens[new_index], "Unexpected token. Expected a number")
 		}
 	} else if tokens[new_index].TokenType == LAST {
 		new_index = consumeIgnoreableTokens(tokens, new_index+1)
 		if tokens[new_index].TokenType == NUMBER {
 			lastValue, lastValueError := strconv.Atoi(tokens[new_index].Lexeme)
 			if lastValueError != nil {
-				return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Error converting to int value")
+				return false, 0, 0, 0, new_index, NewParseError(tokens[new_index], "Error converting to int value")
 			}
 			new_index++
 			return true, 0, 0, lastValue, new_index, nil
 		} else {
-			return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected a number")
+			return false, 0, 0, 0, new_index, NewParseError(tokens[new_index], "Unexpected token. Expected a number")
 		}
 	}
-	return false, 0, 0, 0, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'all', 'skip', or 'take'")
+	return false, 0, 0, 0, new_index, NewParseError(tokens[new_index], "Unexpected token. Expected 'all', 'skip', or 'take'")
 }
 
 func parse_expression(tokens []*Token, token_index int) (AstExpression, int, error) {
@@ -318,7 +318,7 @@ func parse_expression(tokens []*Token, token_index int) (AstExpression, int, err
 		current_token.TokenType == WHOLE || current_token.TokenType == CASELESS {
 		return parse_primary_or_dec(tokens, token_index)
 	}
-	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected 'at', 'between', 'exactly', 'maybe', 'in', '<string>', '<identifier>', or a character class ")
+	return nil, token_index, NewParseError(current_token, "Unexpected token. Expected 'at', 'between', 'exactly', 'maybe', 'in', '<string>', '<identifier>', or a character class ")
 }
 
 func parse_at(tokens []*Token, token_index int) (*AstLoop, int, error) {
@@ -326,7 +326,7 @@ func parse_at(tokens []*Token, token_index int) (*AstLoop, int, error) {
 	current_token := tokens[current_index]
 
 	if current_token.TokenType != LEAST && current_token.TokenType != MOST {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'least' or 'most'.")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected 'least' or 'most'.")
 	}
 
 	isLeast := current_token.TokenType == LEAST
@@ -334,11 +334,11 @@ func parse_at(tokens []*Token, token_index int) (*AstLoop, int, error) {
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
 	current_token = tokens[current_index]
 	if current_token.TokenType != NUMBER {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected a number.")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected a number.")
 	}
 	value, err := strconv.Atoi(current_token.Lexeme)
 	if err != nil {
-		return nil, current_index, NewParseError(*current_token, "Error converting lexeme to number value")
+		return nil, current_index, NewParseError(current_token, "Error converting lexeme to number value")
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
@@ -379,11 +379,11 @@ func parse_at(tokens []*Token, token_index int) (*AstLoop, int, error) {
 	}
 
 	atLoop := AstLoop{
-		min:    min,
-		max:    max,
-		fewest: fewest,
-		body:   expr,
-		name:   loopName,
+		Min:    min,
+		Max:    max,
+		Fewest: fewest,
+		Body:   expr,
+		Name:   loopName,
 	}
 
 	return &atLoop, current_index, nil
@@ -394,27 +394,27 @@ func parse_between(tokens []*Token, token_index int) (*AstLoop, int, error) {
 	current_token := tokens[current_index]
 
 	if current_token.TokenType != NUMBER {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected a number.")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected a number.")
 	}
 	minValue, err := strconv.Atoi(current_token.Lexeme)
 	if err != nil {
-		return nil, current_index, NewParseError(*current_token, "Error converting lexeme to number value")
+		return nil, current_index, NewParseError(current_token, "Error converting lexeme to number value")
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
 	current_token = tokens[current_index]
 	if current_token.TokenType != AND {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'and'.")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected 'and'.")
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
 	current_token = tokens[current_index]
 	if current_token.TokenType != NUMBER {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected a number.")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected a number.")
 	}
 	maxValue, err := strconv.Atoi(current_token.Lexeme)
 	if err != nil {
-		return nil, current_index, NewParseError(*current_token, "Error converting lexeme to number value")
+		return nil, current_index, NewParseError(current_token, "Error converting lexeme to number value")
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
@@ -440,16 +440,16 @@ func parse_between(tokens []*Token, token_index int) (*AstLoop, int, error) {
 			loopName = nameToken.Lexeme
 			current_index += 1
 		} else {
-			return nil, current_index, NewParseError(*current_token, "Expected identifier following keyword 'named'")
+			return nil, current_index, NewParseError(current_token, "Expected identifier following keyword 'named'")
 		}
 	}
 
 	between := AstLoop{
-		min:    minValue,
-		max:    maxValue,
-		fewest: fewest,
-		body:   expr,
-		name:   loopName,
+		Min:    minValue,
+		Max:    maxValue,
+		Fewest: fewest,
+		Body:   expr,
+		Name:   loopName,
 	}
 
 	return &between, current_index, nil
@@ -460,11 +460,11 @@ func parse_exactly(tokens []*Token, token_index int) (*AstLoop, int, error) {
 	current_token := tokens[current_index]
 
 	if current_token.TokenType != NUMBER {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected a number.")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected a number.")
 	}
 	value, err := strconv.Atoi(current_token.Lexeme)
 	if err != nil {
-		return nil, current_index, NewParseError(*current_token, "Error converting lexeme to number value")
+		return nil, current_index, NewParseError(current_token, "Error converting lexeme to number value")
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
@@ -488,11 +488,11 @@ func parse_exactly(tokens []*Token, token_index int) (*AstLoop, int, error) {
 	}
 
 	exactly := AstLoop{
-		min:    value,
-		max:    value,
-		fewest: false,
-		body:   expr,
-		name:   loopName,
+		Min:    value,
+		Max:    value,
+		Fewest: false,
+		Body:   expr,
+		Name:   loopName,
 	}
 
 	return &exactly, next_index, nil
@@ -542,7 +542,7 @@ func parse_not_literal(tokens []*Token, token_index int) (AstLiteral, int, error
 		current_token.TokenType == WHOLE {
 		return parse_character_class(tokens, new_index, true)
 	} else {
-		return nil, new_index, NewParseError(*current_token, "Unexpected token. Expected 'in', <string>, <character class>")
+		return nil, new_index, NewParseError(current_token, "Unexpected token. Expected 'in', <string>, <character class>")
 	}
 }
 
@@ -567,7 +567,7 @@ func parse_in(tokens []*Token, token_index int, not bool) (*AstList, int, error)
 		current_index = next_index
 		current_token = tokens[current_index]
 	}
-	inList := AstList{contents: contents, not: not}
+	inList := AstList{Contents: contents, Not: not}
 	return &inList, current_index, nil
 }
 
@@ -596,8 +596,8 @@ func parse_listable(tokens []*Token, token_index int) (AstListable, int, error) 
 		}
 
 		r := AstRange{
-			from: from,
-			to:   to,
+			From: from,
+			To:   to,
 		}
 		return &r, new_index, nil
 
@@ -606,7 +606,7 @@ func parse_listable(tokens []*Token, token_index int) (AstListable, int, error) 
 	} else if isListableClass(current_token.TokenType) {
 		return parse_character_class(tokens, token_index, false)
 	}
-	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected listable literal")
+	return nil, token_index, NewParseError(current_token, "Unexpected token. Expected listable literal")
 }
 
 func parse_literal(tokens []*Token, token_index int) (AstLiteral, int, error) {
@@ -629,7 +629,7 @@ func parse_literal(tokens []*Token, token_index int) (AstLiteral, int, error) {
 		current_token.TokenType == WHOLE {
 		return parse_character_class(tokens, token_index, false)
 	}
-	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected '(', '<string>', '<identifier>', or a character class.")
+	return nil, token_index, NewParseError(current_token, "Unexpected token. Expected '(', '<string>', '<identifier>', or a character class.")
 }
 
 func parse_primary_or_dec(tokens []*Token, token_index int) (AstExpression, int, error) {
@@ -645,12 +645,12 @@ func parse_primary_or_dec(tokens []*Token, token_index int) (AstExpression, int,
 		current_token = tokens[current_index]
 
 		if current_token.TokenType != IDENTIFIER {
-			return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected identifier.")
+			return nil, current_index, NewParseError(current_token, "Unexpected token. Expected identifier.")
 		}
 
 		dec := AstDec{
-			name: current_token.Lexeme,
-			body: literal,
+			Name: current_token.Lexeme,
+			Body: literal,
 		}
 		return &dec, current_index + 1, nil
 	}
@@ -663,14 +663,14 @@ func parse_primary_or_dec(tokens []*Token, token_index int) (AstExpression, int,
 		}
 
 		branch := AstBranch{
-			left:  literal,
-			right: right_expression,
+			Left:  literal,
+			Right: right_expression,
 		}
 		return &branch, final_index, nil
 	}
 
 	prim := AstPrimary{}
-	prim.literal = literal
+	prim.Literal = literal
 
 	return &prim, new_index, nil
 }
@@ -691,14 +691,14 @@ func parse_primary_or_or(tokens []*Token, token_index int) (AstExpression, int, 
 		}
 
 		branch := AstBranch{
-			left:  literal,
-			right: right_expression,
+			Left:  literal,
+			Right: right_expression,
 		}
 		return &branch, final_index, nil
 	}
 
 	prim := AstPrimary{}
-	prim.literal = literal
+	prim.Literal = literal
 
 	return &prim, new_index, nil
 }
@@ -712,13 +712,13 @@ func parse_atom(tokens []*Token, token_index int) (AstAtom, int, error) {
 	} else if current_token.TokenType == IDENTIFIER {
 		return parse_variable(tokens, token_index)
 	}
-	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected 'caseless', '<string>', or '<identifier>'.")
+	return nil, token_index, NewParseError(current_token, "Unexpected token. Expected 'caseless', '<string>', or '<identifier>'.")
 }
 
 func parse_caseless(tokens []*Token, token_index int) (*AstString, int, error) {
 	next_index := consumeIgnoreableTokens(tokens, token_index+1)
 	if tokens[next_index].TokenType != STRING {
-		return nil, next_index, NewParseError(*tokens[next_index], "Unexpected token. Expected <string> after the 'caseless' keyword.")
+		return nil, next_index, NewParseError(tokens[next_index], "Unexpected token. Expected <string> after the 'caseless' keyword.")
 	}
 
 	s := AstString{
@@ -733,15 +733,15 @@ func parse_caseless(tokens []*Token, token_index int) (*AstString, int, error) {
 func parse_string(tokens []*Token, token_index int, not bool) (*AstString, int, error) {
 	current_token := tokens[token_index]
 	str_literal := AstString{
-		not: not,
+		Not: not,
 	}
 
 	if current_token.TokenType == STRING {
-		str_literal.value = current_token.Lexeme
+		str_literal.Value = current_token.Lexeme
 		return &str_literal, token_index + 1, nil
 	}
 
-	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected a string")
+	return nil, token_index, NewParseError(current_token, "Unexpected token. Expected a string")
 }
 
 func parse_variable(tokens []*Token, token_index int) (*AstVariable, int, error) {
@@ -749,11 +749,11 @@ func parse_variable(tokens []*Token, token_index int) (*AstVariable, int, error)
 	var_literal := AstVariable{}
 
 	if current_token.TokenType == IDENTIFIER {
-		var_literal.name = current_token.Lexeme
+		var_literal.Name = current_token.Lexeme
 		return &var_literal, token_index + 1, nil
 	}
 
-	return nil, token_index, NewParseError(*current_token, "Unexpected token. Expected a variable")
+	return nil, token_index, NewParseError(current_token, "Unexpected token. Expected a variable")
 }
 
 func parse_sub_expression(tokens []*Token, token_index int) (*AstSubExpr, int, error) {
@@ -774,10 +774,10 @@ func parse_sub_expression(tokens []*Token, token_index int) (*AstSubExpr, int, e
 	}
 
 	if current_token.TokenType != CLOSEPAREN {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected ')'")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected ')'")
 	}
 
-	sub_expr := AstSubExpr{body: expr_list}
+	sub_expr := AstSubExpr{Body: expr_list}
 	return &sub_expr, current_index + 1, nil
 }
 
@@ -799,25 +799,25 @@ func parse_subroutine(tokens []*Token, token_index int) (*AstSub, int, error) {
 	}
 
 	if current_token.TokenType != CLOSECURLY {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected '}'")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected '}'")
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
 	current_token = tokens[current_index]
 	if current_token.TokenType != EQUAL {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected '='")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected '='")
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
 	current_token = tokens[current_index]
 
 	if current_token.TokenType != IDENTIFIER {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected identifier.")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected identifier.")
 	}
 
 	dec := AstSub{
-		name: current_token.Lexeme,
-		body: expr_list,
+		Name: current_token.Lexeme,
+		Body: expr_list,
 	}
 	return &dec, current_index + 1, nil
 }
@@ -825,71 +825,71 @@ func parse_subroutine(tokens []*Token, token_index int) (*AstSub, int, error) {
 func parse_character_class(tokens []*Token, token_index int, not bool) (*AstCharacterClass, int, error) {
 	current_token := tokens[token_index]
 	charClass := AstCharacterClass{
-		not: not,
+		Not: not,
 	}
 	if current_token.TokenType == ANY {
-		charClass.classType = ClassAny
+		charClass.ClassType = ClassAny
 		return &charClass, token_index + 1, nil
 	} else if current_token.TokenType == WHITESPACE {
-		charClass.classType = ClassWhitespace
+		charClass.ClassType = ClassWhitespace
 		return &charClass, token_index + 1, nil
 	} else if current_token.TokenType == DIGIT {
-		charClass.classType = ClassDigit
+		charClass.ClassType = ClassDigit
 		return &charClass, token_index + 1, nil
 	} else if current_token.TokenType == UPPER {
-		charClass.classType = ClassUpper
+		charClass.ClassType = ClassUpper
 		return &charClass, token_index + 1, nil
 	} else if current_token.TokenType == LOWER {
-		charClass.classType = ClassLower
+		charClass.ClassType = ClassLower
 		return &charClass, token_index + 1, nil
 	} else if current_token.TokenType == LETTER {
-		charClass.classType = ClassLetter
+		charClass.ClassType = ClassLetter
 		return &charClass, token_index + 1, nil
 	} else if current_token.TokenType == LINE {
 		new_index := consumeIgnoreableTokens(tokens, token_index+1)
 		if tokens[new_index].TokenType == START {
-			charClass.classType = ClassLineStart
+			charClass.ClassType = ClassLineStart
 			return &charClass, new_index + 1, nil
 		} else if tokens[new_index].TokenType == END {
-			charClass.classType = ClassLineEnd
+			charClass.ClassType = ClassLineEnd
 			return &charClass, new_index + 1, nil
 		}
-		return nil, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'start' or 'end'")
+		return nil, new_index, NewParseError(tokens[new_index], "Unexpected token. Expected 'start' or 'end'")
 	} else if current_token.TokenType == FILE {
 		new_index := consumeIgnoreableTokens(tokens, token_index+1)
 		if tokens[new_index].TokenType == START {
-			charClass.classType = ClassFileStart
+			charClass.ClassType = ClassFileStart
 			return &charClass, new_index + 1, nil
 		} else if tokens[new_index].TokenType == END {
-			charClass.classType = ClassFileEnd
+			charClass.ClassType = ClassFileEnd
 			return &charClass, new_index + 1, nil
 		}
-		return nil, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'start' or 'end'")
+		return nil, new_index, NewParseError(tokens[new_index], "Unexpected token. Expected 'start' or 'end'")
 	} else if current_token.TokenType == WORD {
 		new_index := consumeIgnoreableTokens(tokens, token_index+1)
 		if tokens[new_index].TokenType == START {
-			charClass.classType = ClassWordStart
+			charClass.ClassType = ClassWordStart
 			return &charClass, new_index + 1, nil
 		} else if tokens[new_index].TokenType == END {
-			charClass.classType = ClassWordEnd
+			charClass.ClassType = ClassWordEnd
 			return &charClass, new_index + 1, nil
 		}
-		return nil, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'start' or 'end'")
+		return nil, new_index, NewParseError(tokens[new_index], "Unexpected token. Expected 'start' or 'end'")
 	} else if current_token.TokenType == WHOLE {
 		new_index := consumeIgnoreableTokens(tokens, token_index+1)
 		if tokens[new_index].TokenType == LINE {
-			charClass.classType = ClassWholeLine
+			charClass.ClassType = ClassWholeLine
 			return &charClass, new_index + 1, nil
 		} else if tokens[new_index].TokenType == FILE {
-			charClass.classType = ClassWholeFile
+			charClass.ClassType = ClassWholeFile
 			return &charClass, new_index + 1, nil
 		} else if tokens[new_index].TokenType == WORD {
-			charClass.classType = ClassWholeWord
+			charClass.ClassType = ClassWholeWord
 			return &charClass, new_index + 1, nil
 		}
-		return nil, new_index, NewParseError(*tokens[new_index], "Unexpected token. Expected 'file', 'line', or 'word'")
+		return nil, new_index, NewParseError(tokens[new_index], "Unexpected token. Expected 'file', 'line', or 'word'")
 	}
-	return nil, token_index, NewParseError(*tokens[token_index], "Unexpected token. Expected a character class: 'any', 'whitespace', 'digit', 'upper', 'lower', 'letter', 'whole word', 'whole line', 'whole file', 'word start', 'word end', 'line start', 'line end', 'file start', or 'file end'.")
+	return nil, token_index, NewParseError(tokens[token_index], "Unexpected token. Expected a character class: 'any', 'whitespace', 'digit', 'upper', 'lower', 'letter', 'whole word', 'whole line', 'whole file', 'word start', 'word end', 'line start', 'line end', 'file start', or 'file end'.")
 }
 
 func parse_process_statements(tokens []*Token, index int) ([]AstProcessStatement, int, error) {
@@ -932,7 +932,7 @@ func parse_process_statement(tokens []*Token, index int) (AstProcessStatement, i
 	} else if tokens[index].TokenType == ELSE {
 		return nil, index, nil
 	} else {
-		return nil, index, NewParseError(*tokens[index], "Unexpected token. Expected 'set', 'if', 'return', 'debug', 'loop', 'else', or 'end'.")
+		return nil, index, NewParseError(tokens[index], "Unexpected token. Expected 'set', 'if', 'return', 'debug', 'loop', 'else', or 'end'.")
 	}
 }
 
@@ -941,7 +941,7 @@ func parse_process_set(tokens []*Token, index int) (AstProcessStatement, int, er
 	current_token := tokens[current_index]
 
 	if current_token.TokenType != IDENTIFIER {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected identifier")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected identifier")
 	}
 
 	name := current_token.Lexeme
@@ -950,7 +950,7 @@ func parse_process_set(tokens []*Token, index int) (AstProcessStatement, int, er
 	current_token = tokens[current_index]
 
 	if current_token.TokenType != TO {
-		return nil, current_index, NewParseError(*current_token, "Unexpected token. Expected 'to'")
+		return nil, current_index, NewParseError(current_token, "Unexpected token. Expected 'to'")
 	}
 
 	current_index = consumeIgnoreableTokens(tokens, current_index+1)
@@ -960,8 +960,8 @@ func parse_process_set(tokens []*Token, index int) (AstProcessStatement, int, er
 	}
 
 	setStatement := AstProcessSet{
-		name: name,
-		expr: expr,
+		Name: name,
+		Expr: expr,
 	}
 	return &setStatement, next_index, nil
 }
@@ -975,7 +975,7 @@ func parse_process_if(tokens []*Token, index int) (AstProcessStatement, int, err
 
 	next_index = consumeIgnoreableTokens(tokens, next_index)
 	if tokens[next_index].TokenType != THEN {
-		return nil, next_index, NewParseError(*tokens[next_index], "Unexpected token. Expected 'then'.")
+		return nil, next_index, NewParseError(tokens[next_index], "Unexpected token. Expected 'then'.")
 	}
 
 	next_index = consumeIgnoreableTokens(tokens, next_index+1)
@@ -994,7 +994,7 @@ func parse_process_if(tokens []*Token, index int) (AstProcessStatement, int, err
 
 	follow_index = consumeIgnoreableTokens(tokens, follow_index)
 	if tokens[follow_index].TokenType != END {
-		return nil, follow_index, NewParseError(*tokens[follow_index], "Unexpected token. Expected 'end'.")
+		return nil, follow_index, NewParseError(tokens[follow_index], "Unexpected token. Expected 'end'.")
 	}
 
 	return &AstProcessIf{expr, trueBody, falseBody}, follow_index + 1, nil
@@ -1030,7 +1030,7 @@ func parse_process_loop(tokens []*Token, index int) (AstProcessStatement, int, e
 
 	next_index = consumeIgnoreableTokens(tokens, next_index)
 	if tokens[next_index].TokenType != END {
-		return nil, next_index, NewParseError(*tokens[next_index], "Unexpected token. Expected 'end'.")
+		return nil, next_index, NewParseError(tokens[next_index], "Unexpected token. Expected 'end'.")
 	}
 
 	return &AstProcessLoop{body}, next_index + 1, nil
@@ -1081,7 +1081,7 @@ func parse_expr_pratt(tokens []*Token, index int, minPrecedence int) (AstProcess
 		lhs = AstProcessUnaryExpression{tokens[index].TokenType, rhs}
 		token_index = next_index
 	} else {
-		return nil, index, NewParseError(*tokens[index], "Unexpected token. Expected string, number, variable, or unary operator")
+		return nil, index, NewParseError(tokens[index], "Unexpected token. Expected string, number, variable, or unary operator")
 	}
 
 	for token_index < len(tokens) {
@@ -1089,7 +1089,7 @@ func parse_expr_pratt(tokens []*Token, index int, minPrecedence int) (AstProcess
 			break
 		}
 		if !isBinaryOp(tokens[token_index].TokenType) {
-			return nil, token_index, NewParseError(*tokens[token_index], "Unexpected token. Expected binary operator.")
+			return nil, token_index, NewParseError(tokens[token_index], "Unexpected token. Expected binary operator.")
 		}
 		op := tokens[token_index].TokenType
 		lprec, rprec := infixPrecedence(tokens[token_index].TokenType)

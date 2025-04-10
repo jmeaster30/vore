@@ -4,6 +4,8 @@ use (
 	.
 	./libvore
 	./libvore/algo
+	./libvore/ast
+	./libvore/bytecode
 	./libvore/ds
 	./libvore/files
 	./libvore/testutils

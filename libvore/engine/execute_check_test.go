@@ -1,4 +1,4 @@
-package libvore
+package engine
 
 import (
 	"testing"

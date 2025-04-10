@@ -1,7 +1,18 @@
 package libvore
 
-import "fmt"
+type VoreFileError struct {
+	err error
+}
 
+func (err *VoreFileError) Error() string {
+	return err.err.Error()
+}
+
+func NewVoreFileError(err error) *VoreFileError {
+	return &VoreFileError{err}
+}
+
+/*
 type VoreError struct {
 	ErrorType string
 	Token     *Token
@@ -61,3 +72,4 @@ func NewFileError(err error) *VoreError {
 		Message:   err.Error(),
 	}
 }
+*/

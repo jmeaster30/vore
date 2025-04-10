@@ -1,4 +1,4 @@
-package libvore
+package ast
 
 import (
 	"bufio"
@@ -758,11 +758,11 @@ func (s *Lexer) getNextToken() (*Token, error) {
 	token.Lexeme = buf.String()
 
 	if token.TokenType == ERROR && unendingBlockComment {
-		return nil, NewLexErrorCustomMsg(token, "Unending block comment")
+		return nil, NewLexError(token, "Unending block comment")
 	} else if token.TokenType == ERROR && unendingString {
-		return nil, NewLexErrorCustomMsg(token, "Unending string")
+		return nil, NewLexError(token, "Unending string")
 	} else if token.TokenType == ERROR {
-		return nil, NewLexErrorUnknown(token)
+		return nil, NewLexError(token, "Unknown token")
 	}
 	return token, nil
 }
