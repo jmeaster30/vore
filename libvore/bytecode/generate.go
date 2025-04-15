@@ -8,7 +8,7 @@ import (
 )
 
 type Bytecode struct {
-	bytecode []Command
+	Bytecode []Command
 }
 
 type GeneratedPattern struct {
@@ -45,16 +45,16 @@ func GenerateBytecode(a *ast.Ast) (*Bytecode, error) {
 }
 
 func generateCommand(com *ast.AstCommand, state *GenState) (Command, error) {
-	var icom interface{} = com
-	switch icom.(type) {
-	case ast.AstFind:
-		return generateFindCommand(icom.(*ast.AstFind), state)
-	case ast.AstReplace:
-		return generateReplaceCommand(icom.(*ast.AstReplace), state)
-	case ast.AstSet:
-		return generateSetCommand(icom.(*ast.AstSet), state)
+	var icom any = *com
+	switch c := icom.(type) {
+	case *ast.AstFind:
+		return generateFindCommand(c, state)
+	case *ast.AstReplace:
+		return generateReplaceCommand(c, state)
+	case *ast.AstSet:
+		return generateSetCommand(c, state)
 	}
-	return nil, NewGenError(fmt.Sprintf("Unknown command of type %T", com))
+	return nil, NewGenError(fmt.Sprintf("Unknown command %T", icom))
 }
 
 func generateFindCommand(f *ast.AstFind, state *GenState) (Command, error) {
@@ -130,13 +130,13 @@ func generateSetCommand(s *ast.AstSet, state *GenState) (Command, error) {
 }
 
 func generateSetBody(s ast.AstSetBody, state *GenState, id string) (SetCommandBody, error) {
-	switch s.(type) {
+	switch s := s.(type) {
 	case ast.AstSetTransform:
-		return generateSetTransform(s.(ast.AstSetTransform), state, id)
+		return generateSetTransform(s, state, id)
 	case ast.AstSetPattern:
-		return generateSetPattern(s.(ast.AstSetPattern), state, id)
+		return generateSetPattern(s, state, id)
 	case ast.AstSetMatches:
-		return generateSetMatches(s.(ast.AstSetMatches), state, id)
+		return generateSetMatches(s, state, id)
 	}
 	panic("Not supposed to be here")
 }
@@ -158,7 +158,7 @@ func generateSetTransform(s ast.AstSetTransform, state *GenState, id string) (Se
 		inLoop:       false,
 	}
 	for _, stmt := range s.Statements {
-		info = checkProcessStatement(stmt, info)
+		info = checkStatement(stmt, info)
 		if info.currentType == PTERROR {
 			// TODO add more info to the gen error like the statement that failed
 			return nil, NewGenError(info.errorMessage)
@@ -199,7 +199,7 @@ func generateSetPattern(s ast.AstSetPattern, state *GenState, id string) (SetCom
 		inLoop:       false,
 	}
 	for _, stmt := range s.Body {
-		info = checkProcessStatement(stmt, info)
+		info = checkStatement(stmt, info)
 		if info.currentType == PTERROR {
 			// TODO add more info to the gen error like the statement that failed
 			return nil, NewGenError(info.errorMessage)
@@ -223,24 +223,24 @@ func generateSetMatches(s ast.AstSetMatches, state *GenState, id string) (SetCom
 }
 
 func generateSearchInstruction(l *ast.AstExpression, offset int, state *GenState) ([]SearchInstruction, error) {
-	var il interface{} = l
-	switch il.(type) {
-	case ast.AstLoop:
-		return generateLoop(il.(*ast.AstLoop), offset, state)
-	case ast.AstBranch:
-		return generateBranch(il.(*ast.AstBranch), offset, state)
-	case ast.AstDec:
-		return generateVarDec(il.(*ast.AstDec), offset, state)
-	case ast.AstSub:
-		return generateSubroutine(il.(*ast.AstSub), offset, state)
-	case ast.AstList:
-		return generateList(il.(*ast.AstList), offset, state)
-	case ast.AstRange:
-		return generateRange(il.(*ast.AstRange), offset, state)
-	case ast.AstPrimary:
-		return generatePrimary(il.(*ast.AstPrimary), offset, state)
+	var il any = *l
+	switch si := il.(type) {
+	case *ast.AstLoop:
+		return generateLoop(si, offset, state)
+	case *ast.AstBranch:
+		return generateBranch(si, offset, state)
+	case *ast.AstDec:
+		return generateVarDec(si, offset, state)
+	case *ast.AstSub:
+		return generateSubroutine(si, offset, state)
+	case *ast.AstList:
+		return generateList(si, offset, state)
+	case *ast.AstRange:
+		return generateRange(si, offset, state)
+	case *ast.AstPrimary:
+		return generatePrimary(si, offset, state)
 	}
-	return nil, NewGenError(fmt.Sprintf("Unknown expression of type '%T'", l))
+	return nil, NewGenError(fmt.Sprintf("Unknown expression of type '%T'", il))
 }
 
 func generateLoop(l *ast.AstLoop, offset int, state *GenState) ([]SearchInstruction, error) {
@@ -405,14 +405,14 @@ func generateList(l *ast.AstList, offset int, state *GenState) ([]SearchInstruct
 }
 
 func generateListable(l *ast.AstListable, offset int, state *GenState) ([]SearchInstruction, error) {
-	var il interface{} = l
-	switch il.(type) {
-	case ast.AstString:
-		generateString(il.(*ast.AstString), offset, state)
-	case ast.AstCharacterClass:
-		generateCharacterClass(il.(*ast.AstCharacterClass), offset, state)
+	var il any = *l
+	switch li := il.(type) {
+	case *ast.AstString:
+		generateString(li, offset, state)
+	case *ast.AstCharacterClass:
+		generateCharacterClass(li, offset, state)
 	}
-	return nil, NewGenError(fmt.Sprintf("Unknown listable '%T'", l))
+	return nil, NewGenError(fmt.Sprintf("Unknown listable '%T'", il))
 }
 
 func generate_not_not(l *ast.AstList, offset int, state *GenState) ([]SearchInstruction, error) {
@@ -473,35 +473,22 @@ func generate_not(l *ast.AstList, offset int, state *GenState) ([]SearchInstruct
 }
 
 func generateLiteral(l *ast.AstLiteral, offset int, state *GenState) ([]SearchInstruction, error) {
-	var il interface{} = l
-	switch il.(type) {
-	case ast.AstString:
-		return generateString(il.(*ast.AstString), offset, state)
-	case ast.AstSubExpr:
-		return generateSubExpression(il.(*ast.AstSubExpr), offset, state)
-	case ast.AstVariable:
-		return generateVariable(il.(*ast.AstVariable), offset, state)
-	case ast.AstCharacterClass:
-		return generateCharacterClass(il.(*ast.AstCharacterClass), offset, state)
+	var il any = *l
+	switch ll := il.(type) {
+	case *ast.AstString:
+		return generateString(ll, offset, state)
+	case *ast.AstSubExpr:
+		return generateSubExpression(ll, offset, state)
+	case *ast.AstVariable:
+		return generateVariable(ll, offset, state)
+	case *ast.AstCharacterClass:
+		return generateCharacterClass(ll, offset, state)
 	}
-	return nil, NewGenError(fmt.Sprintf("Unkonwn literal type '%T'", l))
+	return nil, NewGenError(fmt.Sprintf("Unkonwn literal type '%T'", il))
 }
 
 func generatePrimary(l *ast.AstPrimary, offset int, state *GenState) ([]SearchInstruction, error) {
-	var il interface{} = l
-	switch il.(type) {
-	case ast.AstRange:
-		return generateRange(il.(*ast.AstRange), offset, state)
-	case ast.AstString:
-		return generateString(il.(*ast.AstString), offset, state)
-	case ast.AstSubExpr:
-		return generateSubExpression(il.(*ast.AstSubExpr), offset, state)
-	case ast.AstVariable:
-		return generateVariable(il.(*ast.AstVariable), offset, state)
-	case ast.AstCharacterClass:
-		return generateCharacterClass(il.(*ast.AstCharacterClass), offset, state)
-	}
-	return nil, NewGenError(fmt.Sprintf("Unknown primary type '%T'", l))
+	return generateLiteral(&l.Literal, offset, state)
 }
 
 func generateRange(l *ast.AstRange, offset int, state *GenState) ([]SearchInstruction, error) {
@@ -597,14 +584,14 @@ func generateCharacterClass(l *ast.AstCharacterClass, offset int, state *GenStat
 }
 
 func generateReplaceInstruction(l *ast.AstAtom, offset int, state *GenState) ([]ReplaceInstruction, error) {
-	var il interface{} = l
-	switch il.(type) {
-	case ast.AstString:
-		return generateReplaceString(il.(*ast.AstString), offset, state)
-	case ast.AstVariable:
-		return generateReplaceVariable(il.(*ast.AstVariable), offset, state)
+	var il any = *l
+	switch ri := il.(type) {
+	case *ast.AstString:
+		return generateReplaceString(ri, offset, state)
+	case *ast.AstVariable:
+		return generateReplaceVariable(ri, offset, state)
 	}
-	return nil, NewGenError(fmt.Sprintf("Unknown replace instruction '%T'", l))
+	return nil, NewGenError(fmt.Sprintf("Unknown replace instruction '%T'", il))
 }
 
 func generateReplaceString(l *ast.AstString, offset int, state *GenState) ([]ReplaceInstruction, error) {

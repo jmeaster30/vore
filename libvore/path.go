@@ -1,6 +1,7 @@
 package libvore
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -33,7 +34,7 @@ func ParsePath(path string) *Path {
 	}
 	splitPath := strings.Split(path, "/")
 	for idx, pathPart := range splitPath {
-		if idx == len(splitPath) {
+		if idx == len(splitPath)-1 {
 			if strings.ContainsRune(pathPart, '*') {
 				entries = append(entries, PathEntry{entryType: WildcardFile, value: pathPart})
 			} else {
@@ -47,6 +48,7 @@ func ParsePath(path string) *Path {
 			}
 		}
 	}
+	fmt.Printf("%+v\n", entries)
 	return &Path{entries}
 }
 
@@ -73,6 +75,7 @@ func pathMatches(target string, matches string) bool {
 			}
 		} else if strings.HasPrefix(target, part[0]) {
 			target = strings.TrimPrefix(target, part[0])
+			// FIXME doesn't account for relative folders ie `./docs/examples`
 		} else {
 			result = false
 			break

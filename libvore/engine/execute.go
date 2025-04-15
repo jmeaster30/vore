@@ -3,6 +3,9 @@ package engine
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/jmeaster30/vore/libvore/ast"
+	"github.com/jmeaster30/vore/libvore/bytecode"
 )
 
 type ProcessStatus int
@@ -15,7 +18,7 @@ const (
 )
 
 type ProcessValue interface {
-	getType() ProcessType
+	getType() bytecode.ProcessType
 	getString() string
 	getNumber() int
 	getBoolean() bool
@@ -41,8 +44,8 @@ func (v ProcessValueString) getBoolean() bool {
 	return len(v.value) != 0
 }
 
-func (v ProcessValueString) getType() ProcessType {
-	return PTSTRING
+func (v ProcessValueString) getType() bytecode.ProcessType {
+	return bytecode.PTSTRING
 }
 
 type ProcessValueNumber struct {
@@ -61,8 +64,8 @@ func (v ProcessValueNumber) getBoolean() bool {
 	return v.value != 0
 }
 
-func (v ProcessValueNumber) getType() ProcessType {
-	return PTNUMBER
+func (v ProcessValueNumber) getType() bytecode.ProcessType {
+	return bytecode.PTNUMBER
 }
 
 type ProcessValueBoolean struct {
@@ -87,8 +90,8 @@ func (v ProcessValueBoolean) getBoolean() bool {
 	return v.value
 }
 
-func (v ProcessValueBoolean) getType() ProcessType {
-	return PTBOOLEAN
+func (v ProcessValueBoolean) getType() bytecode.ProcessType {
+	return bytecode.PTBOOLEAN
 }
 
 type ProcessState struct {
@@ -97,30 +100,51 @@ type ProcessState struct {
 	status       ProcessStatus
 }
 
-func (s AstProcessSet) execute(state ProcessState) ProcessState {
-	expr_state := s.expr.execute(state)
-	expr_state.environment[s.name] = expr_state.currentValue
+func executeStatement(s ast.AstProcessStatement, state ProcessState) ProcessState {
+	var si any = s
+	switch si.(type) {
+	case ast.AstProcessSet:
+		return executeSet(si.(ast.AstProcessSet), state)
+	case ast.AstProcessIf:
+		return executeIf(si.(ast.AstProcessIf), state)
+	case ast.AstProcessLoop:
+		return executeLoop(si.(ast.AstProcessLoop), state)
+	case ast.AstProcessBreak:
+		return executeBreak(si.(ast.AstProcessBreak), state)
+	case ast.AstProcessContinue:
+		return executeContinue(si.(ast.AstProcessContinue), state)
+	case ast.AstProcessReturn:
+		return executeReturn(si.(ast.AstProcessReturn), state)
+	case ast.AstProcessDebug:
+		return executeDebug(si.(ast.AstProcessDebug), state)
+	}
+	panic(fmt.Sprintf("Unknown process statement %T", si))
+}
+
+func executeSet(s ast.AstProcessSet, state ProcessState) ProcessState {
+	expr_state := executeExpression(s.Expr, state)
+	expr_state.environment[s.Name] = expr_state.currentValue
 	return expr_state
 }
 
-func (s AstProcessReturn) execute(state ProcessState) ProcessState {
-	expr_state := s.expr.execute(state)
+func executeReturn(s ast.AstProcessReturn, state ProcessState) ProcessState {
+	expr_state := executeExpression(s.Expr, state)
 	expr_state.status = RETURNING
 	return expr_state
 }
 
-func (s AstProcessIf) execute(state ProcessState) ProcessState {
-	expr_state := s.condition.execute(state)
+func executeIf(s ast.AstProcessIf, state ProcessState) ProcessState {
+	expr_state := executeExpression(s.Condition, state)
 	if expr_state.currentValue.getBoolean() {
-		for _, stmt := range s.trueBody {
-			expr_state = stmt.execute(expr_state)
+		for _, stmt := range s.TrueBody {
+			expr_state = executeStatement(stmt, expr_state)
 			if expr_state.status != NEXT {
 				break
 			}
 		}
 	} else {
-		for _, stmt := range s.falseBody {
-			expr_state = stmt.execute(expr_state)
+		for _, stmt := range s.FalseBody {
+			expr_state = executeStatement(stmt, expr_state)
 			if expr_state.status != NEXT {
 				break
 			}
@@ -130,17 +154,17 @@ func (s AstProcessIf) execute(state ProcessState) ProcessState {
 	return expr_state
 }
 
-func (s AstProcessDebug) execute(state ProcessState) ProcessState {
-	expr_state := s.expr.execute(state)
+func executeDebug(s ast.AstProcessDebug, state ProcessState) ProcessState {
+	expr_state := executeExpression(s.Expr, state)
 	fmt.Println(expr_state.currentValue.getString())
 	return expr_state
 }
 
-func (s AstProcessLoop) execute(state ProcessState) ProcessState {
+func executeLoop(s ast.AstProcessLoop, state ProcessState) ProcessState {
 	expr_state := state
 	for {
-		for _, stmt := range s.body {
-			expr_state = stmt.execute(expr_state)
+		for _, stmt := range s.Body {
+			expr_state = executeStatement(stmt, expr_state)
 			if expr_state.status != NEXT {
 				break
 			}
@@ -159,118 +183,135 @@ func (s AstProcessLoop) execute(state ProcessState) ProcessState {
 	return expr_state
 }
 
-func (s AstProcessContinue) execute(state ProcessState) ProcessState {
+func executeContinue(s ast.AstProcessContinue, state ProcessState) ProcessState {
 	state.status = CONTINUELOOP
 	return state
 }
 
-func (s AstProcessBreak) execute(state ProcessState) ProcessState {
+func executeBreak(s ast.AstProcessBreak, state ProcessState) ProcessState {
 	state.status = BREAKLOOP
 	return state
 }
 
-func (s AstProcessBinaryExpression) execute(state ProcessState) ProcessState {
-	lhs_state := s.lhs.execute(state)
-	rhs_state := s.rhs.execute(state)
+func executeExpression(s ast.AstProcessExpression, state ProcessState) ProcessState {
+	var si any = s
+	switch si.(type) {
+	case ast.AstProcessBinaryExpression:
+		return executeBinaryExpr(si.(ast.AstProcessBinaryExpression), state)
+	case ast.AstProcessUnaryExpression:
+		return executeUnaryExpression(si.(ast.AstProcessUnaryExpression), state)
+	case ast.AstProcessString:
+		return executeString(si.(ast.AstProcessString), state)
+	case ast.AstProcessBoolean:
+		return executeBoolean(si.(ast.AstProcessBoolean), state)
+	case ast.AstProcessVariable:
+		return executeVariable(si.(ast.AstProcessVariable), state)
+	}
+	panic(fmt.Sprintf("unknown process expression type %T", si))
+}
+
+func executeBinaryExpr(s ast.AstProcessBinaryExpression, state ProcessState) ProcessState {
+	lhs_state := executeExpression(s.Lhs, state)
+	rhs_state := executeExpression(s.Rhs, state)
 
 	final_state := lhs_state
-	if lhs_state.currentValue.getType() == PTSTRING {
-		if s.op == PLUS {
+	if lhs_state.currentValue.getType() == bytecode.PTSTRING {
+		if s.Op == ast.PLUS {
 			final := lhs_state.currentValue.getString() + rhs_state.currentValue.getString()
 			final_state.currentValue = ProcessValueString{final}
-		} else if s.op == DEQUAL {
+		} else if s.Op == ast.DEQUAL {
 			final := lhs_state.currentValue.getString() == rhs_state.currentValue.getString()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == NEQUAL {
+		} else if s.Op == ast.NEQUAL {
 			final := lhs_state.currentValue.getString() != rhs_state.currentValue.getString()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == LESS {
+		} else if s.Op == ast.LESS {
 			final := lhs_state.currentValue.getString() < rhs_state.currentValue.getString()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == GREATER {
+		} else if s.Op == ast.GREATER {
 			final := lhs_state.currentValue.getString() > rhs_state.currentValue.getString()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == LESSEQ {
+		} else if s.Op == ast.LESSEQ {
 			final := lhs_state.currentValue.getString() <= rhs_state.currentValue.getString()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == GREATEREQ {
+		} else if s.Op == ast.GREATEREQ {
 			final := lhs_state.currentValue.getString() >= rhs_state.currentValue.getString()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if rhs_state.currentValue.getType() == PTNUMBER && s.op == MINUS {
+		} else if rhs_state.currentValue.getType() == bytecode.PTNUMBER && s.Op == ast.MINUS {
 			final := lhs_state.currentValue.getNumber() - rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueNumber{final}
-		} else if rhs_state.currentValue.getType() == PTNUMBER && s.op == MULT {
+		} else if rhs_state.currentValue.getType() == bytecode.PTNUMBER && s.Op == ast.MULT {
 			final := lhs_state.currentValue.getNumber() * rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueNumber{final}
-		} else if rhs_state.currentValue.getType() == PTNUMBER && s.op == DIV {
+		} else if rhs_state.currentValue.getType() == bytecode.PTNUMBER && s.Op == ast.DIV {
 			final := lhs_state.currentValue.getNumber() / rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueNumber{final}
-		} else if rhs_state.currentValue.getType() == PTNUMBER && s.op == MOD {
+		} else if rhs_state.currentValue.getType() == bytecode.PTNUMBER && s.Op == ast.MOD {
 			final := lhs_state.currentValue.getNumber() % rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueNumber{final}
 		} else {
 			panic("SHOULDN'T GET HERE (string) :(")
 		}
-	} else if lhs_state.currentValue.getType() == PTBOOLEAN {
-		if s.op == AND {
+	} else if lhs_state.currentValue.getType() == bytecode.PTBOOLEAN {
+		if s.Op == ast.AND {
 			final := lhs_state.currentValue.getBoolean() && rhs_state.currentValue.getBoolean()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == OR {
+		} else if s.Op == ast.OR {
 			final := lhs_state.currentValue.getBoolean() || rhs_state.currentValue.getBoolean()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == DEQUAL {
+		} else if s.Op == ast.DEQUAL {
 			final := lhs_state.currentValue.getBoolean() == rhs_state.currentValue.getBoolean()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == NEQUAL {
+		} else if s.Op == ast.NEQUAL {
 			final := lhs_state.currentValue.getBoolean() != rhs_state.currentValue.getBoolean()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == LESS {
+		} else if s.Op == ast.LESS {
 			final := lhs_state.currentValue.getNumber() < rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == GREATER {
+		} else if s.Op == ast.GREATER {
 			final := lhs_state.currentValue.getNumber() > rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == LESSEQ {
+		} else if s.Op == ast.LESSEQ {
 			final := lhs_state.currentValue.getNumber() <= rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == GREATEREQ {
+		} else if s.Op == ast.GREATEREQ {
 			final := lhs_state.currentValue.getNumber() >= rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueBoolean{final}
 		} else {
 			panic("SHOULDN'T GET HERE (bool) :(")
 		}
-	} else if lhs_state.currentValue.getType() == PTNUMBER {
-		if s.op == DEQUAL {
+	} else if lhs_state.currentValue.getType() == bytecode.PTNUMBER {
+		if s.Op == ast.DEQUAL {
 			final := lhs_state.currentValue.getBoolean() == rhs_state.currentValue.getBoolean()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == NEQUAL {
+		} else if s.Op == ast.NEQUAL {
 			final := lhs_state.currentValue.getBoolean() != rhs_state.currentValue.getBoolean()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == LESS {
+		} else if s.Op == ast.LESS {
 			final := lhs_state.currentValue.getNumber() < rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == GREATER {
+		} else if s.Op == ast.GREATER {
 			final := lhs_state.currentValue.getNumber() > rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == LESSEQ {
+		} else if s.Op == ast.LESSEQ {
 			final := lhs_state.currentValue.getNumber() <= rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == GREATEREQ {
+		} else if s.Op == ast.GREATEREQ {
 			final := lhs_state.currentValue.getNumber() >= rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueBoolean{final}
-		} else if s.op == PLUS {
+		} else if s.Op == ast.PLUS {
 			final := lhs_state.currentValue.getNumber() + rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueNumber{final}
-		} else if s.op == MINUS {
+		} else if s.Op == ast.MINUS {
 			final := lhs_state.currentValue.getNumber() - rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueNumber{final}
-		} else if s.op == MULT {
+		} else if s.Op == ast.MULT {
 			final := lhs_state.currentValue.getNumber() * rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueNumber{final}
-		} else if s.op == DIV {
+		} else if s.Op == ast.DIV {
 			final := lhs_state.currentValue.getNumber() / rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueNumber{final}
-		} else if s.op == MOD {
+		} else if s.Op == ast.MOD {
 			final := lhs_state.currentValue.getNumber() % rhs_state.currentValue.getNumber()
 			final_state.currentValue = ProcessValueNumber{final}
 		} else {
@@ -280,17 +321,17 @@ func (s AstProcessBinaryExpression) execute(state ProcessState) ProcessState {
 	return final_state
 }
 
-func (s AstProcessUnaryExpression) execute(state ProcessState) ProcessState {
-	expr_state := s.expr.execute(state)
-	if s.op == NOT {
+func executeUnaryExpression(s ast.AstProcessUnaryExpression, state ProcessState) ProcessState {
+	expr_state := executeExpression(s.Expr, state)
+	if s.Op == ast.NOT {
 		expr_state.currentValue = ProcessValueBoolean{!expr_state.currentValue.getBoolean()}
-	} else if s.op == HEAD {
+	} else if s.Op == ast.HEAD {
 		if len(expr_state.currentValue.getString()) <= 0 {
 			expr_state.currentValue = ProcessValueString{""}
 		} else {
 			expr_state.currentValue = ProcessValueString{expr_state.currentValue.getString()[0:1]}
 		}
-	} else if s.op == TAIL {
+	} else if s.Op == ast.TAIL {
 		if len(expr_state.currentValue.getString()) <= 1 {
 			expr_state.currentValue = ProcessValueString{""}
 		} else {
@@ -300,23 +341,23 @@ func (s AstProcessUnaryExpression) execute(state ProcessState) ProcessState {
 	return expr_state
 }
 
-func (s AstProcessString) execute(state ProcessState) ProcessState {
-	state.currentValue = ProcessValueString(s)
+func executeString(s ast.AstProcessString, state ProcessState) ProcessState {
+	state.currentValue = ProcessValueString{s.Value}
 	return state
 }
 
-func (s AstProcessBoolean) execute(state ProcessState) ProcessState {
-	state.currentValue = ProcessValueBoolean(s)
+func executeBoolean(s ast.AstProcessBoolean, state ProcessState) ProcessState {
+	state.currentValue = ProcessValueBoolean{s.Value}
 	return state
 }
 
-func (s AstProcessNumber) execute(state ProcessState) ProcessState {
-	state.currentValue = ProcessValueNumber(s)
+func executeNumber(s ast.AstProcessNumber, state ProcessState) ProcessState {
+	state.currentValue = ProcessValueNumber{s.Value}
 	return state
 }
 
-func (s AstProcessVariable) execute(state ProcessState) ProcessState {
-	val, prs := state.environment[s.name]
+func executeVariable(s ast.AstProcessVariable, state ProcessState) ProcessState {
+	val, prs := state.environment[s.Name]
 	if prs {
 		state.currentValue = val
 	} else {

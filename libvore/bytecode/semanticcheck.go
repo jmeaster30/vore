@@ -1,5 +1,11 @@
 package bytecode
 
+import (
+	"fmt"
+
+	"github.com/jmeaster30/vore/libvore/ast"
+)
+
 type ProcessType int
 
 const (
@@ -26,18 +32,41 @@ type ProcessTypeInfo struct {
 	inLoop       bool
 }
 
-func (s AstProcessSet) check(info ProcessTypeInfo) ProcessTypeInfo {
-	valueInfo := s.expr.check(info)
+func checkStatement(s ast.AstProcessStatement, info ProcessTypeInfo) ProcessTypeInfo {
+	var si interface{} = s
+	switch si.(type) {
+	case ast.AstProcessSet:
+		return checkSet(si.(ast.AstProcessSet), info)
+	case ast.AstProcessReturn:
+		return checkReturn(si.(ast.AstProcessReturn), info)
+	case ast.AstProcessIf:
+		return checkIf(si.(ast.AstProcessIf), info)
+	case ast.AstProcessLoop:
+		return checkLoop(si.(ast.AstProcessLoop), info)
+	case ast.AstProcessBreak:
+		return checkBreak(si.(ast.AstProcessBreak), info)
+	case ast.AstProcessContinue:
+		return checkContinue(si.(ast.AstProcessContinue), info)
+	case ast.AstProcessExpression:
+		return checkExpression(si.(ast.AstProcessExpression), info)
+	}
+	info.currentType = PTERROR
+	info.errorMessage = fmt.Sprintf("Unknown expression '%T'", si)
+	return info
+}
+
+func checkSet(s ast.AstProcessSet, info ProcessTypeInfo) ProcessTypeInfo {
+	valueInfo := checkExpression(s.Expr, info)
 	if valueInfo.currentType == PTERROR {
 		return valueInfo
 	}
-	valueInfo.environment[s.name] = valueInfo.currentType
+	valueInfo.environment[s.Name] = valueInfo.currentType
 	valueInfo.currentType = PTOK
 	return valueInfo
 }
 
-func (s AstProcessReturn) check(info ProcessTypeInfo) ProcessTypeInfo {
-	valueInfo := s.expr.check(info)
+func checkReturn(s ast.AstProcessReturn, info ProcessTypeInfo) ProcessTypeInfo {
+	valueInfo := checkExpression(s.Expr, info)
 	if valueInfo.currentType == PTERROR {
 		return valueInfo
 	}
@@ -55,8 +84,8 @@ func (s AstProcessReturn) check(info ProcessTypeInfo) ProcessTypeInfo {
 	return valueInfo
 }
 
-func (s AstProcessIf) check(info ProcessTypeInfo) ProcessTypeInfo {
-	valueInfo := s.condition.check(info)
+func checkIf(s ast.AstProcessIf, info ProcessTypeInfo) ProcessTypeInfo {
+	valueInfo := checkExpression(s.Condition, info)
 	if valueInfo.currentType == PTERROR {
 		return valueInfo
 	}
@@ -67,15 +96,15 @@ func (s AstProcessIf) check(info ProcessTypeInfo) ProcessTypeInfo {
 		return valueInfo
 	}
 
-	for _, stmt := range s.trueBody {
-		valueInfo = stmt.check(valueInfo)
+	for _, stmt := range s.TrueBody {
+		valueInfo = checkStatement(stmt, valueInfo)
 		if valueInfo.currentType == PTERROR {
 			return valueInfo
 		}
 	}
 
-	for _, stmt := range s.falseBody {
-		valueInfo = stmt.check(valueInfo)
+	for _, stmt := range s.FalseBody {
+		valueInfo = checkStatement(stmt, valueInfo)
 		if valueInfo.currentType == PTERROR {
 			return valueInfo
 		}
@@ -84,8 +113,8 @@ func (s AstProcessIf) check(info ProcessTypeInfo) ProcessTypeInfo {
 	return valueInfo
 }
 
-func (s AstProcessDebug) check(info ProcessTypeInfo) ProcessTypeInfo {
-	valueInfo := s.expr.check(info)
+func checkDebug(s ast.AstProcessDebug, info ProcessTypeInfo) ProcessTypeInfo {
+	valueInfo := checkExpression(s.Expr, info)
 	if valueInfo.currentType == PTERROR {
 		return valueInfo
 	}
@@ -94,10 +123,10 @@ func (s AstProcessDebug) check(info ProcessTypeInfo) ProcessTypeInfo {
 	return valueInfo
 }
 
-func (s AstProcessLoop) check(info ProcessTypeInfo) ProcessTypeInfo {
+func checkLoop(s ast.AstProcessLoop, info ProcessTypeInfo) ProcessTypeInfo {
 	info.inLoop = true
-	for _, stmt := range s.body {
-		info = stmt.check(info)
+	for _, stmt := range s.Body {
+		info = checkStatement(stmt, info)
 		if info.currentType == PTERROR {
 			return info
 		}
@@ -106,7 +135,7 @@ func (s AstProcessLoop) check(info ProcessTypeInfo) ProcessTypeInfo {
 	return info
 }
 
-func (s AstProcessContinue) check(info ProcessTypeInfo) ProcessTypeInfo {
+func checkContinue(s ast.AstProcessContinue, info ProcessTypeInfo) ProcessTypeInfo {
 	if !info.inLoop {
 		info.currentType = PTERROR
 		info.errorMessage = "Cannot use 'continue' outside of a loop."
@@ -114,7 +143,7 @@ func (s AstProcessContinue) check(info ProcessTypeInfo) ProcessTypeInfo {
 	return info
 }
 
-func (s AstProcessBreak) check(info ProcessTypeInfo) ProcessTypeInfo {
+func checkBreak(s ast.AstProcessBreak, info ProcessTypeInfo) ProcessTypeInfo {
 	if !info.inLoop {
 		info.currentType = PTERROR
 		info.errorMessage = "Cannot use 'break' outside of a loop."
@@ -122,25 +151,46 @@ func (s AstProcessBreak) check(info ProcessTypeInfo) ProcessTypeInfo {
 	return info
 }
 
-func (s AstProcessBinaryExpression) check(info ProcessTypeInfo) ProcessTypeInfo {
-	lhsinfo := s.lhs.check(info)
-	rhsinfo := s.rhs.check(info)
+func checkExpression(s ast.AstProcessExpression, info ProcessTypeInfo) ProcessTypeInfo {
+	var si interface{} = s
+	switch si.(type) {
+	case ast.AstProcessBinaryExpression:
+		return checkBinaryExpr(si.(ast.AstProcessBinaryExpression), info)
+	case ast.AstProcessUnaryExpression:
+		return checkUnaryExpr(si.(ast.AstProcessUnaryExpression), info)
+	case ast.AstProcessString:
+		return checkString(si.(ast.AstProcessString), info)
+	case ast.AstProcessNumber:
+		return checkNumber(si.(ast.AstProcessNumber), info)
+	case ast.AstProcessBoolean:
+		return checkBoolean(si.(ast.AstProcessBoolean), info)
+	case ast.AstProcessVariable:
+		return checkVariable(si.(ast.AstProcessVariable), info)
+	}
+	info.currentType = PTERROR
+	info.errorMessage = fmt.Sprintf("Unknown expression '%T'", s)
+	return info
+}
+
+func checkBinaryExpr(s ast.AstProcessBinaryExpression, info ProcessTypeInfo) ProcessTypeInfo {
+	lhsinfo := checkExpression(s.Lhs, info)
+	rhsinfo := checkExpression(s.Rhs, info)
 	// super basic need to expand on this
 	if lhsinfo.currentType == PTERROR {
 		return lhsinfo
 	} else if rhsinfo.currentType == PTERROR {
 		return rhsinfo
-	} else if lhsinfo.currentType == PTSTRING && s.op == PLUS {
+	} else if lhsinfo.currentType == PTSTRING && s.Op == ast.PLUS {
 		lhsinfo.currentType = PTSTRING
-	} else if lhsinfo.currentType == PTSTRING && (s.op == DEQUAL || s.op == NEQUAL || s.op == LESS || s.op == GREATER || s.op == LESSEQ || s.op == GREATEREQ) {
+	} else if lhsinfo.currentType == PTSTRING && (s.Op == ast.DEQUAL || s.Op == ast.NEQUAL || s.Op == ast.LESS || s.Op == ast.GREATER || s.Op == ast.LESSEQ || s.Op == ast.GREATEREQ) {
 		lhsinfo.currentType = PTBOOLEAN
-	} else if lhsinfo.currentType == PTBOOLEAN && (s.op == AND || s.op == OR || s.op == DEQUAL || s.op == NEQUAL || s.op == LESS || s.op == GREATER || s.op == LESSEQ || s.op == GREATEREQ) {
+	} else if lhsinfo.currentType == PTBOOLEAN && (s.Op == ast.AND || s.Op == ast.OR || s.Op == ast.DEQUAL || s.Op == ast.NEQUAL || s.Op == ast.LESS || s.Op == ast.GREATER || s.Op == ast.LESSEQ || s.Op == ast.GREATEREQ) {
 		lhsinfo.currentType = PTBOOLEAN
-	} else if lhsinfo.currentType == PTNUMBER && (s.op == DEQUAL || s.op == NEQUAL || s.op == LESS || s.op == GREATER || s.op == LESSEQ || s.op == GREATEREQ) {
+	} else if lhsinfo.currentType == PTNUMBER && (s.Op == ast.DEQUAL || s.Op == ast.NEQUAL || s.Op == ast.LESS || s.Op == ast.GREATER || s.Op == ast.LESSEQ || s.Op == ast.GREATEREQ) {
 		lhsinfo.currentType = PTBOOLEAN
-	} else if lhsinfo.currentType == PTNUMBER && (s.op == PLUS || s.op == MINUS || s.op == MULT || s.op == DIV || s.op == MOD) {
+	} else if lhsinfo.currentType == PTNUMBER && (s.Op == ast.PLUS || s.Op == ast.MINUS || s.Op == ast.MULT || s.Op == ast.DIV || s.Op == ast.MOD) {
 		lhsinfo.currentType = PTNUMBER
-	} else if lhsinfo.currentType == PTSTRING && rhsinfo.currentType == PTNUMBER && (s.op == PLUS || s.op == MINUS || s.op == MULT || s.op == DIV || s.op == MOD) {
+	} else if lhsinfo.currentType == PTSTRING && rhsinfo.currentType == PTNUMBER && (s.Op == ast.PLUS || s.Op == ast.MINUS || s.Op == ast.MULT || s.Op == ast.DIV || s.Op == ast.MOD) {
 		lhsinfo.currentType = PTNUMBER
 	} else {
 		lhsinfo.currentType = PTERROR
@@ -150,11 +200,11 @@ func (s AstProcessBinaryExpression) check(info ProcessTypeInfo) ProcessTypeInfo 
 	return lhsinfo
 }
 
-func (s AstProcessUnaryExpression) check(info ProcessTypeInfo) ProcessTypeInfo {
-	next_info := s.expr.check(info)
-	if next_info.currentType == PTBOOLEAN && s.op == NOT {
+func checkUnaryExpr(s ast.AstProcessUnaryExpression, info ProcessTypeInfo) ProcessTypeInfo {
+	next_info := checkExpression(s.Expr, info)
+	if next_info.currentType == PTBOOLEAN && s.Op == ast.NOT {
 		next_info.currentType = PTBOOLEAN
-	} else if next_info.currentType == PTSTRING && (s.op == HEAD || s.op == TAIL) {
+	} else if next_info.currentType == PTSTRING && (s.Op == ast.HEAD || s.Op == ast.TAIL) {
 		next_info.currentType = PTSTRING
 	} else if next_info.currentType != PTERROR {
 		next_info.currentType = PTERROR
@@ -163,23 +213,23 @@ func (s AstProcessUnaryExpression) check(info ProcessTypeInfo) ProcessTypeInfo {
 	return next_info
 }
 
-func (s AstProcessString) check(info ProcessTypeInfo) ProcessTypeInfo {
+func checkString(s ast.AstProcessString, info ProcessTypeInfo) ProcessTypeInfo {
 	info.currentType = PTSTRING
 	return info
 }
 
-func (s AstProcessNumber) check(info ProcessTypeInfo) ProcessTypeInfo {
+func checkNumber(s ast.AstProcessNumber, info ProcessTypeInfo) ProcessTypeInfo {
 	info.currentType = PTNUMBER
 	return info
 }
 
-func (s AstProcessBoolean) check(info ProcessTypeInfo) ProcessTypeInfo {
+func checkBoolean(s ast.AstProcessBoolean, info ProcessTypeInfo) ProcessTypeInfo {
 	info.currentType = PTBOOLEAN
 	return info
 }
 
-func (s AstProcessVariable) check(info ProcessTypeInfo) ProcessTypeInfo {
-	t, prs := info.environment[s.name]
+func checkVariable(s ast.AstProcessVariable, info ProcessTypeInfo) ProcessTypeInfo {
+	t, prs := info.environment[s.Name]
 	if prs {
 		info.currentType = t
 	} else {

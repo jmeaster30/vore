@@ -9,20 +9,21 @@ import (
 	"runtime/pprof"
 
 	"github.com/jmeaster30/vore/libvore"
+	"github.com/jmeaster30/vore/libvore/engine"
 )
 
-var replaceModeArg = libvore.NEW
+var replaceModeArg = engine.NEW
 
 func replaceMode(value string) error {
 	switch value {
 	case "OVERWRITE":
-		replaceModeArg = libvore.OVERWRITE
+		replaceModeArg = engine.OVERWRITE
 	case "NOTHING":
-		replaceModeArg = libvore.NOTHING
+		replaceModeArg = engine.NOTHING
 	case "":
 		fallthrough
 	case "NEW":
-		replaceModeArg = libvore.NEW
+		replaceModeArg = engine.NEW
 	default:
 		return errors.New("Expected [NEW, NOTHING, OVERWRITE] but got '" + value + "'.")
 	}
@@ -132,6 +133,7 @@ func main() {
 	}
 
 	if debug {
+		println("HERE")
 		vore.PrintAST()
 		vore.PrintBytecode()
 	}
