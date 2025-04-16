@@ -10,12 +10,12 @@ import (
 )
 
 func search(command *bytecode.Command, filename string, reader *files.Reader, mode ReplaceMode) Matches {
-	var ci any = command
-	switch ci.(type) {
+	var ci any = *command
+	switch com := ci.(type) {
 	case bytecode.FindCommand:
-		return searchFind(ci.(*bytecode.FindCommand), filename, reader, mode)
+		return searchFind(&com, filename, reader, mode)
 	case bytecode.ReplaceCommand:
-		return searchReplace(ci.(*bytecode.ReplaceCommand), filename, reader, mode)
+		return searchReplace(&com, filename, reader, mode)
 	case bytecode.SetCommand:
 		return Matches{}
 	}

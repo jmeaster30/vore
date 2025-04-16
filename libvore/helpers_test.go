@@ -1,9 +1,11 @@
 package libvore
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/jmeaster30/vore/libvore/ds"
+	"github.com/jmeaster30/vore/libvore/engine"
 )
 
 type TestMatch struct {
@@ -18,7 +20,7 @@ type TestVar struct {
 	value string
 }
 
-func singleMatch(t *testing.T, results Matches, startOffset int, value string) {
+func singleMatch(t *testing.T, results engine.Matches, startOffset int, value string) {
 	t.Helper()
 	if len(results) < 1 {
 		t.FailNow()
@@ -33,7 +35,7 @@ func singleMatch(t *testing.T, results Matches, startOffset int, value string) {
 	}
 }
 
-func matches(t *testing.T, results Matches, expected []TestMatch) {
+func matches(t *testing.T, results engine.Matches, expected []TestMatch) {
 	t.Helper()
 	if len(results) != len(expected) {
 		t.Errorf("Expected %d results, got %d results\n", len(expected), len(results))
@@ -64,55 +66,16 @@ func matches(t *testing.T, results Matches, expected []TestMatch) {
 	}
 }
 
-func checkVoreError(t *testing.T, err error, expectedType string, expectedMessage string) {
+func checkVoreError(t *testing.T, err error, expectedType reflect.Type, expectedMessage string) {
 	if err == nil {
 		t.Errorf("Did not return any error :(")
 		t.FailNow()
 	}
 
-	if detailedErr, ok := err.(*VoreError); ok {
-		if detailedErr.ErrorType != expectedType {
-			t.Errorf("Expected %s but got %s", expectedType, detailedErr.ErrorType)
-		}
-		if detailedErr.Message != expectedMessage {
-			t.Errorf("Expected message '%s' but got '%s'", expectedMessage, detailedErr.Message)
-		}
-	} else {
-		t.Errorf("Expected VoreError returned but got some other error. %s", err.Error())
+	if reflect.TypeOf(err) != expectedType {
+		t.Errorf("Expected %s but got %s", expectedType, reflect.TypeOf(err))
 	}
-}
-
-func checkVoreErrorToken(t *testing.T,
-	err error,
-	expectedType string,
-	expectedTokenType TokenType,
-	expectedLexeme string,
-	expectedOffsetStart int,
-	expectedOffsetEnd int,
-	expectedMessage string,
-) {
-	if err == nil {
-		t.Errorf("Did not return any error :(")
-		t.FailNow()
-	}
-
-	if detailedErr, ok := err.(*VoreError); ok {
-		if detailedErr.ErrorType != expectedType {
-			t.Errorf("Expected %s but got %s", expectedType, detailedErr.ErrorType)
-		}
-		if detailedErr.Token.TokenType != expectedTokenType {
-			t.Errorf("Expected tokenType %s but got %s", expectedTokenType.PP(), detailedErr.Token.TokenType.PP())
-		}
-		if detailedErr.Token.Lexeme != expectedLexeme {
-			t.Errorf("Expected lexeme '%s' but got '%s'", expectedLexeme, detailedErr.Token.Lexeme)
-		}
-		if detailedErr.Token.Offset.Start != expectedOffsetStart && detailedErr.Token.Offset.End != expectedOffsetEnd {
-			t.Errorf("Expected range (%d, %d) but got (%d, %d)", expectedOffsetStart, expectedOffsetEnd, detailedErr.Token.Offset.Start, detailedErr.Token.Offset.End)
-		}
-		if detailedErr.Message != expectedMessage {
-			t.Errorf("Expected message '%s' but got '%s'", expectedMessage, detailedErr.Message)
-		}
-	} else {
-		t.Errorf("Expected VoreError returned but got some other error. %s", err.Error())
+	if err.Error() != expectedMessage {
+		t.Errorf("Expected message '%s' but got '%s'", expectedMessage, err.Error())
 	}
 }

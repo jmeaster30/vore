@@ -29,8 +29,7 @@ func (m Matches) Json() string {
 }
 
 func (m Matches) FormattedJson() string {
-	var mi any = m
-	data, err := json.Marshal(mi.([]Match))
+	data, err := json.MarshalIndent(m, "", "\t")
 	if err != nil {
 		panic(err)
 	}

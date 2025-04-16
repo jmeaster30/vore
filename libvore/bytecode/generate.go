@@ -119,7 +119,7 @@ func generateReplaceCommand(r *ast.AstReplace, state *GenState) (Command, error)
 func generateSetCommand(s *ast.AstSet, state *GenState) (Command, error) {
 	state.variables = make(map[string]int)
 
-	body, err := generateSetBody(s.Body, state, s.Id)
+	body, err := generateSetBody(&s.Body, state, s.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -129,16 +129,17 @@ func generateSetCommand(s *ast.AstSet, state *GenState) (Command, error) {
 	}, nil
 }
 
-func generateSetBody(s ast.AstSetBody, state *GenState, id string) (SetCommandBody, error) {
-	switch s := s.(type) {
-	case ast.AstSetTransform:
-		return generateSetTransform(s, state, id)
-	case ast.AstSetPattern:
-		return generateSetPattern(s, state, id)
-	case ast.AstSetMatches:
-		return generateSetMatches(s, state, id)
+func generateSetBody(s *ast.AstSetBody, state *GenState, id string) (SetCommandBody, error) {
+	var si any = *s
+	switch sb := si.(type) {
+	case *ast.AstSetTransform:
+		return generateSetTransform(*sb, state, id)
+	case *ast.AstSetPattern:
+		return generateSetPattern(*sb, state, id)
+	case *ast.AstSetMatches:
+		return generateSetMatches(*sb, state, id)
 	}
-	panic("Not supposed to be here")
+	return nil, NewGenError(fmt.Sprintf("Unexpected set body %T", si))
 }
 
 func generateSetTransform(s ast.AstSetTransform, state *GenState, id string) (SetCommandBody, error) {
@@ -408,9 +409,11 @@ func generateListable(l *ast.AstListable, offset int, state *GenState) ([]Search
 	var il any = *l
 	switch li := il.(type) {
 	case *ast.AstString:
-		generateString(li, offset, state)
+		return generateString(li, offset, state)
 	case *ast.AstCharacterClass:
-		generateCharacterClass(li, offset, state)
+		return generateCharacterClass(li, offset, state)
+	case *ast.AstRange:
+		return generateRange(li, offset, state)
 	}
 	return nil, NewGenError(fmt.Sprintf("Unknown listable '%T'", il))
 }

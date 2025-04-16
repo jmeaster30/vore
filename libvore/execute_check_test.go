@@ -1,8 +1,10 @@
-package engine
+package libvore
 
 import (
+	"reflect"
 	"testing"
 
+	"github.com/jmeaster30/vore/libvore/bytecode"
 	"github.com/jmeaster30/vore/libvore/ds"
 	"github.com/jmeaster30/vore/libvore/testutils"
 )
@@ -69,7 +71,7 @@ begin
 end
 
 find all divisibleBy3`)
-	checkVoreError(t, err, "GenError", "Since we are in the predicate of a pattern, return values must be a boolean")
+	checkVoreError(t, err, reflect.TypeFor[bytecode.GenError](), "Since we are in the predicate of a pattern, return values must be a boolean")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -82,7 +84,7 @@ set foo to transform
 end
 
 replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Since we are in a transform function, return values must be a string or a number")
+	checkVoreError(t, err, reflect.TypeFor[bytecode.GenError](), "Since we are in a transform function, return values must be a string or a number")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -97,7 +99,7 @@ set foo to transform
 end
 
 replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Cannot use 'break' outside of a loop.")
+	checkVoreError(t, err, reflect.TypeFor[bytecode.GenError](), "Cannot use 'break' outside of a loop.")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -114,7 +116,7 @@ set foo to transform
 end
 
 replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Cannot use 'break' outside of a loop.")
+	checkVoreError(t, err, reflect.TypeFor[bytecode.GenError](), "Cannot use 'break' outside of a loop.")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -129,7 +131,7 @@ set foo to transform
 end
 
 replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Cannot use 'continue' outside of a loop.")
+	checkVoreError(t, err, reflect.TypeFor[bytecode.GenError](), "Cannot use 'continue' outside of a loop.")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -148,7 +150,7 @@ set foo to transform
 end
 
 replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Condition of an if statement must be a boolean.")
+	checkVoreError(t, err, reflect.TypeFor[bytecode.GenError](), "Condition of an if statement must be a boolean.")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -163,7 +165,7 @@ set foo to transform
 end
 
 replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Condition of an if statement must be a boolean.")
+	checkVoreError(t, err, reflect.TypeFor[bytecode.GenError](), "Condition of an if statement must be a boolean.")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -176,7 +178,7 @@ func TestUndefinedOperator(t *testing.T) {
 	end
 	
 	replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Operator not defined for type.")
+	checkVoreError(t, err, reflect.TypeFor[bytecode.GenError](), "Operator not defined for type.")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}

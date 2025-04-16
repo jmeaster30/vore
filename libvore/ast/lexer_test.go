@@ -113,7 +113,7 @@ func TestCheckUnknownToken(t *testing.T) {
 	lexer := initLexer(strings.NewReader("ident $"))
 	tokens, err := lexer.getTokens()
 
-	checkVoreErrorToken(t, err, "LexError", ERROR, "$", 6, 7, "Unknown token :(")
+	checkVoreErrorToken(t, err, "LexError", ERROR, "$", 6, 7, "Unknown token")
 
 	if len(tokens) != 0 {
 		t.Errorf("Expected no tokens returned on error. Got %d tokens", len(tokens))
