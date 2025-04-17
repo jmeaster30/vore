@@ -27,12 +27,12 @@ func checkVoreErrorToken(t *testing.T,
 		if expectedType != "LexError" {
 			t.Errorf("Expected %s but got %s", expectedType, "LexError")
 		}
-		erroredToken = detailedErr.Token
+		erroredToken = detailedErr.Token()
 	case *ParseError:
 		if expectedType != "ParseError" {
 			t.Errorf("Expected %s but got %s", expectedType, "ParseError")
 		}
-		erroredToken = detailedErr.Token
+		erroredToken = detailedErr.Token()
 	default:
 		t.Errorf("Expected %s but got %T", expectedType, erri)
 	}

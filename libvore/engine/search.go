@@ -364,7 +364,7 @@ func matchEndSubroutine(i bytecode.EndSubroutine, current_state *SearchEngineSta
 		}
 		var final_value ProcessValue = ProcessValueBoolean{true}
 		for _, stmt := range i.Validate {
-			pstate = executeStatement(stmt, pstate)
+			pstate = executeStatement(&stmt, pstate)
 			if pstate.status == RETURNING {
 				final_value = pstate.currentValue
 				break
@@ -438,7 +438,7 @@ func executeReplaceProcess(i bytecode.ReplaceProcess, current_state *ReplacerSta
 	}
 	var final_value ProcessValue = ProcessValueBoolean{true}
 	for _, stmt := range i.Process {
-		pstate = executeStatement(stmt, pstate)
+		pstate = executeStatement(&stmt, pstate)
 		if pstate.status == RETURNING {
 			final_value = pstate.currentValue
 			break

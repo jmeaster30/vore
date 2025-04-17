@@ -2,6 +2,12 @@ module github.com/jmeaster30/vore/vorejs
 
 go 1.19
 
-replace github.com/jmeaster30/vore/libvore => ../../libvore
+replace (
+	github.com/jmeaster30/vore/libvore => ../../libvore
+	github.com/jmeaster30/vore/libvore/engine => ../../libvore/engine
+)
 
-require github.com/jmeaster30/vore/libvore v0.0.0-00010101000000-000000000000
+require (
+	github.com/jmeaster30/vore/libvore v0.0.0
+	github.com/jmeaster30/vore/libvore/engine v0.0.0
+)

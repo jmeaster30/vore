@@ -1,7 +1,9 @@
 package libvore
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/jmeaster30/vore/libvore/ds"
@@ -66,16 +68,17 @@ func matches(t *testing.T, results engine.Matches, expected []TestMatch) {
 	}
 }
 
-func checkVoreError(t *testing.T, err error, expectedType reflect.Type, expectedMessage string) {
+func checkVoreError(t *testing.T, err error, expectedType string, expectedMessage string) {
 	if err == nil {
 		t.Errorf("Did not return any error :(")
 		t.FailNow()
 	}
 
-	if reflect.TypeOf(err) != expectedType {
-		t.Errorf("Expected %s but got %s", expectedType, reflect.TypeOf(err))
+	if strings.HasSuffix(expectedType, reflect.TypeOf(err).String()) {
+		t.Errorf("Expected %s but got %s", expectedType, reflect.TypeOf(err).String())
 	}
-	if err.Error() != expectedMessage {
-		t.Errorf("Expected message '%s' but got '%s'", expectedMessage, err.Error())
+	expectedMessageFixed := fmt.Sprintf("%s: %s", expectedType, expectedMessage)
+	if !strings.HasPrefix(err.Error(), expectedMessageFixed) {
+		t.Errorf("Expected message '%s' but got '%s'", expectedMessageFixed, err.Error())
 	}
 }

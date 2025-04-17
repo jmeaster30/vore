@@ -100,51 +100,51 @@ type ProcessState struct {
 	status       ProcessStatus
 }
 
-func executeStatement(s ast.AstProcessStatement, state ProcessState) ProcessState {
-	var si any = s
-	switch si.(type) {
-	case ast.AstProcessSet:
-		return executeSet(si.(ast.AstProcessSet), state)
-	case ast.AstProcessIf:
-		return executeIf(si.(ast.AstProcessIf), state)
-	case ast.AstProcessLoop:
-		return executeLoop(si.(ast.AstProcessLoop), state)
+func executeStatement(s *ast.AstProcessStatement, state ProcessState) ProcessState {
+	var si any = *s
+	switch stmt := si.(type) {
+	case *ast.AstProcessSet:
+		return executeSet(stmt, state)
+	case *ast.AstProcessIf:
+		return executeIf(stmt, state)
+	case *ast.AstProcessLoop:
+		return executeLoop(stmt, state)
 	case ast.AstProcessBreak:
-		return executeBreak(si.(ast.AstProcessBreak), state)
+		return executeBreak(state)
 	case ast.AstProcessContinue:
-		return executeContinue(si.(ast.AstProcessContinue), state)
-	case ast.AstProcessReturn:
-		return executeReturn(si.(ast.AstProcessReturn), state)
-	case ast.AstProcessDebug:
-		return executeDebug(si.(ast.AstProcessDebug), state)
+		return executeContinue(state)
+	case *ast.AstProcessReturn:
+		return executeReturn(stmt, state)
+	case *ast.AstProcessDebug:
+		return executeDebug(stmt, state)
 	}
 	panic(fmt.Sprintf("Unknown process statement %T", si))
 }
 
-func executeSet(s ast.AstProcessSet, state ProcessState) ProcessState {
-	expr_state := executeExpression(s.Expr, state)
+func executeSet(s *ast.AstProcessSet, state ProcessState) ProcessState {
+	expr_state := executeExpression(&s.Expr, state)
 	expr_state.environment[s.Name] = expr_state.currentValue
 	return expr_state
 }
 
-func executeReturn(s ast.AstProcessReturn, state ProcessState) ProcessState {
-	expr_state := executeExpression(s.Expr, state)
+func executeReturn(s *ast.AstProcessReturn, state ProcessState) ProcessState {
+	expr_state := executeExpression(&s.Expr, state)
 	expr_state.status = RETURNING
 	return expr_state
 }
 
-func executeIf(s ast.AstProcessIf, state ProcessState) ProcessState {
-	expr_state := executeExpression(s.Condition, state)
+func executeIf(s *ast.AstProcessIf, state ProcessState) ProcessState {
+	expr_state := executeExpression(&s.Condition, state)
 	if expr_state.currentValue.getBoolean() {
 		for _, stmt := range s.TrueBody {
-			expr_state = executeStatement(stmt, expr_state)
+			expr_state = executeStatement(&stmt, expr_state)
 			if expr_state.status != NEXT {
 				break
 			}
 		}
 	} else {
 		for _, stmt := range s.FalseBody {
-			expr_state = executeStatement(stmt, expr_state)
+			expr_state = executeStatement(&stmt, expr_state)
 			if expr_state.status != NEXT {
 				break
 			}
@@ -154,17 +154,17 @@ func executeIf(s ast.AstProcessIf, state ProcessState) ProcessState {
 	return expr_state
 }
 
-func executeDebug(s ast.AstProcessDebug, state ProcessState) ProcessState {
-	expr_state := executeExpression(s.Expr, state)
+func executeDebug(s *ast.AstProcessDebug, state ProcessState) ProcessState {
+	expr_state := executeExpression(&s.Expr, state)
 	fmt.Println(expr_state.currentValue.getString())
 	return expr_state
 }
 
-func executeLoop(s ast.AstProcessLoop, state ProcessState) ProcessState {
+func executeLoop(s *ast.AstProcessLoop, state ProcessState) ProcessState {
 	expr_state := state
 	for {
 		for _, stmt := range s.Body {
-			expr_state = executeStatement(stmt, expr_state)
+			expr_state = executeStatement(&stmt, expr_state)
 			if expr_state.status != NEXT {
 				break
 			}
@@ -183,36 +183,38 @@ func executeLoop(s ast.AstProcessLoop, state ProcessState) ProcessState {
 	return expr_state
 }
 
-func executeContinue(s ast.AstProcessContinue, state ProcessState) ProcessState {
+func executeContinue(state ProcessState) ProcessState {
 	state.status = CONTINUELOOP
 	return state
 }
 
-func executeBreak(s ast.AstProcessBreak, state ProcessState) ProcessState {
+func executeBreak(state ProcessState) ProcessState {
 	state.status = BREAKLOOP
 	return state
 }
 
-func executeExpression(s ast.AstProcessExpression, state ProcessState) ProcessState {
-	var si any = s
-	switch si.(type) {
+func executeExpression(s *ast.AstProcessExpression, state ProcessState) ProcessState {
+	var si any = *s
+	switch exp := si.(type) {
 	case ast.AstProcessBinaryExpression:
-		return executeBinaryExpr(si.(ast.AstProcessBinaryExpression), state)
+		return executeBinaryExpr(&exp, state)
 	case ast.AstProcessUnaryExpression:
-		return executeUnaryExpression(si.(ast.AstProcessUnaryExpression), state)
+		return executeUnaryExpression(&exp, state)
 	case ast.AstProcessString:
-		return executeString(si.(ast.AstProcessString), state)
+		return executeString(&exp, state)
 	case ast.AstProcessBoolean:
-		return executeBoolean(si.(ast.AstProcessBoolean), state)
+		return executeBoolean(&exp, state)
+	case ast.AstProcessNumber:
+		return executeNumber(&exp, state)
 	case ast.AstProcessVariable:
-		return executeVariable(si.(ast.AstProcessVariable), state)
+		return executeVariable(&exp, state)
 	}
 	panic(fmt.Sprintf("unknown process expression type %T", si))
 }
 
-func executeBinaryExpr(s ast.AstProcessBinaryExpression, state ProcessState) ProcessState {
-	lhs_state := executeExpression(s.Lhs, state)
-	rhs_state := executeExpression(s.Rhs, state)
+func executeBinaryExpr(s *ast.AstProcessBinaryExpression, state ProcessState) ProcessState {
+	lhs_state := executeExpression(&s.Lhs, state)
+	rhs_state := executeExpression(&s.Rhs, state)
 
 	final_state := lhs_state
 	if lhs_state.currentValue.getType() == bytecode.PTSTRING {
@@ -321,8 +323,8 @@ func executeBinaryExpr(s ast.AstProcessBinaryExpression, state ProcessState) Pro
 	return final_state
 }
 
-func executeUnaryExpression(s ast.AstProcessUnaryExpression, state ProcessState) ProcessState {
-	expr_state := executeExpression(s.Expr, state)
+func executeUnaryExpression(s *ast.AstProcessUnaryExpression, state ProcessState) ProcessState {
+	expr_state := executeExpression(&s.Expr, state)
 	if s.Op == ast.NOT {
 		expr_state.currentValue = ProcessValueBoolean{!expr_state.currentValue.getBoolean()}
 	} else if s.Op == ast.HEAD {
@@ -341,22 +343,22 @@ func executeUnaryExpression(s ast.AstProcessUnaryExpression, state ProcessState)
 	return expr_state
 }
 
-func executeString(s ast.AstProcessString, state ProcessState) ProcessState {
+func executeString(s *ast.AstProcessString, state ProcessState) ProcessState {
 	state.currentValue = ProcessValueString{s.Value}
 	return state
 }
 
-func executeBoolean(s ast.AstProcessBoolean, state ProcessState) ProcessState {
+func executeBoolean(s *ast.AstProcessBoolean, state ProcessState) ProcessState {
 	state.currentValue = ProcessValueBoolean{s.Value}
 	return state
 }
 
-func executeNumber(s ast.AstProcessNumber, state ProcessState) ProcessState {
+func executeNumber(s *ast.AstProcessNumber, state ProcessState) ProcessState {
 	state.currentValue = ProcessValueNumber{s.Value}
 	return state
 }
 
-func executeVariable(s ast.AstProcessVariable, state ProcessState) ProcessState {
+func executeVariable(s *ast.AstProcessVariable, state ProcessState) ProcessState {
 	val, prs := state.environment[s.Name]
 	if prs {
 		state.currentValue = val

@@ -37,7 +37,7 @@ func GenerateBytecode(a *ast.Ast) (*Bytecode, error) {
 	for _, ast_comm := range a.Commands() {
 		byte_comm, gen_error := generateCommand(&ast_comm, gen_state)
 		if gen_error != nil {
-			return nil, NewGenError(gen_error.Error())
+			return nil, gen_error
 		}
 		bytecode = append(bytecode, byte_comm)
 	}
@@ -159,7 +159,7 @@ func generateSetTransform(s ast.AstSetTransform, state *GenState, id string) (Se
 		inLoop:       false,
 	}
 	for _, stmt := range s.Statements {
-		info = checkStatement(stmt, info)
+		info = checkStatement(&stmt, info)
 		if info.currentType == PTERROR {
 			// TODO add more info to the gen error like the statement that failed
 			return nil, NewGenError(info.errorMessage)
@@ -200,7 +200,7 @@ func generateSetPattern(s ast.AstSetPattern, state *GenState, id string) (SetCom
 		inLoop:       false,
 	}
 	for _, stmt := range s.Body {
-		info = checkStatement(stmt, info)
+		info = checkStatement(&stmt, info)
 		if info.currentType == PTERROR {
 			// TODO add more info to the gen error like the statement that failed
 			return nil, NewGenError(info.errorMessage)

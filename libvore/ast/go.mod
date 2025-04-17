@@ -1,4 +1,4 @@
-module github.com/jmeaster30/vore/libvore/frontend
+module github.com/jmeaster30/vore/libvore/ast
 
 go 1.19
 

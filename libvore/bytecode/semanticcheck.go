@@ -32,31 +32,33 @@ type ProcessTypeInfo struct {
 	inLoop       bool
 }
 
-func checkStatement(s ast.AstProcessStatement, info ProcessTypeInfo) ProcessTypeInfo {
-	var si interface{} = s
-	switch si.(type) {
-	case ast.AstProcessSet:
-		return checkSet(si.(ast.AstProcessSet), info)
-	case ast.AstProcessReturn:
-		return checkReturn(si.(ast.AstProcessReturn), info)
-	case ast.AstProcessIf:
-		return checkIf(si.(ast.AstProcessIf), info)
-	case ast.AstProcessLoop:
-		return checkLoop(si.(ast.AstProcessLoop), info)
+func checkStatement(s *ast.AstProcessStatement, info ProcessTypeInfo) ProcessTypeInfo {
+	var si any = *s
+	switch ps := si.(type) {
+	case *ast.AstProcessSet:
+		return checkSet(ps, info)
+	case *ast.AstProcessReturn:
+		return checkReturn(ps, info)
+	case *ast.AstProcessIf:
+		return checkIf(ps, info)
+	case *ast.AstProcessLoop:
+		return checkLoop(ps, info)
 	case ast.AstProcessBreak:
-		return checkBreak(si.(ast.AstProcessBreak), info)
+		return checkBreak(info)
 	case ast.AstProcessContinue:
-		return checkContinue(si.(ast.AstProcessContinue), info)
-	case ast.AstProcessExpression:
-		return checkExpression(si.(ast.AstProcessExpression), info)
+		return checkContinue(info)
+	case *ast.AstProcessExpression:
+		return checkExpression(ps, info)
+	case *ast.AstProcessDebug:
+		return checkDebug(ps, info)
 	}
 	info.currentType = PTERROR
 	info.errorMessage = fmt.Sprintf("Unknown expression '%T'", si)
 	return info
 }
 
-func checkSet(s ast.AstProcessSet, info ProcessTypeInfo) ProcessTypeInfo {
-	valueInfo := checkExpression(s.Expr, info)
+func checkSet(s *ast.AstProcessSet, info ProcessTypeInfo) ProcessTypeInfo {
+	valueInfo := checkExpression(&s.Expr, info)
 	if valueInfo.currentType == PTERROR {
 		return valueInfo
 	}
@@ -65,8 +67,8 @@ func checkSet(s ast.AstProcessSet, info ProcessTypeInfo) ProcessTypeInfo {
 	return valueInfo
 }
 
-func checkReturn(s ast.AstProcessReturn, info ProcessTypeInfo) ProcessTypeInfo {
-	valueInfo := checkExpression(s.Expr, info)
+func checkReturn(s *ast.AstProcessReturn, info ProcessTypeInfo) ProcessTypeInfo {
+	valueInfo := checkExpression(&s.Expr, info)
 	if valueInfo.currentType == PTERROR {
 		return valueInfo
 	}
@@ -84,8 +86,8 @@ func checkReturn(s ast.AstProcessReturn, info ProcessTypeInfo) ProcessTypeInfo {
 	return valueInfo
 }
 
-func checkIf(s ast.AstProcessIf, info ProcessTypeInfo) ProcessTypeInfo {
-	valueInfo := checkExpression(s.Condition, info)
+func checkIf(s *ast.AstProcessIf, info ProcessTypeInfo) ProcessTypeInfo {
+	valueInfo := checkExpression(&s.Condition, info)
 	if valueInfo.currentType == PTERROR {
 		return valueInfo
 	}
@@ -97,14 +99,14 @@ func checkIf(s ast.AstProcessIf, info ProcessTypeInfo) ProcessTypeInfo {
 	}
 
 	for _, stmt := range s.TrueBody {
-		valueInfo = checkStatement(stmt, valueInfo)
+		valueInfo = checkStatement(&stmt, valueInfo)
 		if valueInfo.currentType == PTERROR {
 			return valueInfo
 		}
 	}
 
 	for _, stmt := range s.FalseBody {
-		valueInfo = checkStatement(stmt, valueInfo)
+		valueInfo = checkStatement(&stmt, valueInfo)
 		if valueInfo.currentType == PTERROR {
 			return valueInfo
 		}
@@ -113,8 +115,8 @@ func checkIf(s ast.AstProcessIf, info ProcessTypeInfo) ProcessTypeInfo {
 	return valueInfo
 }
 
-func checkDebug(s ast.AstProcessDebug, info ProcessTypeInfo) ProcessTypeInfo {
-	valueInfo := checkExpression(s.Expr, info)
+func checkDebug(s *ast.AstProcessDebug, info ProcessTypeInfo) ProcessTypeInfo {
+	valueInfo := checkExpression(&s.Expr, info)
 	if valueInfo.currentType == PTERROR {
 		return valueInfo
 	}
@@ -123,10 +125,10 @@ func checkDebug(s ast.AstProcessDebug, info ProcessTypeInfo) ProcessTypeInfo {
 	return valueInfo
 }
 
-func checkLoop(s ast.AstProcessLoop, info ProcessTypeInfo) ProcessTypeInfo {
+func checkLoop(s *ast.AstProcessLoop, info ProcessTypeInfo) ProcessTypeInfo {
 	info.inLoop = true
 	for _, stmt := range s.Body {
-		info = checkStatement(stmt, info)
+		info = checkStatement(&stmt, info)
 		if info.currentType == PTERROR {
 			return info
 		}
@@ -135,7 +137,7 @@ func checkLoop(s ast.AstProcessLoop, info ProcessTypeInfo) ProcessTypeInfo {
 	return info
 }
 
-func checkContinue(s ast.AstProcessContinue, info ProcessTypeInfo) ProcessTypeInfo {
+func checkContinue(info ProcessTypeInfo) ProcessTypeInfo {
 	if !info.inLoop {
 		info.currentType = PTERROR
 		info.errorMessage = "Cannot use 'continue' outside of a loop."
@@ -143,7 +145,7 @@ func checkContinue(s ast.AstProcessContinue, info ProcessTypeInfo) ProcessTypeIn
 	return info
 }
 
-func checkBreak(s ast.AstProcessBreak, info ProcessTypeInfo) ProcessTypeInfo {
+func checkBreak(info ProcessTypeInfo) ProcessTypeInfo {
 	if !info.inLoop {
 		info.currentType = PTERROR
 		info.errorMessage = "Cannot use 'break' outside of a loop."
@@ -151,30 +153,30 @@ func checkBreak(s ast.AstProcessBreak, info ProcessTypeInfo) ProcessTypeInfo {
 	return info
 }
 
-func checkExpression(s ast.AstProcessExpression, info ProcessTypeInfo) ProcessTypeInfo {
-	var si interface{} = s
-	switch si.(type) {
+func checkExpression(s *ast.AstProcessExpression, info ProcessTypeInfo) ProcessTypeInfo {
+	var si any = *s
+	switch pe := si.(type) {
 	case ast.AstProcessBinaryExpression:
-		return checkBinaryExpr(si.(ast.AstProcessBinaryExpression), info)
+		return checkBinaryExpr(&pe, info)
 	case ast.AstProcessUnaryExpression:
-		return checkUnaryExpr(si.(ast.AstProcessUnaryExpression), info)
+		return checkUnaryExpr(&pe, info)
 	case ast.AstProcessString:
-		return checkString(si.(ast.AstProcessString), info)
+		return checkString(&pe, info)
 	case ast.AstProcessNumber:
-		return checkNumber(si.(ast.AstProcessNumber), info)
+		return checkNumber(&pe, info)
 	case ast.AstProcessBoolean:
-		return checkBoolean(si.(ast.AstProcessBoolean), info)
+		return checkBoolean(&pe, info)
 	case ast.AstProcessVariable:
-		return checkVariable(si.(ast.AstProcessVariable), info)
+		return checkVariable(&pe, info)
 	}
 	info.currentType = PTERROR
-	info.errorMessage = fmt.Sprintf("Unknown expression '%T'", s)
+	info.errorMessage = fmt.Sprintf("Unknown expression '%T'", si)
 	return info
 }
 
-func checkBinaryExpr(s ast.AstProcessBinaryExpression, info ProcessTypeInfo) ProcessTypeInfo {
-	lhsinfo := checkExpression(s.Lhs, info)
-	rhsinfo := checkExpression(s.Rhs, info)
+func checkBinaryExpr(s *ast.AstProcessBinaryExpression, info ProcessTypeInfo) ProcessTypeInfo {
+	lhsinfo := checkExpression(&s.Lhs, info)
+	rhsinfo := checkExpression(&s.Rhs, info)
 	// super basic need to expand on this
 	if lhsinfo.currentType == PTERROR {
 		return lhsinfo
@@ -200,8 +202,8 @@ func checkBinaryExpr(s ast.AstProcessBinaryExpression, info ProcessTypeInfo) Pro
 	return lhsinfo
 }
 
-func checkUnaryExpr(s ast.AstProcessUnaryExpression, info ProcessTypeInfo) ProcessTypeInfo {
-	next_info := checkExpression(s.Expr, info)
+func checkUnaryExpr(s *ast.AstProcessUnaryExpression, info ProcessTypeInfo) ProcessTypeInfo {
+	next_info := checkExpression(&s.Expr, info)
 	if next_info.currentType == PTBOOLEAN && s.Op == ast.NOT {
 		next_info.currentType = PTBOOLEAN
 	} else if next_info.currentType == PTSTRING && (s.Op == ast.HEAD || s.Op == ast.TAIL) {
@@ -213,22 +215,22 @@ func checkUnaryExpr(s ast.AstProcessUnaryExpression, info ProcessTypeInfo) Proce
 	return next_info
 }
 
-func checkString(s ast.AstProcessString, info ProcessTypeInfo) ProcessTypeInfo {
+func checkString(s *ast.AstProcessString, info ProcessTypeInfo) ProcessTypeInfo {
 	info.currentType = PTSTRING
 	return info
 }
 
-func checkNumber(s ast.AstProcessNumber, info ProcessTypeInfo) ProcessTypeInfo {
+func checkNumber(s *ast.AstProcessNumber, info ProcessTypeInfo) ProcessTypeInfo {
 	info.currentType = PTNUMBER
 	return info
 }
 
-func checkBoolean(s ast.AstProcessBoolean, info ProcessTypeInfo) ProcessTypeInfo {
+func checkBoolean(s *ast.AstProcessBoolean, info ProcessTypeInfo) ProcessTypeInfo {
 	info.currentType = PTBOOLEAN
 	return info
 }
 
-func checkVariable(s ast.AstProcessVariable, info ProcessTypeInfo) ProcessTypeInfo {
+func checkVariable(s *ast.AstProcessVariable, info ProcessTypeInfo) ProcessTypeInfo {
 	t, prs := info.environment[s.Name]
 	if prs {
 		info.currentType = t
