@@ -1,12 +1,15 @@
 package ds
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestQueuePush(t *testing.T) {
 	queue := NewQueue[int]()
-	queue.PushBack(1)
-	queue.PushBack(2)
-	queue.PushBack(3)
+	queue.Push(1)
+	queue.Push(2)
+	queue.Push(3)
 
 	if queue.Size() != 3 {
 		t.Errorf("The queue was expected to be 3 but actually was %d :(", queue.Size())
@@ -19,9 +22,9 @@ func TestQueuePush(t *testing.T) {
 
 func TestQueuePop(t *testing.T) {
 	queue := NewQueue[int]()
-	queue.PushBack(1)
-	queue.PushBack(2)
-	queue.PushBack(3)
+	queue.Push(1)
+	queue.Push(2)
+	queue.Push(3)
 
 	val := *queue.Pop()
 	if val != 1 {
@@ -72,18 +75,53 @@ func TestQueuePushFront(t *testing.T) {
 }
 
 func TestQueueIsEmpty(t *testing.T) {
-	stack := NewStack[int]()
-	if !stack.IsEmpty() {
-		t.Errorf("The stack was expected to be empty after creating new stack :(")
+	queue := NewQueue[int]()
+	if !queue.IsEmpty() {
+		t.Errorf("The queue was expected to be empty after creating new stack :(")
 	}
 
-	stack.Push(1)
-	if stack.IsEmpty() {
-		t.Errorf("The stack was supposed to have an element in it after adding an element :(")
+	queue.Push(1)
+	if queue.IsEmpty() {
+		t.Errorf("The queue was supposed to have an element in it after adding an element :(")
 	}
 
-	stack.Pop()
-	if !stack.IsEmpty() {
-		t.Errorf("The stack was expected to be empty after removing an element :(")
+	queue.Pop()
+	if !queue.IsEmpty() {
+		t.Errorf("The queue was expected to be empty after removing an element :(")
+	}
+}
+
+func TestQueueLimit(t *testing.T) {
+	queue := NewQueue[int]()
+	queue.Push(1)
+	queue.Push(2)
+	queue.Push(3)
+
+	queue.Limit(2)
+
+	if queue.Size() != 2 {
+		t.Errorf("The queue was expected to be limited to 2 elements but was %d", queue.Size())
+	}
+
+	value := queue.Pop()
+	if value == nil || *value != 2 {
+		t.Errorf("The first value in the queue was expected to be 2 but was %d", value)
+	}
+
+	value = queue.Pop()
+	if value == nil || *value != 3 {
+		t.Errorf("The second value in the queue was expected to be 3 but was %d", value)
+	}
+}
+
+func TestQueueContents(t *testing.T) {
+	queue := NewQueue[int]()
+	queue.Push(1)
+	queue.Push(2)
+	queue.Push(3)
+
+	data := queue.Contents()
+	if !reflect.DeepEqual(data, []int{1, 2, 3}) {
+		t.Errorf("Expected data to be [1, 2, 3] but got %+v", data)
 	}
 }

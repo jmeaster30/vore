@@ -68,3 +68,17 @@ func TestSplitKeep(t *testing.T) {
 		t.Errorf("SplitKeep was supposed to be [a, bc, a, a, bc] but was [%s]", strings.Join(result, ", "))
 	}
 }
+
+func TestWindow1(t *testing.T) {
+	result := Window([]string{"a", "b", "c", "d"}, 1)
+	if !reflect.DeepEqual(result, [][]string{{"a"}, {"b"}, {"c"}, {"d"}}) {
+		t.Errorf("Window was supposed to be [[a], [b], [c], [d]] but was %+v", result)
+	}
+}
+
+func TestWindow2(t *testing.T) {
+	result := Window([]string{"a", "b", "c", "d"}, 2)
+	if !reflect.DeepEqual(result, [][]string{{"a", "b"}, {"b", "c"}, {"c", "d"}, {"d"}}) {
+		t.Errorf("Window was supposed to be [[a, b], [b, c], [c, d], [d] but was %+v", result)
+	}
+}

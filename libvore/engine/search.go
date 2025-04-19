@@ -47,7 +47,7 @@ func findMatches(insts []bytecode.SearchInstruction, all bool, skip int, take in
 		if currentState.status == SUCCESS && len(currentState.currentMatch) != 0 && matchNumber >= skip {
 			// fmt.Println("====== SUCCESS ======")
 			foundMatch := currentState.MakeMatch(matchNumber + 1)
-			matches.PushBack(foundMatch)
+			matches.Push(foundMatch)
 			if last != 0 {
 				matches.Limit(last)
 			}
@@ -99,15 +99,16 @@ func searchReplace(c *bytecode.ReplaceCommand, filename string, reader *files.Re
 
 	var writer *files.Writer
 	replaceReader := reader
-	if mode == NEW {
+	switch mode {
+	case NEW:
 		writer = files.WriterFromFile(filename + ".vored")
-	} else if mode == OVERWRITE {
+	case OVERWRITE:
 		// If we are overwriting the file we have to load the original
 		// into memory since we will be writing over areas of text that
 		// we need to read from
 		replaceReader = files.ReaderFromFileToMemory(filename)
 		writer = files.WriterFromFile(filename)
-	} else if mode == NOTHING {
+	case NOTHING:
 		writer = files.WriterFromMemory()
 	}
 
@@ -139,39 +140,39 @@ func searchReplace(c *bytecode.ReplaceCommand, filename string, reader *files.Re
 
 func matchInstruction(i bytecode.SearchInstruction, current_state *SearchEngineState) *SearchEngineState {
 	var ii any = i
-	switch ii.(type) {
+	switch si := ii.(type) {
 	case bytecode.MatchLiteral:
-		return matchLiteral(ii.(bytecode.MatchLiteral), current_state)
+		return matchLiteral(si, current_state)
 	case bytecode.MatchCharClass:
-		return matchCharClass(ii.(bytecode.MatchCharClass), current_state)
+		return matchCharClass(si, current_state)
 	case bytecode.MatchVariable:
-		return matchVariable(ii.(bytecode.MatchVariable), current_state)
+		return matchVariable(si, current_state)
 	case bytecode.MatchRange:
-		return matchRange(ii.(bytecode.MatchRange), current_state)
+		return matchRange(si, current_state)
 	case bytecode.CallSubroutine:
-		return matchCallSubroutine(ii.(bytecode.CallSubroutine), current_state)
+		return matchCallSubroutine(si, current_state)
 	case bytecode.Branch:
-		return matchBranch(ii.(bytecode.Branch), current_state)
+		return matchBranch(si, current_state)
 	case bytecode.StartNotIn:
-		return matchStartNotIn(ii.(bytecode.StartNotIn), current_state)
+		return matchStartNotIn(si, current_state)
 	case bytecode.EndNotIn:
-		return matchEndNotIn(ii.(bytecode.EndNotIn), current_state)
+		return matchEndNotIn(si, current_state)
 	case bytecode.FailNotIn:
-		return matchFailNotIn(ii.(bytecode.FailNotIn), current_state)
+		return matchFailNotIn(si, current_state)
 	case bytecode.StartLoop:
-		return matchStartLoop(ii.(bytecode.StartLoop), current_state)
+		return matchStartLoop(si, current_state)
 	case bytecode.StopLoop:
-		return matchStopLoop(ii.(bytecode.StopLoop), current_state)
+		return matchStopLoop(si, current_state)
 	case bytecode.StartVarDec:
-		return matchStartVarDec(ii.(bytecode.StartVarDec), current_state)
+		return matchStartVarDec(si, current_state)
 	case bytecode.EndVarDec:
-		return matchEndVarDec(ii.(bytecode.EndVarDec), current_state)
+		return matchEndVarDec(si, current_state)
 	case bytecode.StartSubroutine:
-		return matchStartSubroutine(ii.(bytecode.StartSubroutine), current_state)
+		return matchStartSubroutine(si, current_state)
 	case bytecode.EndSubroutine:
-		return matchEndSubroutine(ii.(bytecode.EndSubroutine), current_state)
+		return matchEndSubroutine(si, current_state)
 	case bytecode.Jump:
-		return matchJump(ii.(bytecode.Jump), current_state)
+		return matchJump(si, current_state)
 	}
 	panic(fmt.Sprintf("Unknown search instruction %T", ii))
 }

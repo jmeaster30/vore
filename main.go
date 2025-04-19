@@ -10,6 +10,7 @@ import (
 
 	"github.com/jmeaster30/vore/libvore"
 	"github.com/jmeaster30/vore/libvore/engine"
+	"github.com/jmeaster30/vore/libvore/files"
 )
 
 var replaceModeArg = engine.NEW
@@ -34,7 +35,7 @@ func main() {
 	source_arg := flag.String("src", "", "Vore source file to run on search files")
 	command_arg := flag.String("com", "", "Vore command to run on search files")
 	debug_arg := flag.Bool("debug", false, "Prints the AST of the supplied command or source file")
-	files_arg := flag.String("files", "", "Files to search")
+	search_files_glob_arg := flag.String("files", "", "Files to search")
 	filenames_arg := flag.Bool("filenames", false, "Process filenames instead of file contents")
 	out_json_arg := flag.Bool("json", false, "Output JSON to STDOUT")
 	out_fjson_arg := flag.Bool("formatted-json", false, "Output formatted JSON to STDOUT")
@@ -46,7 +47,7 @@ func main() {
 	flag.Parse()
 
 	source := *source_arg
-	files := *files_arg
+	search_files_glob := *search_files_glob_arg
 	process_filenames := *filenames_arg
 	json_file := *json_file_arg
 	fjson_file := *fjson_file_arg
@@ -60,7 +61,7 @@ func main() {
 	if debug {
 		fmt.Printf("source: '%s'\n", source)
 		fmt.Printf("command: '%s'\n", command)
-		fmt.Printf("files: '%s'\n", files)
+		fmt.Printf("files: '%s'\n", search_files_glob)
 		fmt.Printf("replace mode: '%s'\n", replaceModeArg)
 		if debug {
 			fmt.Print("D ")
@@ -96,7 +97,7 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	if len(files) == 0 && !debug {
+	if len(search_files_glob) == 0 && !debug {
 		fmt.Println("Please supply some files to search O.O")
 		flag.PrintDefaults()
 		os.Exit(1)
@@ -143,13 +144,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	searchFiles := libvore.ParsePath(*files_arg).GetFileList(currentDir)
-	if len(searchFiles) == 0 {
+	search_files := files.ParsePath(search_files_glob).GetFileList(currentDir)
+	if len(search_files) == 0 {
 		fmt.Println("No files to search :(")
 		return
 	}
 
-	results := vore.RunFiles(searchFiles, replaceModeArg, process_filenames)
+	results := vore.RunFiles(search_files, replaceModeArg, process_filenames)
 
 	if no_output { // skip all output
 		return

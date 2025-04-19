@@ -17,7 +17,7 @@ func (s *Queue[T]) Peek() *T {
 }
 
 // push
-func (s *Queue[T]) PushBack(value T) {
+func (s *Queue[T]) Push(value T) {
 	s.store = append(s.store, value)
 }
 
