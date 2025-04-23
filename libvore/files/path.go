@@ -1,55 +1,76 @@
 package files
 
 import (
-	"fmt"
 	"os"
+	"os/user"
 	"strings"
 
 	"github.com/jmeaster30/vore/libvore/algo"
 )
 
-type PathEntryType int
-
-const (
-	Directory PathEntryType = iota
-	WildcardDirectory
-	File
-	WildcardFile
-)
-
-type PathEntry struct {
-	entryType PathEntryType
-	value     string
-}
-
 type Path struct {
-	entries []PathEntry
+	entries []string
 }
 
 func ParsePath(path string) *Path {
-	var entries []PathEntry
+	var entries []string
 	if path[0] == '/' {
-		entries = append(entries, PathEntry{entryType: Directory, value: "/"})
+		entries = append(entries, "/")
 		path = path[1:]
 	}
 	splitPath := strings.Split(path, "/")
 	for idx, pathPart := range splitPath {
 		if idx == len(splitPath)-1 {
 			if strings.ContainsRune(pathPart, '*') {
-				entries = append(entries, PathEntry{entryType: WildcardFile, value: pathPart})
+				entries = append(entries, pathPart)
 			} else {
-				entries = append(entries, PathEntry{entryType: File, value: pathPart})
+				entries = append(entries, pathPart)
 			}
 		} else {
 			if strings.ContainsRune(pathPart, '*') {
-				entries = append(entries, PathEntry{entryType: WildcardDirectory, value: pathPart})
+				entries = append(entries, pathPart)
 			} else {
-				entries = append(entries, PathEntry{entryType: Directory, value: pathPart})
+				entries = append(entries, pathPart)
 			}
 		}
 	}
-	fmt.Printf("%+v\n", entries)
 	return &Path{entries}
+}
+
+func matchIndexes(target string, match string) []int {
+	result := []int{}
+	for {
+		splitOffset := strings.Index(target, match)
+		if splitOffset == -1 {
+			break
+		}
+		if len(result) == 0 {
+			result = append(result, splitOffset)
+		} else {
+			result = append(result, result[len(result)-1]+1+splitOffset)
+		}
+		target = target[splitOffset+1:]
+	}
+	return result
+}
+
+func pathMatchesRecurse(target string, matchPartIdx int, matchParts [][]string) bool {
+	part := matchParts[matchPartIdx]
+	if len(part) == 1 {
+		return part[0] == "*" || target == part[0]
+	} else if part[0] == "*" {
+		splits := matchIndexes(target, part[1])
+		for _, split := range splits {
+			if pathMatchesRecurse(target[split:], matchPartIdx+1, matchParts) {
+				return true
+			}
+		}
+	} else if strings.HasPrefix(target, part[0]) {
+		target = strings.TrimPrefix(target, part[0])
+		matchPartIdx++
+		return pathMatchesRecurse(target, matchPartIdx, matchParts)
+	}
+	return false
 }
 
 func pathMatches(target string, matches string) bool {
@@ -59,29 +80,7 @@ func pathMatches(target string, matches string) bool {
 
 	matchParts := algo.Window(algo.SplitKeep(matches, "*"), 2)
 
-	result := true
-	for _, part := range matchParts {
-		if len(part) == 1 {
-			if part[0] != "*" && target != part[0] {
-				result = false
-			}
-			break
-		} else if part[0] == "*" {
-			splitStart := strings.Index(target, part[1])
-			if splitStart == -1 {
-				target = ""
-			} else {
-				target = target[splitStart:]
-			}
-		} else if strings.HasPrefix(target, part[0]) {
-			target = strings.TrimPrefix(target, part[0])
-			// FIXME doesn't account for relative folders ie `./docs/examples`
-		} else {
-			result = false
-			break
-		}
-	}
-	return result
+	return pathMatchesRecurse(target, 0, matchParts)
 }
 
 func directoryExists(entries []os.DirEntry, name string) bool {
@@ -97,45 +96,95 @@ func (path *Path) shrink() *Path {
 	return &Path{entries: path.entries[1:]}
 }
 
+func normalize(path string) string {
+	if path == "" {
+		return path
+	}
+	parts := strings.Split(path, "/")
+
+	finalPath := []string{}
+	if path[0] == '/' {
+		finalPath = append(finalPath, "/")
+	}
+
+	for _, part := range parts {
+		if part == ".." && len(finalPath) == 0 {
+			finalPath = append(finalPath, part)
+		} else if part == ".." && len(finalPath) == 1 && finalPath[0] == "/" {
+			continue
+		} else if part == ".." {
+			finalPath = finalPath[:len(finalPath)-1]
+		} else if part == "." {
+			continue
+		} else if part == "~" {
+			current, err := user.Current()
+			if err != nil {
+				panic(err)
+			}
+			finalPath = []string{"/", "home", current.Username}
+		} else {
+			finalPath = append(finalPath, part)
+		}
+	}
+
+	result := ""
+	if len(finalPath) >= 1 && finalPath[0] == "/" {
+		result = "/"
+	}
+
+	for idx, part := range finalPath {
+		result += part
+		if idx != len(finalPath)-1 {
+			result += "/"
+		}
+	}
+
+	return result
+}
+
 func (path *Path) GetFileList(currentDirectory string) []string {
+	normCurrentDirectory := normalize(currentDirectory)
+
 	if len(path.entries) == 1 {
-		entries, err := os.ReadDir(currentDirectory)
+		entries, err := os.ReadDir(normCurrentDirectory)
 		if err != nil {
 			return []string{}
 		}
 
 		var results []string
 		for _, e := range entries {
-			if !e.IsDir() && pathMatches(e.Name(), path.entries[0].value) {
-				results = append(results, currentDirectory+"/"+e.Name())
+			if !e.IsDir() && pathMatches(e.Name(), path.entries[0]) {
+				results = append(results, normCurrentDirectory+"/"+e.Name())
 			}
 		}
 		return results
 	}
 
-	if path.entries[0].value == "/" {
+	if path.entries[0] == "/" {
 		return path.shrink().GetFileList("/")
 	}
 
-	entries, err := os.ReadDir(currentDirectory)
+	entries, err := os.ReadDir(normCurrentDirectory)
 	if err != nil {
 		return []string{}
 	}
 
 	var results []string
 
-	if strings.Trim(path.entries[0].value, "*") == "" {
-		results = append(results, path.shrink().GetFileList(currentDirectory)...)
+	if strings.Trim(path.entries[0], "*") == "" {
+		results = append(results, path.shrink().GetFileList(normCurrentDirectory)...)
 	}
 
-	if path.entries[0].entryType == WildcardDirectory {
+	isWildcard := strings.Contains(path.entries[0], "*")
+
+	if isWildcard {
 		for _, e := range entries {
-			if pathMatches(e.Name(), path.entries[0].value) {
-				results = append(results, path.shrink().GetFileList(currentDirectory+"/"+e.Name())...)
+			if pathMatches(e.Name(), path.entries[0]) {
+				results = append(results, path.shrink().GetFileList(normCurrentDirectory+"/"+e.Name())...)
 			}
 		}
-	} else if path.entries[0].entryType == Directory && directoryExists(entries, path.entries[0].value) {
-		results = append(results, path.shrink().GetFileList(currentDirectory+"/"+path.entries[0].value)...)
+	} else if !isWildcard && directoryExists(entries, path.entries[0]) {
+		results = append(results, path.shrink().GetFileList(normCurrentDirectory+"/"+path.entries[0])...)
 	}
 
 	return results
