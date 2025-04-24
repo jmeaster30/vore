@@ -1,6 +1,10 @@
 package ds
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/jmeaster30/vore/libvore/testutils"
+)
 
 func TestPush(t *testing.T) {
 	stack := NewStack[int]()
@@ -81,4 +85,25 @@ func TestIndex(t *testing.T) {
 	if *stack.Index(1) != 2 {
 		t.Errorf("Expected 2 but got %d", *stack.Index(1))
 	}
+}
+
+func TestCopy(t *testing.T) {
+	stack := NewStack[int]()
+	stack.Push(1)
+	stack.Push(2)
+
+	stackCopy := stack.Copy()
+	testutils.AssertEqual(t, 2, stackCopy.Size())
+	testutils.AssertEqual(t, 2, stackCopy.Pop())
+	testutils.AssertEqual(t, 1, stackCopy.Pop())
+	testutils.AssertEqual(t, 2, stack.Pop())
+	testutils.AssertEqual(t, 1, stack.Pop())
+}
+
+func TestPeekEmpty(t *testing.T) {
+	stack := NewStack[int]()
+
+	var expectedValue *int = nil
+
+	testutils.AssertEqual(t, expectedValue, stack.Peek())
 }

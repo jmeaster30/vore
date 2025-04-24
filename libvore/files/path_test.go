@@ -1,6 +1,8 @@
 package files
 
 import (
+	"fmt"
+	"os/user"
 	"testing"
 
 	"github.com/jmeaster30/vore/libvore/testutils"
@@ -158,4 +160,37 @@ func TestGetFileListWildcardThenSingleLetter(t *testing.T) {
 	testutils.AssertLength(t, 2, fileList)
 	testutils.AssertEqual(t, fs+"/plaza", fileList[0])
 	testutils.AssertEqual(t, fs+"/test.a", fileList[1])
+}
+
+func TestNormalize(t *testing.T) {
+	normalized := normalize("/a/b")
+	testutils.AssertEqual(t, "/a/b", normalized)
+}
+
+func TestNormalizeCurrentDirectory(t *testing.T) {
+	normalized := normalize("/a/.")
+	testutils.AssertEqual(t, "/a", normalized)
+}
+
+func TestNormalizedRelativeDirectoryParent(t *testing.T) {
+	normalized := normalize("a/../..")
+	testutils.AssertEqual(t, "..", normalized)
+}
+
+func TestNormalizeHomeDirectory(t *testing.T) {
+	currentUser, err := user.Current()
+	testutils.CheckNoError(t, err)
+
+	normalized := normalize("a/~/test")
+	testutils.AssertEqual(t, fmt.Sprintf("/home/%s/test", currentUser.Username), normalized)
+}
+
+func TestNormalizeParentOfRoot(t *testing.T) {
+	normalized := normalize("/../../test")
+	testutils.AssertEqual(t, "/test", normalized)
+}
+
+func TestNormalizeEmpty(t *testing.T) {
+	normalized := normalize("")
+	testutils.AssertEqual(t, "", normalized)
 }

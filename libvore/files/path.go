@@ -103,14 +103,10 @@ func normalize(path string) string {
 	parts := strings.Split(path, "/")
 
 	finalPath := []string{}
-	if path[0] == '/' {
-		finalPath = append(finalPath, "/")
-	}
-
 	for _, part := range parts {
 		if part == ".." && len(finalPath) == 0 {
 			finalPath = append(finalPath, part)
-		} else if part == ".." && len(finalPath) == 1 && finalPath[0] == "/" {
+		} else if part == ".." && len(finalPath) >= 1 && finalPath[len(finalPath)-1] == "/" {
 			continue
 		} else if part == ".." {
 			finalPath = finalPath[:len(finalPath)-1]
@@ -122,23 +118,20 @@ func normalize(path string) string {
 				panic(err)
 			}
 			finalPath = []string{"/", "home", current.Username}
+		} else if part == "" {
+			finalPath = append(finalPath, "/")
 		} else {
 			finalPath = append(finalPath, part)
 		}
 	}
 
 	result := ""
-	if len(finalPath) >= 1 && finalPath[0] == "/" {
-		result = "/"
-	}
-
 	for idx, part := range finalPath {
 		result += part
-		if idx != len(finalPath)-1 {
+		if part != "/" && idx != len(finalPath)-1 {
 			result += "/"
 		}
 	}
-
 	return result
 }
 
@@ -158,10 +151,6 @@ func (path *Path) GetFileList(currentDirectory string) []string {
 			}
 		}
 		return results
-	}
-
-	if path.entries[0] == "/" {
-		return path.shrink().GetFileList("/")
 	}
 
 	entries, err := os.ReadDir(normCurrentDirectory)
