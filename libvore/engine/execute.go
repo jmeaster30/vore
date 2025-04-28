@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/jmeaster30/vore/libvore/ast"
 	"github.com/jmeaster30/vore/libvore/bytecode"
@@ -17,86 +16,9 @@ const (
 	RETURNING
 )
 
-type ProcessValue interface {
-	getType() bytecode.ProcessType
-	getString() string
-	getNumber() int
-	getBoolean() bool
-}
-
-type ProcessValueString struct {
-	value string
-}
-
-func (v ProcessValueString) getString() string {
-	return v.value
-}
-
-func (v ProcessValueString) getNumber() int {
-	intval, err := strconv.Atoi(v.value)
-	if err != nil {
-		return 0
-	}
-	return intval
-}
-
-func (v ProcessValueString) getBoolean() bool {
-	return len(v.value) != 0
-}
-
-func (v ProcessValueString) getType() bytecode.ProcessType {
-	return bytecode.PTSTRING
-}
-
-type ProcessValueNumber struct {
-	value int
-}
-
-func (v ProcessValueNumber) getString() string {
-	return strconv.Itoa(v.value)
-}
-
-func (v ProcessValueNumber) getNumber() int {
-	return v.value
-}
-
-func (v ProcessValueNumber) getBoolean() bool {
-	return v.value != 0
-}
-
-func (v ProcessValueNumber) getType() bytecode.ProcessType {
-	return bytecode.PTNUMBER
-}
-
-type ProcessValueBoolean struct {
-	value bool
-}
-
-func (v ProcessValueBoolean) getString() string {
-	if v.value {
-		return "true"
-	}
-	return "false"
-}
-
-func (v ProcessValueBoolean) getNumber() int {
-	if v.value {
-		return 1
-	}
-	return 0
-}
-
-func (v ProcessValueBoolean) getBoolean() bool {
-	return v.value
-}
-
-func (v ProcessValueBoolean) getType() bytecode.ProcessType {
-	return bytecode.PTBOOLEAN
-}
-
 type ProcessState struct {
-	currentValue ProcessValue
-	environment  map[string]ProcessValue
+	currentValue bytecode.Value
+	environment  map[string]bytecode.Value
 	status       ProcessStatus
 }
 
@@ -135,7 +57,7 @@ func executeReturn(s *ast.AstProcessReturn, state ProcessState) ProcessState {
 
 func executeIf(s *ast.AstProcessIf, state ProcessState) ProcessState {
 	expr_state := executeExpression(&s.Condition, state)
-	if expr_state.currentValue.getBoolean() {
+	if expr_state.currentValue.GetBoolean() {
 		for _, stmt := range s.TrueBody {
 			expr_state = executeStatement(&stmt, expr_state)
 			if expr_state.status != NEXT {
@@ -156,7 +78,7 @@ func executeIf(s *ast.AstProcessIf, state ProcessState) ProcessState {
 
 func executeDebug(s *ast.AstProcessDebug, state ProcessState) ProcessState {
 	expr_state := executeExpression(&s.Expr, state)
-	fmt.Println(expr_state.currentValue.getString())
+	fmt.Println(expr_state.currentValue.GetString())
 	return expr_state
 }
 
@@ -217,105 +139,105 @@ func executeBinaryExpr(s *ast.AstProcessBinaryExpression, state ProcessState) Pr
 	rhs_state := executeExpression(&s.Rhs, state)
 
 	final_state := lhs_state
-	if lhs_state.currentValue.getType() == bytecode.PTSTRING {
+	if lhs_state.currentValue.GetType() == bytecode.ValueType_String {
 		if s.Op == ast.PLUS {
-			final := lhs_state.currentValue.getString() + rhs_state.currentValue.getString()
-			final_state.currentValue = ProcessValueString{final}
+			final := lhs_state.currentValue.GetString() + rhs_state.currentValue.GetString()
+			final_state.currentValue = bytecode.StringValue{Value: final}
 		} else if s.Op == ast.DEQUAL {
-			final := lhs_state.currentValue.getString() == rhs_state.currentValue.getString()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetString() == rhs_state.currentValue.GetString()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.NEQUAL {
-			final := lhs_state.currentValue.getString() != rhs_state.currentValue.getString()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetString() != rhs_state.currentValue.GetString()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.LESS {
-			final := lhs_state.currentValue.getString() < rhs_state.currentValue.getString()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetString() < rhs_state.currentValue.GetString()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.GREATER {
-			final := lhs_state.currentValue.getString() > rhs_state.currentValue.getString()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetString() > rhs_state.currentValue.GetString()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.LESSEQ {
-			final := lhs_state.currentValue.getString() <= rhs_state.currentValue.getString()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetString() <= rhs_state.currentValue.GetString()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.GREATEREQ {
-			final := lhs_state.currentValue.getString() >= rhs_state.currentValue.getString()
-			final_state.currentValue = ProcessValueBoolean{final}
-		} else if rhs_state.currentValue.getType() == bytecode.PTNUMBER && s.Op == ast.MINUS {
-			final := lhs_state.currentValue.getNumber() - rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueNumber{final}
-		} else if rhs_state.currentValue.getType() == bytecode.PTNUMBER && s.Op == ast.MULT {
-			final := lhs_state.currentValue.getNumber() * rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueNumber{final}
-		} else if rhs_state.currentValue.getType() == bytecode.PTNUMBER && s.Op == ast.DIV {
-			final := lhs_state.currentValue.getNumber() / rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueNumber{final}
-		} else if rhs_state.currentValue.getType() == bytecode.PTNUMBER && s.Op == ast.MOD {
-			final := lhs_state.currentValue.getNumber() % rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueNumber{final}
+			final := lhs_state.currentValue.GetString() >= rhs_state.currentValue.GetString()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
+		} else if rhs_state.currentValue.GetType() == bytecode.ValueType_Number && s.Op == ast.MINUS {
+			final := lhs_state.currentValue.GetNumber() - rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.NumberValue{Value: final}
+		} else if rhs_state.currentValue.GetType() == bytecode.ValueType_Number && s.Op == ast.MULT {
+			final := lhs_state.currentValue.GetNumber() * rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.NumberValue{Value: final}
+		} else if rhs_state.currentValue.GetType() == bytecode.ValueType_Number && s.Op == ast.DIV {
+			final := lhs_state.currentValue.GetNumber() / rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.NumberValue{Value: final}
+		} else if rhs_state.currentValue.GetType() == bytecode.ValueType_Number && s.Op == ast.MOD {
+			final := lhs_state.currentValue.GetNumber() % rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.NumberValue{Value: final}
 		} else {
 			panic("SHOULDN'T GET HERE (string) :(")
 		}
-	} else if lhs_state.currentValue.getType() == bytecode.PTBOOLEAN {
+	} else if lhs_state.currentValue.GetType() == bytecode.ValueType_Boolean {
 		if s.Op == ast.AND {
-			final := lhs_state.currentValue.getBoolean() && rhs_state.currentValue.getBoolean()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetBoolean() && rhs_state.currentValue.GetBoolean()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.OR {
-			final := lhs_state.currentValue.getBoolean() || rhs_state.currentValue.getBoolean()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetBoolean() || rhs_state.currentValue.GetBoolean()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.DEQUAL {
-			final := lhs_state.currentValue.getBoolean() == rhs_state.currentValue.getBoolean()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetBoolean() == rhs_state.currentValue.GetBoolean()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.NEQUAL {
-			final := lhs_state.currentValue.getBoolean() != rhs_state.currentValue.getBoolean()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetBoolean() != rhs_state.currentValue.GetBoolean()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.LESS {
-			final := lhs_state.currentValue.getNumber() < rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetNumber() < rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.GREATER {
-			final := lhs_state.currentValue.getNumber() > rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetNumber() > rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.LESSEQ {
-			final := lhs_state.currentValue.getNumber() <= rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetNumber() <= rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.GREATEREQ {
-			final := lhs_state.currentValue.getNumber() >= rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetNumber() >= rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else {
 			panic("SHOULDN'T GET HERE (bool) :(")
 		}
-	} else if lhs_state.currentValue.getType() == bytecode.PTNUMBER {
+	} else if lhs_state.currentValue.GetType() == bytecode.ValueType_Number {
 		if s.Op == ast.DEQUAL {
-			final := lhs_state.currentValue.getBoolean() == rhs_state.currentValue.getBoolean()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetBoolean() == rhs_state.currentValue.GetBoolean()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.NEQUAL {
-			final := lhs_state.currentValue.getBoolean() != rhs_state.currentValue.getBoolean()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetBoolean() != rhs_state.currentValue.GetBoolean()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.LESS {
-			final := lhs_state.currentValue.getNumber() < rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetNumber() < rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.GREATER {
-			final := lhs_state.currentValue.getNumber() > rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetNumber() > rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.LESSEQ {
-			final := lhs_state.currentValue.getNumber() <= rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetNumber() <= rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.GREATEREQ {
-			final := lhs_state.currentValue.getNumber() >= rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueBoolean{final}
+			final := lhs_state.currentValue.GetNumber() >= rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.BooleanValue{Value: final}
 		} else if s.Op == ast.PLUS {
-			final := lhs_state.currentValue.getNumber() + rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueNumber{final}
+			final := lhs_state.currentValue.GetNumber() + rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.NumberValue{Value: final}
 		} else if s.Op == ast.MINUS {
-			final := lhs_state.currentValue.getNumber() - rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueNumber{final}
+			final := lhs_state.currentValue.GetNumber() - rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.NumberValue{Value: final}
 		} else if s.Op == ast.MULT {
-			final := lhs_state.currentValue.getNumber() * rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueNumber{final}
+			final := lhs_state.currentValue.GetNumber() * rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.NumberValue{Value: final}
 		} else if s.Op == ast.DIV {
-			final := lhs_state.currentValue.getNumber() / rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueNumber{final}
+			final := lhs_state.currentValue.GetNumber() / rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.NumberValue{Value: final}
 		} else if s.Op == ast.MOD {
-			final := lhs_state.currentValue.getNumber() % rhs_state.currentValue.getNumber()
-			final_state.currentValue = ProcessValueNumber{final}
+			final := lhs_state.currentValue.GetNumber() % rhs_state.currentValue.GetNumber()
+			final_state.currentValue = bytecode.NumberValue{Value: final}
 		} else {
 			panic("SHOULDN'T GET HERE (number) :(")
 		}
@@ -326,35 +248,35 @@ func executeBinaryExpr(s *ast.AstProcessBinaryExpression, state ProcessState) Pr
 func executeUnaryExpression(s *ast.AstProcessUnaryExpression, state ProcessState) ProcessState {
 	expr_state := executeExpression(&s.Expr, state)
 	if s.Op == ast.NOT {
-		expr_state.currentValue = ProcessValueBoolean{!expr_state.currentValue.getBoolean()}
+		expr_state.currentValue = bytecode.BooleanValue{Value: !expr_state.currentValue.GetBoolean()}
 	} else if s.Op == ast.HEAD {
-		if len(expr_state.currentValue.getString()) <= 0 {
-			expr_state.currentValue = ProcessValueString{""}
+		if len(expr_state.currentValue.GetString()) <= 0 {
+			expr_state.currentValue = bytecode.StringValue{Value: ""}
 		} else {
-			expr_state.currentValue = ProcessValueString{expr_state.currentValue.getString()[0:1]}
+			expr_state.currentValue = bytecode.StringValue{Value: expr_state.currentValue.GetString()[0:1]}
 		}
 	} else if s.Op == ast.TAIL {
-		if len(expr_state.currentValue.getString()) <= 1 {
-			expr_state.currentValue = ProcessValueString{""}
+		if len(expr_state.currentValue.GetString()) <= 1 {
+			expr_state.currentValue = bytecode.StringValue{Value: ""}
 		} else {
-			expr_state.currentValue = ProcessValueString{expr_state.currentValue.getString()[1:]}
+			expr_state.currentValue = bytecode.StringValue{Value: expr_state.currentValue.GetString()[1:]}
 		}
 	}
 	return expr_state
 }
 
 func executeString(s *ast.AstProcessString, state ProcessState) ProcessState {
-	state.currentValue = ProcessValueString{s.Value}
+	state.currentValue = bytecode.StringValue{Value: s.Value}
 	return state
 }
 
 func executeBoolean(s *ast.AstProcessBoolean, state ProcessState) ProcessState {
-	state.currentValue = ProcessValueBoolean{s.Value}
+	state.currentValue = bytecode.BooleanValue{Value: s.Value}
 	return state
 }
 
 func executeNumber(s *ast.AstProcessNumber, state ProcessState) ProcessState {
-	state.currentValue = ProcessValueNumber{s.Value}
+	state.currentValue = bytecode.NumberValue{Value: s.Value}
 	return state
 }
 
@@ -363,7 +285,7 @@ func executeVariable(s *ast.AstProcessVariable, state ProcessState) ProcessState
 	if prs {
 		state.currentValue = val
 	} else {
-		state.currentValue = ProcessValueString{""}
+		state.currentValue = bytecode.StringValue{Value: ""}
 	}
 	return state
 }

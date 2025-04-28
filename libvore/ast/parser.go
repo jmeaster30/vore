@@ -924,9 +924,9 @@ func parse_process_statement(tokens []*Token, index int) (AstProcessStatement, i
 	} else if tokens[index].TokenType == LOOP {
 		return parse_process_loop(tokens, index)
 	} else if tokens[index].TokenType == BREAK {
-		return AstProcessBreak{}, index + 1, nil
+		return &AstProcessBreak{}, index + 1, nil
 	} else if tokens[index].TokenType == CONTINUE {
-		return AstProcessContinue{}, index + 1, nil
+		return &AstProcessContinue{}, index + 1, nil
 	} else if tokens[index].TokenType == END {
 		return nil, index, nil
 	} else if tokens[index].TokenType == ELSE {

@@ -327,6 +327,7 @@ type Jump struct {
 }
 
 func (i Jump) IsSearchInstruction() {}
+func (i Jump) isProcInstruction()   {}
 
 func (i Jump) String() string {
 	return fmt.Sprintf("(jump %d)", i.NewProgramCounter)
@@ -354,3 +355,102 @@ type ReplaceProcess struct {
 }
 
 func (i ReplaceProcess) IsReplaceInstruction() {}
+
+type ProcInstruction interface {
+	isProcInstruction()
+	// StackChange() (int, int)
+}
+
+type Store struct {
+	variableName string
+}
+
+func (s Store) isProcInstruction() {}
+
+type Load struct {
+	variableName string
+}
+
+func (l Load) isProcInstruction() {}
+
+type Push struct {
+	value Value
+}
+
+func (p Push) isProcInstruction() {}
+
+type BranchIfTrue struct{}
+
+func (b BranchIfTrue) isProcInstruction() {}
+
+type Debug struct{}
+
+func (d Debug) isProcInstruction() {}
+
+type Return struct{}
+
+func (r Return) isProcInstruction() {}
+
+type Not struct{}
+
+func (n Not) isProcInstruction() {}
+
+type Head struct{}
+
+func (h Head) isProcInstruction() {}
+
+type Tail struct{}
+
+func (t Tail) isProcInstruction() {}
+
+type And struct{}
+
+func (a And) isProcInstruction() {}
+
+type Or struct{}
+
+func (o Or) isProcInstruction() {}
+
+type Add struct{}
+
+func (a Add) isProcInstruction() {}
+
+type Subtract struct{}
+
+func (s Subtract) isProcInstruction() {}
+
+type Multiply struct{}
+
+func (m Multiply) isProcInstruction() {}
+
+type Divide struct{}
+
+func (d Divide) isProcInstruction() {}
+
+type Modulo struct{}
+
+func (m Modulo) isProcInstruction() {}
+
+type Equal struct{}
+
+func (e Equal) isProcInstruction() {}
+
+type NotEqual struct{}
+
+func (n NotEqual) isProcInstruction() {}
+
+type GreaterThan struct{}
+
+func (g GreaterThan) isProcInstruction() {}
+
+type GreaterThanEqual struct{}
+
+func (g GreaterThanEqual) isProcInstruction() {}
+
+type LessThan struct{}
+
+func (l LessThan) isProcInstruction() {}
+
+type LessThanEqual struct{}
+
+func (l LessThanEqual) isProcInstruction() {}

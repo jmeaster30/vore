@@ -91,7 +91,7 @@ func (es *SearchEngineState) BACKTRACK() {
 	if es.backtrack.Size() == 0 {
 		es.FAIL()
 	} else {
-		next_state := es.backtrack.Pop()
+		next_state := es.backtrack.Pop().GetValue()
 		es.Set(next_state)
 	}
 }
@@ -491,7 +491,7 @@ func (es *SearchEngineState) GETPC() int {
 
 func (es *SearchEngineState) INITLOOPSTACK(loopId int64, name string) bool {
 	top := es.loopStack.Peek()
-	if es.loopStack.IsEmpty() || top.loopId != loopId || top.callLevel != int(es.callStack.Size()) {
+	if es.loopStack.IsEmpty() || top.GetValue().loopId != loopId || top.GetValue().callLevel != int(es.callStack.Size()) {
 		lstate := LoopState{
 			loopId:              loopId,
 			name:                name,
@@ -511,35 +511,36 @@ func (es *SearchEngineState) INCLOOPSTACK() {
 	if es.loopStack.IsEmpty() {
 		panic("oh crap :(")
 	}
-	es.loopStack.Peek().iterationStep += 1
-	es.loopStack.Peek().loopMatchIndexStart = len(es.currentMatch)
-	es.loopStack.Peek().variables.Add(strconv.Itoa(es.loopStack.Peek().iterationStep), NewValueHashMap())
+	old := es.loopStack.Pop().GetValue()
+	old.iterationStep += 1
+	old.loopMatchIndexStart = len(es.currentMatch)
+	old.variables.Add(strconv.Itoa(old.iterationStep), NewValueHashMap())
+	es.loopStack.Push(old)
 }
 
 func (es *SearchEngineState) GETITERATIONSTEP() int {
 	if es.loopStack.IsEmpty() {
 		panic("oh crap :(")
 	}
-	return es.loopStack.Peek().iterationStep
+	return es.loopStack.Peek().GetValue().iterationStep
 }
 
 func (es *SearchEngineState) CHECKZEROMATCHLOOP() bool {
 	if es.loopStack.IsEmpty() {
 		panic("Loop stack is empty :(")
 	}
-	return es.loopStack.Peek().loopMatchIndexStart == len(es.currentMatch)
+	return es.loopStack.Peek().GetValue().loopMatchIndexStart == len(es.currentMatch)
 }
 
 func (es *SearchEngineState) POPLOOPSTACK() LoopState {
 	if es.loopStack.IsEmpty() {
 		panic("oh crap :(")
 	}
-	top := es.loopStack.Peek()
-	es.loopStack.Pop()
+	top := es.loopStack.Pop().GetValue()
 	if top.name != "" {
 		es.INSERTVARIABLE(top.name, top.variables)
 	}
-	return *top
+	return top
 }
 
 func (es *SearchEngineState) PUSHLOOPSTACK(loopState LoopState) {
@@ -556,7 +557,7 @@ func (es *SearchEngineState) STARTVAR(name string) {
 }
 
 func (es *SearchEngineState) ENDVAR(name string) {
-	record := es.variableStack.Pop()
+	record := es.variableStack.Pop().GetValue()
 	if record.name != name {
 		panic("UHOH BAD INSTRUCTIONS I TRIED RESOLVING A VARIABLE THAT I WASN'T EXPECTING")
 	}
@@ -566,34 +567,34 @@ func (es *SearchEngineState) ENDVAR(name string) {
 }
 
 func (es *SearchEngineState) INSERTVARIABLE(name string, value Value) {
-	var lowestScope *LoopState = nil
+	var lowestScope ds.Optional[LoopState] = ds.None[LoopState]()
 	for i := int(es.loopStack.Size()) - 1; i >= 0; i-- {
 		lowestScope = es.loopStack.Index(i)
-		if lowestScope.name != "" {
+		if lowestScope.GetValue().name != "" {
 			break
 		}
 	}
 
-	if lowestScope == nil || lowestScope.name == "" {
+	if !lowestScope.HasValue() || lowestScope.GetValue().name == "" {
 		es.environment.Add(name, value)
 	} else {
-		index := strconv.Itoa(lowestScope.iterationStep)
-		v, prs := lowestScope.variables.Get(index)
+		index := strconv.Itoa(lowestScope.GetValue().iterationStep)
+		v, prs := lowestScope.GetValue().variables.Get(index)
 		if !prs {
 			m := NewValueHashMap()
 			m.Add(name, value)
-			lowestScope.variables.Add(index, m)
+			lowestScope.GetValue().variables.Add(index, m)
 		} else {
 			m := v.Hashmap()
 			m.Add(name, value)
-			lowestScope.variables.Add(index, m)
+			lowestScope.GetValue().variables.Add(index, m)
 		}
 	}
 }
 
 func (es *SearchEngineState) VALIDATECALL(id int, returnOffset int) {
 	top := es.callStack.Peek()
-	if top == nil || top.id != id {
+	if !top.HasValue() || top.GetValue().id != id {
 		es.CALL(id, returnOffset)
 	}
 }
@@ -607,10 +608,10 @@ func (es *SearchEngineState) CALL(id int, returnOffset int) {
 
 func (es *SearchEngineState) RETURN() {
 	top := es.callStack.Pop()
-	if top == nil {
+	if !top.HasValue() {
 		panic("BAD CALL STACK :(")
 	}
-	es.programCounter = top.returnOffset
+	es.programCounter = top.GetValue().returnOffset
 }
 
 func (es *SearchEngineState) CHECKPOINT() {
@@ -659,7 +660,7 @@ func (es *SearchEngineState) Copy() *SearchEngineState {
 	}
 }
 
-func (es *SearchEngineState) Set(value *SearchEngineState) {
+func (es *SearchEngineState) Set(value SearchEngineState) {
 	es.loopStack = value.loopStack
 	es.backtrack = value.backtrack
 	es.variableStack = value.variableStack

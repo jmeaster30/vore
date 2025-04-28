@@ -69,7 +69,7 @@ begin
 end
 
 find all divisibleBy3`)
-	checkVoreError(t, err, "GenError", "Since we are in the predicate of a pattern, return values must be a boolean")
+	checkVoreError(t, err, "SemanticError", "Since we are in the predicate of a pattern, return values must be a boolean")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -82,7 +82,7 @@ set foo to transform
 end
 
 replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Since we are in a transform function, return values must be a string or a number")
+	checkVoreError(t, err, "SemanticError", "Since we are in a transform function, return values must be a string or a number")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -97,7 +97,7 @@ set foo to transform
 end
 
 replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Cannot use 'break' outside of a loop.")
+	checkVoreError(t, err, "SemanticError", "Cannot use 'break' outside of a loop.")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -114,7 +114,7 @@ set foo to transform
 end
 
 replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Cannot use 'break' outside of a loop.")
+	checkVoreError(t, err, "SemanticError", "Cannot use 'break' outside of a loop.")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -129,7 +129,7 @@ set foo to transform
 end
 
 replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Cannot use 'continue' outside of a loop.")
+	checkVoreError(t, err, "SemanticError", "Cannot use 'continue' outside of a loop.")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -148,7 +148,7 @@ set foo to transform
 end
 
 replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Condition of an if statement must be a boolean.")
+	checkVoreError(t, err, "SemanticError", "Condition of an if statement must be a boolean.")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -163,7 +163,7 @@ set foo to transform
 end
 
 replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Condition of an if statement must be a boolean.")
+	checkVoreError(t, err, "SemanticError", "Condition of an if statement must be a boolean.")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}
@@ -176,7 +176,7 @@ func TestUndefinedOperator(t *testing.T) {
 	end
 	
 	replace all "bar" with foo`)
-	checkVoreError(t, err, "GenError", "Operator not defined for type.")
+	checkVoreError(t, err, "SemanticError", "Operator not defined for type.")
 	if vore != nil {
 		t.Errorf("Expected vore to be nil but it was not")
 	}

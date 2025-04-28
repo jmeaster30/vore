@@ -69,6 +69,7 @@ func matches(t *testing.T, results engine.Matches, expected []TestMatch) {
 }
 
 func checkVoreError(t *testing.T, err error, expectedType string, expectedMessage string) {
+	t.Helper()
 	if err == nil {
 		t.Errorf("Did not return any error :(")
 		t.FailNow()

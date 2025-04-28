@@ -5,6 +5,22 @@ import (
 	"testing"
 )
 
+func AssertTrue(t *testing.T, actual bool) {
+	t.Helper()
+	if !actual {
+		t.Error("Expected true but got false :(")
+		t.FailNow()
+	}
+}
+
+func AssertFalse(t *testing.T, actual bool) {
+	t.Helper()
+	if actual {
+		t.Error("Expected false but got true :(")
+		t.FailNow()
+	}
+}
+
 func AssertEqual[T any, U any](t *testing.T, expected T, actual U) {
 	t.Helper()
 	if !reflect.DeepEqual(expected, actual) {

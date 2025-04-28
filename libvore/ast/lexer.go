@@ -362,7 +362,7 @@ func (s *Lexer) getNextToken() (*Token, error) {
 
 	current_state := SSTART
 	token := &Token{}
-	startPosInfo := s.get_position()
+	startPosInfo := s.get_position().GetValue()
 	var buf bytes.Buffer
 
 	for {
@@ -751,7 +751,7 @@ func (s *Lexer) getNextToken() (*Token, error) {
 		panic("Unknown final state")
 	}
 
-	endPosInfo := s.get_position()
+	endPosInfo := s.get_position().GetValue()
 	token.Offset = ds.NewRange(startPosInfo.offset, endPosInfo.offset)
 	token.Column = ds.NewRange(startPosInfo.column, endPosInfo.column)
 	token.Line = ds.NewRange(startPosInfo.line, endPosInfo.line)
@@ -793,9 +793,10 @@ func (s *Lexer) read() rune {
 	}
 	posInfo := PositionInfo{}
 	posInfo.lastRead = s.currentChar
-	posInfo.offset = s.get_position().offset + 1
-	posInfo.column = s.get_position().column + 1
-	posInfo.line = s.get_position().line
+	lastPosition := s.get_position().GetValue()
+	posInfo.offset = lastPosition.offset + 1
+	posInfo.column = lastPosition.column + 1
+	posInfo.line = lastPosition.line
 	if s.currentChar == '\n' {
 		posInfo.line += 1
 		posInfo.column = 1
@@ -805,7 +806,7 @@ func (s *Lexer) read() rune {
 	return ch
 }
 
-func (s *Lexer) get_position() *PositionInfo {
+func (s *Lexer) get_position() ds.Optional[PositionInfo] {
 	return s.position.Peek()
 }
 
@@ -813,14 +814,14 @@ func (s *Lexer) unread_last() {
 	s.unread(1)
 }
 
-func (s *Lexer) unread(amount uint64) {
+func (s *Lexer) unread(amount int) {
 	if amount >= s.position.Size() {
 		panic("You can't pop that much!!!")
 	}
-	var lastPopped *PositionInfo
-	for i := uint64(0); i < amount; i++ {
+	var lastPopped PositionInfo
+	for i := 0; i < amount; i++ {
 		_ = s.r.UnreadRune()
-		lastPopped = s.position.Pop()
+		lastPopped = s.position.Pop().GetValue()
 	}
 	s.currentChar = lastPopped.lastRead
 }

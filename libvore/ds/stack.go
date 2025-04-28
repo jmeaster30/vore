@@ -19,11 +19,11 @@ func (s *Stack[T]) Copy() *Stack[T] {
 }
 
 // peek
-func (s *Stack[T]) Peek() *T {
+func (s *Stack[T]) Peek() Optional[T] {
 	if s.IsEmpty() {
-		return nil
+		return None[T]()
 	}
-	return &s.store[len(s.store)-1]
+	return Some(s.store[len(s.store)-1])
 }
 
 // push
@@ -32,20 +32,20 @@ func (s *Stack[T]) Push(value T) {
 }
 
 // pop
-func (s *Stack[T]) Pop() *T {
+func (s *Stack[T]) Pop() Optional[T] {
 	if s.IsEmpty() {
-		return nil
+		return None[T]()
 	}
 	result := s.store[len(s.store)-1]
 	s.store = s.store[:len(s.store)-1]
-	return &result
+	return Some(result)
 }
 
-func (s *Stack[T]) Index(index int) *T {
+func (s *Stack[T]) Index(index int) Optional[T] {
 	if s.IsEmpty() || index < 0 || index >= len(s.store) {
-		return nil
+		return None[T]()
 	}
-	return &s.store[index]
+	return Some(s.store[index])
 }
 
 // isEmpty
@@ -53,6 +53,6 @@ func (s *Stack[T]) IsEmpty() bool {
 	return len(s.store) == 0
 }
 
-func (s *Stack[T]) Size() uint64 {
-	return uint64(len(s.store))
+func (s *Stack[T]) Size() int {
+	return len(s.store)
 }

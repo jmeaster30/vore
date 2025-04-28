@@ -9,18 +9,13 @@ import (
 func TestOptionalNoneHasValue(t *testing.T) {
 	value := None[string]()
 
-	if value.HasValue() {
-		t.Errorf("None optional had value when it was supposed to have no value.")
-	}
+	testutils.AssertFalse(t, value.HasValue())
 }
 
 func TestOptionalNoneHasValueGetValue(t *testing.T) {
 	value := None[string]()
 
-	if value.HasValue() {
-		t.Errorf("None optional had value when it was supposed to have no value.")
-	}
-
+	testutils.AssertFalse(t, value.HasValue())
 	testutils.MustPanic(t, "Expected None value to panic when reading value.",
 		func(t *testing.T) {
 			value.GetValue()
@@ -30,30 +25,57 @@ func TestOptionalNoneHasValueGetValue(t *testing.T) {
 func TestOptionalSomeHasValueGetValue(t *testing.T) {
 	value := Some("hello :)")
 
-	if !value.HasValue() {
-		t.Errorf("Some optional has no value when it was supposed to have a value.")
-	}
+	testutils.AssertTrue(t, value.HasValue())
 
 	result := value.GetValue()
-	if result != "hello :)" {
-		t.Errorf("Some optional returned incorrect value from GetValue(). Expected 'hello :)' but got '%s'", result)
-	}
+	testutils.AssertEqual(t, "hello :)", result)
 }
 
 func TestOptionalNoneGetValueOrDefault(t *testing.T) {
 	value := None[int]()
 
 	result := value.GetValueOrDefault(5)
-	if result != 5 {
-		t.Errorf("None optional was supposed to return 5 from GetValueOrDefault but actually returned %d.", result)
-	}
+	testutils.AssertEqual(t, 5, result)
 }
 
 func TestOptionalSomeGetValueOrDefault(t *testing.T) {
 	value := Some("hello :)")
 
 	result := value.GetValueOrDefault("oh no :(")
-	if result != "hello :)" {
-		t.Errorf("Some optional returned incorrect value from GetValueOrDefault(). Expected 'hello :)' but got '%s'", result)
-	}
+	testutils.AssertEqual(t, "hello :)", result)
+}
+
+func TestOptionalEqualNone(t *testing.T) {
+	left := None[int]()
+	right := None[int]()
+
+	testutils.AssertTrue(t, OptionalEqual(left, right))
+}
+
+func TestOptionalEqualNoneAndSome(t *testing.T) {
+	left := None[int]()
+	right := Some(12)
+
+	testutils.AssertFalse(t, OptionalEqual(left, right))
+}
+
+func TestOptionalEqualSomeAndNone(t *testing.T) {
+	left := Some(1)
+	right := None[int]()
+
+	testutils.AssertFalse(t, OptionalEqual(left, right))
+}
+
+func TestOptionalEqualSomeNotEqual(t *testing.T) {
+	left := Some(1)
+	right := Some(3)
+
+	testutils.AssertFalse(t, OptionalEqual(left, right))
+}
+
+func TestOptionalEqualSomeEqual(t *testing.T) {
+	left := Some(1)
+	right := Some(1)
+
+	testutils.AssertTrue(t, OptionalEqual(left, right))
 }

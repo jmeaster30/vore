@@ -352,18 +352,18 @@ func matchEndSubroutine(i bytecode.EndSubroutine, current_state *SearchEngineSta
 	if len(i.Validate) == 0 {
 		next_state.RETURN()
 	} else {
-		env := make(map[string]ProcessValue)
-		subMatch := current_state.currentMatch[current_state.callStack.Peek().startMatchOffset:]
-		env["match"] = ProcessValueString{subMatch}
-		env["matchLength"] = ProcessValueNumber{len(subMatch)}
+		env := make(map[string]bytecode.Value)
+		subMatch := current_state.currentMatch[current_state.callStack.Peek().GetValue().startMatchOffset:]
+		env["match"] = bytecode.StringValue{Value: subMatch}
+		env["matchLength"] = bytecode.NumberValue{Value: len(subMatch)}
 		// TODO add more variables here!
 
 		pstate := ProcessState{
-			currentValue: ProcessValueString{""},
+			currentValue: bytecode.StringValue{Value: ""},
 			environment:  env,
 			status:       NEXT,
 		}
-		var final_value ProcessValue = ProcessValueBoolean{true}
+		var final_value bytecode.Value = bytecode.BooleanValue{Value: true}
 		for _, stmt := range i.Validate {
 			pstate = executeStatement(&stmt, pstate)
 			if pstate.status == RETURNING {
@@ -372,7 +372,7 @@ func matchEndSubroutine(i bytecode.EndSubroutine, current_state *SearchEngineSta
 			}
 		}
 
-		if final_value.getBoolean() {
+		if final_value.GetBoolean() {
 			next_state.RETURN()
 		} else {
 			next_state.BACKTRACK()
@@ -419,25 +419,25 @@ func executeReplaceProcess(i bytecode.ReplaceProcess, current_state *ReplacerSta
 	next_state := current_state.Copy()
 
 	// execute AST
-	env := make(map[string]ProcessValue)
+	env := make(map[string]bytecode.Value)
 	keys := current_state.variables.Keys()
 	for _, key := range keys {
 		value, _ := current_state.variables.Get(key)
 		if value.getType() == ValueStringType {
-			env[key] = ProcessValueString{value.String().Value}
+			env[key] = bytecode.StringValue{Value: value.String().Value}
 		}
 		// TODO Need to add process hash maps or merge into the main Values
 	}
 
-	env["match"] = ProcessValueString{next_state.match.Value}
-	env["matchLength"] = ProcessValueNumber{len(next_state.match.Value)}
-	env["matchNumber"] = ProcessValueNumber{next_state.match.MatchNumber}
+	env["match"] = bytecode.StringValue{Value: next_state.match.Value}
+	env["matchLength"] = bytecode.NumberValue{Value: len(next_state.match.Value)}
+	env["matchNumber"] = bytecode.NumberValue{Value: next_state.match.MatchNumber}
 	pstate := ProcessState{
-		currentValue: ProcessValueString{""},
+		currentValue: bytecode.StringValue{Value: ""},
 		environment:  env,
 		status:       NEXT,
 	}
-	var final_value ProcessValue = ProcessValueBoolean{true}
+	var final_value bytecode.Value = bytecode.BooleanValue{Value: true}
 	for _, stmt := range i.Process {
 		pstate = executeStatement(&stmt, pstate)
 		if pstate.status == RETURNING {
@@ -446,7 +446,7 @@ func executeReplaceProcess(i bytecode.ReplaceProcess, current_state *ReplacerSta
 		}
 	}
 
-	next_state.WRITESTRING(final_value.getString())
+	next_state.WRITESTRING(final_value.GetString())
 	next_state.NEXT()
 	return next_state
 }

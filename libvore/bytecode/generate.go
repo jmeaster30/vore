@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/jmeaster30/vore/libvore/ast"
+	"github.com/jmeaster30/vore/libvore/ds"
 )
 
 type Bytecode struct {
@@ -146,23 +147,22 @@ func generateSetTransform(s ast.AstSetTransform, state *GenState, id string) (Se
 	state.globalTransformations[id] = s.Statements
 
 	// semantic check
-	env := make(map[string]ProcessType)
-	env["match"] = PTSTRING
-	env["matchLength"] = PTNUMBER
+	env := make(map[string]ValueType)
+	env["match"] = ValueType_String
+	env["matchLength"] = ValueType_Number
 	// TODO pull variables from search pattern and add them here
 
 	info := ProcessTypeInfo{
-		currentType:  PTOK,
-		errorMessage: "",
-		context:      TRANSFORMATION,
-		environment:  env,
-		inLoop:       false,
+		currentType: ds.None[ValueType](),
+		context:     TRANSFORMATION,
+		environment: env,
+		inLoop:      false,
 	}
 	for _, stmt := range s.Statements {
-		info = checkStatement(&stmt, info)
-		if info.currentType == PTERROR {
+		_, err := checkStatement(&stmt, info)
+		if err != nil {
 			// TODO add more info to the gen error like the statement that failed
-			return nil, NewGenError(info.errorMessage)
+			return nil, err
 		}
 	}
 
@@ -187,23 +187,22 @@ func generateSetPattern(s ast.AstSetPattern, state *GenState, id string) (SetCom
 	state.globalSubroutines[id] = GeneratedPattern{searchInstructions, s.Body}
 
 	// semantic check
-	env := make(map[string]ProcessType)
-	env["match"] = PTSTRING
-	env["matchLength"] = PTNUMBER
+	env := make(map[string]ValueType)
+	env["match"] = ValueType_String
+	env["matchLength"] = ValueType_Number
 	// TODO pull variables from search pattern and add them here
 
 	info := ProcessTypeInfo{
-		currentType:  PTOK,
-		errorMessage: "",
-		context:      PREDICATE,
-		environment:  env,
-		inLoop:       false,
+		currentType: ds.None[ValueType](),
+		context:     PREDICATE,
+		environment: env,
+		inLoop:      false,
 	}
 	for _, stmt := range s.Body {
-		info = checkStatement(&stmt, info)
-		if info.currentType == PTERROR {
+		_, err := checkStatement(&stmt, info)
+		if err != nil {
 			// TODO add more info to the gen error like the statement that failed
-			return nil, NewGenError(info.errorMessage)
+			return nil, err
 		}
 	}
 

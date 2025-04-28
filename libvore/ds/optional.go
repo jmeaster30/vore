@@ -18,6 +18,18 @@ func Some[T any](value T) Optional[T] {
 	}
 }
 
+func OptionalEqual[T comparable](left Optional[T], right Optional[T]) bool {
+	if !left.HasValue() && !right.HasValue() {
+		return true
+	}
+
+	if left.HasValue() != right.HasValue() {
+		return false
+	}
+
+	return left.GetValue() == right.GetValue()
+}
+
 func (o Optional[T]) HasValue() bool {
 	return o.hasValue
 }
