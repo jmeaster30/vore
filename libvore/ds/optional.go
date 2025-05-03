@@ -30,6 +30,13 @@ func OptionalEqual[T comparable](left Optional[T], right Optional[T]) bool {
 	return left.GetValue() == right.GetValue()
 }
 
+func OptionalMap[T any, U any](value Optional[T], mappingFunction func(T) U) Optional[U] {
+	if value.HasValue() {
+		return Some(mappingFunction(value.GetValue()))
+	}
+	return None[U]()
+}
+
 func (o Optional[T]) HasValue() bool {
 	return o.hasValue
 }

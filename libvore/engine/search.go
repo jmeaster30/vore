@@ -354,25 +354,16 @@ func matchEndSubroutine(i bytecode.EndSubroutine, current_state *SearchEngineSta
 	} else {
 		env := make(map[string]bytecode.Value)
 		subMatch := current_state.currentMatch[current_state.callStack.Peek().GetValue().startMatchOffset:]
-		env["match"] = bytecode.StringValue{Value: subMatch}
-		env["matchLength"] = bytecode.NumberValue{Value: len(subMatch)}
+		env["match"] = bytecode.NewString(subMatch)
+		env["matchLength"] = bytecode.NewNumber(len(subMatch))
 		// TODO add more variables here!
 
-		pstate := ProcessState{
-			currentValue: bytecode.StringValue{Value: ""},
-			environment:  env,
-			status:       NEXT,
-		}
-		var final_value bytecode.Value = bytecode.BooleanValue{Value: true}
-		for _, stmt := range i.Validate {
-			pstate = executeStatement(&stmt, pstate)
-			if pstate.status == RETURNING {
-				final_value = pstate.currentValue
-				break
-			}
+		finalValue, err := executeProcessInstructions(i.Validate, env)
+		if err != nil {
+			panic(err)
 		}
 
-		if final_value.GetBoolean() {
+		if finalValue.GetValueOrDefault(bytecode.NewBoolean(true)).GetBoolean() {
 			next_state.RETURN()
 		} else {
 			next_state.BACKTRACK()
@@ -390,13 +381,13 @@ func matchJump(i bytecode.Jump, current_state *SearchEngineState) *SearchEngineS
 
 func executeReplace(i bytecode.ReplaceInstruction, current_state *ReplacerState) *ReplacerState {
 	var ii any = i
-	switch ii.(type) {
+	switch ri := ii.(type) {
 	case bytecode.ReplaceString:
-		return executeReplaceString(ii.(bytecode.ReplaceString), current_state)
+		return executeReplaceString(ri, current_state)
 	case bytecode.ReplaceVariable:
-		return executeReplaceVariable(ii.(bytecode.ReplaceVariable), current_state)
+		return executeReplaceVariable(ri, current_state)
 	case bytecode.ReplaceProcess:
-		return executeReplaceProcess(ii.(bytecode.ReplaceProcess), current_state)
+		return executeReplaceProcess(ri, current_state)
 	}
 	panic(fmt.Sprintf("Unknown replace instruction %T", ii))
 }
@@ -424,29 +415,21 @@ func executeReplaceProcess(i bytecode.ReplaceProcess, current_state *ReplacerSta
 	for _, key := range keys {
 		value, _ := current_state.variables.Get(key)
 		if value.getType() == ValueStringType {
-			env[key] = bytecode.StringValue{Value: value.String().Value}
+			env[key] = bytecode.NewString(value.String().Value)
 		}
 		// TODO Need to add process hash maps or merge into the main Values
 	}
 
-	env["match"] = bytecode.StringValue{Value: next_state.match.Value}
-	env["matchLength"] = bytecode.NumberValue{Value: len(next_state.match.Value)}
-	env["matchNumber"] = bytecode.NumberValue{Value: next_state.match.MatchNumber}
-	pstate := ProcessState{
-		currentValue: bytecode.StringValue{Value: ""},
-		environment:  env,
-		status:       NEXT,
-	}
-	var final_value bytecode.Value = bytecode.BooleanValue{Value: true}
-	for _, stmt := range i.Process {
-		pstate = executeStatement(&stmt, pstate)
-		if pstate.status == RETURNING {
-			final_value = pstate.currentValue
-			break
-		}
+	env["match"] = bytecode.NewString(next_state.match.Value)
+	env["matchLength"] = bytecode.NewNumber(len(next_state.match.Value))
+	env["matchNumber"] = bytecode.NewNumber(next_state.match.MatchNumber)
+
+	finalValue, err := executeProcessInstructions(i.Process, env)
+	if err != nil {
+		panic(err)
 	}
 
-	next_state.WRITESTRING(final_value.GetString())
+	next_state.WRITESTRING(finalValue.GetValueOrDefault(bytecode.NewString("")).GetString())
 	next_state.NEXT()
 	return next_state
 }

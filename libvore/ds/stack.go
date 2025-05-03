@@ -1,6 +1,7 @@
 package ds
 
 type Stack[T any] struct {
+	DefaultIndexable[T]
 	store []T
 }
 
@@ -45,7 +46,7 @@ func (s *Stack[T]) Index(index int) Optional[T] {
 	if s.IsEmpty() || index < 0 || index >= len(s.store) {
 		return None[T]()
 	}
-	return Some(s.store[index])
+	return Some(s.store[len(s.store)-(index+1)])
 }
 
 // isEmpty

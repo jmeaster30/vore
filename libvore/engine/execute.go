@@ -1,291 +1,210 @@
 package engine
 
 import (
-	"fmt"
-
-	"github.com/jmeaster30/vore/libvore/ast"
 	"github.com/jmeaster30/vore/libvore/bytecode"
-)
-
-type ProcessStatus int
-
-const (
-	NEXT ProcessStatus = iota
-	BREAKLOOP
-	CONTINUELOOP
-	RETURNING
+	"github.com/jmeaster30/vore/libvore/ds"
 )
 
 type ProcessState struct {
-	currentValue bytecode.Value
-	environment  map[string]bytecode.Value
-	status       ProcessStatus
+	instructionPointer int
+	environment        map[string]bytecode.Value
+	stack              *ds.Stack[bytecode.Value]
 }
 
-func executeStatement(s *ast.AstProcessStatement, state ProcessState) ProcessState {
-	var si any = *s
-	switch stmt := si.(type) {
-	case *ast.AstProcessSet:
-		return executeSet(stmt, state)
-	case *ast.AstProcessIf:
-		return executeIf(stmt, state)
-	case *ast.AstProcessLoop:
-		return executeLoop(stmt, state)
-	case ast.AstProcessBreak:
-		return executeBreak(state)
-	case ast.AstProcessContinue:
-		return executeContinue(state)
-	case *ast.AstProcessReturn:
-		return executeReturn(stmt, state)
-	case *ast.AstProcessDebug:
-		return executeDebug(stmt, state)
+func executeProcessInstructions(insts []bytecode.ProcInstruction, environment map[string]bytecode.Value) (ds.Optional[bytecode.Value], error) {
+	currentState := ProcessState{
+		instructionPointer: 0,
+		environment:        environment,
+		stack:              ds.NewStack[bytecode.Value](),
 	}
-	panic(fmt.Sprintf("Unknown process statement %T", si))
-}
 
-func executeSet(s *ast.AstProcessSet, state ProcessState) ProcessState {
-	expr_state := executeExpression(&s.Expr, state)
-	expr_state.environment[s.Name] = expr_state.currentValue
-	return expr_state
-}
-
-func executeReturn(s *ast.AstProcessReturn, state ProcessState) ProcessState {
-	expr_state := executeExpression(&s.Expr, state)
-	expr_state.status = RETURNING
-	return expr_state
-}
-
-func executeIf(s *ast.AstProcessIf, state ProcessState) ProcessState {
-	expr_state := executeExpression(&s.Condition, state)
-	if expr_state.currentValue.GetBoolean() {
-		for _, stmt := range s.TrueBody {
-			expr_state = executeStatement(&stmt, expr_state)
-			if expr_state.status != NEXT {
-				break
-			}
+	for currentState.instructionPointer < len(insts) {
+		currentInstruction := insts[currentState.instructionPointer]
+		newState, err := executeProcessInstruction(&currentInstruction, currentState)
+		if err != nil {
+			return ds.None[bytecode.Value](), err
 		}
+
+		oldIP := currentState.instructionPointer
+
+		currentState = newState
+		if oldIP == newState.instructionPointer {
+			currentState.instructionPointer += 1
+		}
+	}
+
+	return currentState.stack.Pop(), nil
+}
+
+func executeProcessInstruction(i *bytecode.ProcInstruction, state ProcessState) (ProcessState, error) {
+	var ii any = *i
+	switch inst := ii.(type) {
+	case *bytecode.Jump:
+		return executeJump(inst, state)
+	case *bytecode.Store:
+		return executeStore(inst, state)
+	case *bytecode.Load:
+		return executeLoad(inst, state)
+	case *bytecode.Push:
+		return executePush(inst, state)
+	case *bytecode.ConditionalJump:
+		return executeConditionalJump(inst, state)
+	case *bytecode.Debug:
+		return executeDebug(inst, state)
+	case *bytecode.Return:
+		return executeReturn(inst, state)
+	case *bytecode.Not:
+		return executeNot(state)
+	case *bytecode.Head:
+		return executeHead(state)
+	case *bytecode.Tail:
+		return executeTail(state)
+	case *bytecode.And:
+		return executeAnd(state)
+	case *bytecode.Or:
+		return executeOr(state)
+	case *bytecode.Add:
+		return executeAdd(state)
+	case *bytecode.Subtract:
+		return executeSubtract(state)
+	case *bytecode.Multiply:
+		return executeMultiply(state)
+	case *bytecode.Divide:
+		return executeDivide(state)
+	case *bytecode.Modulo:
+		return executeModulo(state)
+	case *bytecode.Equal:
+		return executeEqual(state)
+	case *bytecode.NotEqual:
+		return executeNotEqual(state)
+	case *bytecode.LessThan:
+		return executeLessThan(state)
+	case *bytecode.LessThanEqual:
+		return executeLessThanEqual(state)
+	case *bytecode.GreaterThan:
+		return executeGreaterThan(state)
+	case *bytecode.GreaterThanEqual:
+		return executeGreaterThanEqual(state)
+	}
+	return state, NewExecError("Unknown process instruction", *i, state)
+}
+
+func executeJump(inst *bytecode.Jump, state ProcessState) (ProcessState, error) {
+	state.instructionPointer = inst.NewProgramCounter
+	return state, nil
+}
+
+func executeStore(inst *bytecode.Store, state ProcessState) (ProcessState, error) {
+	if state.stack.IsEmpty() {
+		return state, NewExecError("Empty stack for store instruction", *inst, state)
+	}
+
+	storedValue := state.stack.Pop().GetValue()
+	state.environment[inst.VariableName] = storedValue
+	return state, nil
+}
+
+func executeLoad(inst *bytecode.Load, state ProcessState) (ProcessState, error) {
+	value, ok := state.environment[inst.VariableName]
+	if ok {
+		state.stack.Push(bytecode.NewString(""))
 	} else {
-		for _, stmt := range s.FalseBody {
-			expr_state = executeStatement(&stmt, expr_state)
-			if expr_state.status != NEXT {
-				break
-			}
-		}
+		state.stack.Push(value)
+	}
+	return state, nil
+}
+
+func executePush(inst *bytecode.Push, state ProcessState) (ProcessState, error) {
+	state.stack.Push(inst.Value)
+	return state, nil
+}
+
+func executeConditionalJump(inst *bytecode.ConditionalJump, state ProcessState) (ProcessState, error) {
+	if state.stack.IsEmpty() {
+		return state, NewExecError("Empty stack for conditional jump", *inst, state)
 	}
 
-	return expr_state
+	condition := state.stack.Pop().GetValue()
+	if condition.GetBoolean() {
+		state.instructionPointer = inst.NewProgramCounter
+	}
+	return state, nil
 }
 
-func executeDebug(s *ast.AstProcessDebug, state ProcessState) ProcessState {
-	expr_state := executeExpression(&s.Expr, state)
-	fmt.Println(expr_state.currentValue.GetString())
-	return expr_state
-}
-
-func executeLoop(s *ast.AstProcessLoop, state ProcessState) ProcessState {
-	expr_state := state
-	for {
-		for _, stmt := range s.Body {
-			expr_state = executeStatement(&stmt, expr_state)
-			if expr_state.status != NEXT {
-				break
-			}
-		}
-		if expr_state.status == RETURNING || expr_state.status == BREAKLOOP {
-			if expr_state.status == BREAKLOOP {
-				expr_state.status = NEXT
-			}
-			break
-		} else if expr_state.status == CONTINUELOOP {
-			expr_state.status = NEXT
-			continue
-		}
+func executeDebug(inst *bytecode.Debug, state ProcessState) (ProcessState, error) {
+	if state.stack.IsEmpty() {
+		return state, NewExecError("Empty stack for debug print", *inst, state)
 	}
 
-	return expr_state
+	value := state.stack.Pop().GetValue()
+	print(value.GetString())
+	return state, nil
 }
 
-func executeContinue(state ProcessState) ProcessState {
-	state.status = CONTINUELOOP
-	return state
+func executeReturn(inst *bytecode.Return, state ProcessState) (ProcessState, error) {
+	return state, NewExecError("TODO I didn't implement returns yet lol", *inst, state)
 }
 
-func executeBreak(state ProcessState) ProcessState {
-	state.status = BREAKLOOP
-	return state
+func executeNot(state ProcessState) (ProcessState, error) {
+	return state, nil
 }
 
-func executeExpression(s *ast.AstProcessExpression, state ProcessState) ProcessState {
-	var si any = *s
-	switch exp := si.(type) {
-	case ast.AstProcessBinaryExpression:
-		return executeBinaryExpr(&exp, state)
-	case ast.AstProcessUnaryExpression:
-		return executeUnaryExpression(&exp, state)
-	case ast.AstProcessString:
-		return executeString(&exp, state)
-	case ast.AstProcessBoolean:
-		return executeBoolean(&exp, state)
-	case ast.AstProcessNumber:
-		return executeNumber(&exp, state)
-	case ast.AstProcessVariable:
-		return executeVariable(&exp, state)
-	}
-	panic(fmt.Sprintf("unknown process expression type %T", si))
+func executeHead(state ProcessState) (ProcessState, error) {
+	return state, nil
 }
 
-func executeBinaryExpr(s *ast.AstProcessBinaryExpression, state ProcessState) ProcessState {
-	lhs_state := executeExpression(&s.Lhs, state)
-	rhs_state := executeExpression(&s.Rhs, state)
-
-	final_state := lhs_state
-	if lhs_state.currentValue.GetType() == bytecode.ValueType_String {
-		if s.Op == ast.PLUS {
-			final := lhs_state.currentValue.GetString() + rhs_state.currentValue.GetString()
-			final_state.currentValue = bytecode.StringValue{Value: final}
-		} else if s.Op == ast.DEQUAL {
-			final := lhs_state.currentValue.GetString() == rhs_state.currentValue.GetString()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.NEQUAL {
-			final := lhs_state.currentValue.GetString() != rhs_state.currentValue.GetString()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.LESS {
-			final := lhs_state.currentValue.GetString() < rhs_state.currentValue.GetString()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.GREATER {
-			final := lhs_state.currentValue.GetString() > rhs_state.currentValue.GetString()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.LESSEQ {
-			final := lhs_state.currentValue.GetString() <= rhs_state.currentValue.GetString()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.GREATEREQ {
-			final := lhs_state.currentValue.GetString() >= rhs_state.currentValue.GetString()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if rhs_state.currentValue.GetType() == bytecode.ValueType_Number && s.Op == ast.MINUS {
-			final := lhs_state.currentValue.GetNumber() - rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.NumberValue{Value: final}
-		} else if rhs_state.currentValue.GetType() == bytecode.ValueType_Number && s.Op == ast.MULT {
-			final := lhs_state.currentValue.GetNumber() * rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.NumberValue{Value: final}
-		} else if rhs_state.currentValue.GetType() == bytecode.ValueType_Number && s.Op == ast.DIV {
-			final := lhs_state.currentValue.GetNumber() / rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.NumberValue{Value: final}
-		} else if rhs_state.currentValue.GetType() == bytecode.ValueType_Number && s.Op == ast.MOD {
-			final := lhs_state.currentValue.GetNumber() % rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.NumberValue{Value: final}
-		} else {
-			panic("SHOULDN'T GET HERE (string) :(")
-		}
-	} else if lhs_state.currentValue.GetType() == bytecode.ValueType_Boolean {
-		if s.Op == ast.AND {
-			final := lhs_state.currentValue.GetBoolean() && rhs_state.currentValue.GetBoolean()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.OR {
-			final := lhs_state.currentValue.GetBoolean() || rhs_state.currentValue.GetBoolean()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.DEQUAL {
-			final := lhs_state.currentValue.GetBoolean() == rhs_state.currentValue.GetBoolean()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.NEQUAL {
-			final := lhs_state.currentValue.GetBoolean() != rhs_state.currentValue.GetBoolean()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.LESS {
-			final := lhs_state.currentValue.GetNumber() < rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.GREATER {
-			final := lhs_state.currentValue.GetNumber() > rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.LESSEQ {
-			final := lhs_state.currentValue.GetNumber() <= rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.GREATEREQ {
-			final := lhs_state.currentValue.GetNumber() >= rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else {
-			panic("SHOULDN'T GET HERE (bool) :(")
-		}
-	} else if lhs_state.currentValue.GetType() == bytecode.ValueType_Number {
-		if s.Op == ast.DEQUAL {
-			final := lhs_state.currentValue.GetBoolean() == rhs_state.currentValue.GetBoolean()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.NEQUAL {
-			final := lhs_state.currentValue.GetBoolean() != rhs_state.currentValue.GetBoolean()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.LESS {
-			final := lhs_state.currentValue.GetNumber() < rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.GREATER {
-			final := lhs_state.currentValue.GetNumber() > rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.LESSEQ {
-			final := lhs_state.currentValue.GetNumber() <= rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.GREATEREQ {
-			final := lhs_state.currentValue.GetNumber() >= rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.BooleanValue{Value: final}
-		} else if s.Op == ast.PLUS {
-			final := lhs_state.currentValue.GetNumber() + rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.NumberValue{Value: final}
-		} else if s.Op == ast.MINUS {
-			final := lhs_state.currentValue.GetNumber() - rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.NumberValue{Value: final}
-		} else if s.Op == ast.MULT {
-			final := lhs_state.currentValue.GetNumber() * rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.NumberValue{Value: final}
-		} else if s.Op == ast.DIV {
-			final := lhs_state.currentValue.GetNumber() / rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.NumberValue{Value: final}
-		} else if s.Op == ast.MOD {
-			final := lhs_state.currentValue.GetNumber() % rhs_state.currentValue.GetNumber()
-			final_state.currentValue = bytecode.NumberValue{Value: final}
-		} else {
-			panic("SHOULDN'T GET HERE (number) :(")
-		}
-	}
-	return final_state
+func executeTail(state ProcessState) (ProcessState, error) {
+	return state, nil
 }
 
-func executeUnaryExpression(s *ast.AstProcessUnaryExpression, state ProcessState) ProcessState {
-	expr_state := executeExpression(&s.Expr, state)
-	if s.Op == ast.NOT {
-		expr_state.currentValue = bytecode.BooleanValue{Value: !expr_state.currentValue.GetBoolean()}
-	} else if s.Op == ast.HEAD {
-		if len(expr_state.currentValue.GetString()) <= 0 {
-			expr_state.currentValue = bytecode.StringValue{Value: ""}
-		} else {
-			expr_state.currentValue = bytecode.StringValue{Value: expr_state.currentValue.GetString()[0:1]}
-		}
-	} else if s.Op == ast.TAIL {
-		if len(expr_state.currentValue.GetString()) <= 1 {
-			expr_state.currentValue = bytecode.StringValue{Value: ""}
-		} else {
-			expr_state.currentValue = bytecode.StringValue{Value: expr_state.currentValue.GetString()[1:]}
-		}
-	}
-	return expr_state
+func executeAnd(state ProcessState) (ProcessState, error) {
+	return state, nil
 }
 
-func executeString(s *ast.AstProcessString, state ProcessState) ProcessState {
-	state.currentValue = bytecode.StringValue{Value: s.Value}
-	return state
+func executeOr(state ProcessState) (ProcessState, error) {
+	return state, nil
 }
 
-func executeBoolean(s *ast.AstProcessBoolean, state ProcessState) ProcessState {
-	state.currentValue = bytecode.BooleanValue{Value: s.Value}
-	return state
+func executeAdd(state ProcessState) (ProcessState, error) {
+	return state, nil
 }
 
-func executeNumber(s *ast.AstProcessNumber, state ProcessState) ProcessState {
-	state.currentValue = bytecode.NumberValue{Value: s.Value}
-	return state
+func executeSubtract(state ProcessState) (ProcessState, error) {
+	return state, nil
 }
 
-func executeVariable(s *ast.AstProcessVariable, state ProcessState) ProcessState {
-	val, prs := state.environment[s.Name]
-	if prs {
-		state.currentValue = val
-	} else {
-		state.currentValue = bytecode.StringValue{Value: ""}
-	}
-	return state
+func executeMultiply(state ProcessState) (ProcessState, error) {
+	return state, nil
+}
+
+func executeDivide(state ProcessState) (ProcessState, error) {
+	return state, nil
+}
+
+func executeModulo(state ProcessState) (ProcessState, error) {
+	return state, nil
+}
+
+func executeEqual(state ProcessState) (ProcessState, error) {
+	return state, nil
+}
+
+func executeNotEqual(state ProcessState) (ProcessState, error) {
+	return state, nil
+}
+
+func executeLessThan(state ProcessState) (ProcessState, error) {
+	return state, nil
+}
+
+func executeLessThanEqual(state ProcessState) (ProcessState, error) {
+	return state, nil
+}
+
+func executeGreaterThan(state ProcessState) (ProcessState, error) {
+	return state, nil
+}
+
+func executeGreaterThanEqual(state ProcessState) (ProcessState, error) {
+	return state, nil
 }

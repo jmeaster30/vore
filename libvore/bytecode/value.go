@@ -10,6 +10,18 @@ const (
 	ValueType_Boolean
 )
 
+func (vt ValueType) String() string {
+	switch vt {
+	case ValueType_String:
+		return "str"
+	case ValueType_Number:
+		return "num"
+	case ValueType_Boolean:
+		return "bool"
+	}
+	return "unk"
+}
+
 type Value interface {
 	GetType() ValueType
 	GetString() string
@@ -18,15 +30,19 @@ type Value interface {
 }
 
 type StringValue struct {
-	Value string
+	value string
+}
+
+func NewString(value string) Value {
+	return StringValue{value}
 }
 
 func (v StringValue) GetString() string {
-	return v.Value
+	return v.value
 }
 
 func (v StringValue) GetNumber() int {
-	intval, err := strconv.Atoi(v.Value)
+	intval, err := strconv.Atoi(v.value)
 	if err != nil {
 		return 0
 	}
@@ -34,7 +50,7 @@ func (v StringValue) GetNumber() int {
 }
 
 func (v StringValue) GetBoolean() bool {
-	return len(v.Value) != 0
+	return len(v.value) != 0
 }
 
 func (v StringValue) GetType() ValueType {
@@ -42,19 +58,23 @@ func (v StringValue) GetType() ValueType {
 }
 
 type NumberValue struct {
-	Value int
+	value int
+}
+
+func NewNumber(value int) NumberValue {
+	return NumberValue{value}
 }
 
 func (v NumberValue) GetString() string {
-	return strconv.Itoa(v.Value)
+	return strconv.Itoa(v.value)
 }
 
 func (v NumberValue) GetNumber() int {
-	return v.Value
+	return v.value
 }
 
 func (v NumberValue) GetBoolean() bool {
-	return v.Value != 0
+	return v.value != 0
 }
 
 func (v NumberValue) GetType() ValueType {
@@ -62,25 +82,29 @@ func (v NumberValue) GetType() ValueType {
 }
 
 type BooleanValue struct {
-	Value bool
+	value bool
+}
+
+func NewBoolean(value bool) BooleanValue {
+	return BooleanValue{value}
 }
 
 func (v BooleanValue) GetString() string {
-	if v.Value {
+	if v.value {
 		return "true"
 	}
 	return "false"
 }
 
 func (v BooleanValue) GetNumber() int {
-	if v.Value {
+	if v.value {
 		return 1
 	}
 	return 0
 }
 
 func (v BooleanValue) GetBoolean() bool {
-	return v.Value
+	return v.value
 }
 
 func (v BooleanValue) GetType() ValueType {

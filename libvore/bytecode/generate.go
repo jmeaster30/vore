@@ -13,19 +13,15 @@ type Bytecode struct {
 }
 
 type GeneratedPattern struct {
-	search []SearchInstruction
-	// FIXME replace the AstProcessStatement with actual bytecode
-	validate []ast.AstProcessStatement
+	search   []SearchInstruction
+	validate []ProcInstruction
 }
-
-// TODO why??
-type AstProcessProgram []ast.AstProcessStatement
 
 type GenState struct {
 	variables             map[string]int
 	globalSubroutines     map[string]GeneratedPattern
 	globalVariables       map[string]int
-	globalTransformations map[string]AstProcessProgram
+	globalTransformations map[string][]ProcInstruction
 }
 
 func GenerateBytecode(a *ast.Ast) (*Bytecode, error) {
@@ -33,7 +29,7 @@ func GenerateBytecode(a *ast.Ast) (*Bytecode, error) {
 	gen_state := &GenState{
 		globalSubroutines:     make(map[string]GeneratedPattern),
 		globalVariables:       make(map[string]int),
-		globalTransformations: make(map[string]AstProcessProgram),
+		globalTransformations: make(map[string][]ProcInstruction),
 	}
 	for _, ast_comm := range a.Commands() {
 		byte_comm, gen_error := generateCommand(&ast_comm, gen_state)
@@ -144,8 +140,6 @@ func generateSetBody(s *ast.AstSetBody, state *GenState, id string) (SetCommandB
 }
 
 func generateSetTransform(s ast.AstSetTransform, state *GenState, id string) (SetCommandBody, error) {
-	state.globalTransformations[id] = s.Statements
-
 	// semantic check
 	env := make(map[string]ValueType)
 	env["match"] = ValueType_String
@@ -166,7 +160,9 @@ func generateSetTransform(s ast.AstSetTransform, state *GenState, id string) (Se
 		}
 	}
 
-	return SetCommandTransform{s.Statements}, nil
+	generatedInstructions := generateProcessBytecode(s.Statements)
+	state.globalTransformations[id] = generatedInstructions
+	return SetCommandTransform{generatedInstructions}, nil
 }
 
 func generateSetPattern(s ast.AstSetPattern, state *GenState, id string) (SetCommandBody, error) {
@@ -183,8 +179,6 @@ func generateSetPattern(s ast.AstSetPattern, state *GenState, id string) (SetCom
 		offset += len(part)
 		searchInstructions = append(searchInstructions, part...)
 	}
-
-	state.globalSubroutines[id] = GeneratedPattern{searchInstructions, s.Body}
 
 	// semantic check
 	env := make(map[string]ValueType)
@@ -206,9 +200,12 @@ func generateSetPattern(s ast.AstSetPattern, state *GenState, id string) (SetCom
 		}
 	}
 
+	generatedInstructions := generateProcessBytecode(s.Body)
+	state.globalSubroutines[id] = GeneratedPattern{searchInstructions, generatedInstructions}
+
 	return &SetCommandExpression{
 		Instructions: searchInstructions,
-		Validate:     s.Body,
+		Validate:     generatedInstructions,
 	}, nil
 }
 

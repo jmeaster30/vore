@@ -1,6 +1,7 @@
 package ds
 
 type Queue[T any] struct {
+	DefaultIndexable[T]
 	store []T
 }
 

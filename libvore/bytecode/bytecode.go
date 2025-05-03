@@ -58,7 +58,7 @@ type SetCommandBody interface {
 
 type SetCommandExpression struct {
 	Instructions []SearchInstruction
-	Validate     []ast.AstProcessStatement
+	Validate     []ProcInstruction
 }
 
 func (s SetCommandExpression) IsSetCommandBody() {}
@@ -70,7 +70,7 @@ type SetCommandMatches struct {
 func (s SetCommandMatches) IsSetCommandBody() {}
 
 type SetCommandTransform struct {
-	Statements []ast.AstProcessStatement
+	Instructions []ProcInstruction
 }
 
 func (s SetCommandTransform) IsSetCommandBody() {}
@@ -309,7 +309,7 @@ func (i StartSubroutine) adjust(offset int, state *GenState) SearchInstruction {
 
 type EndSubroutine struct {
 	Name     string
-	Validate []ast.AstProcessStatement
+	Validate []ProcInstruction
 }
 
 func (i EndSubroutine) IsSearchInstruction() {}
@@ -351,7 +351,7 @@ type ReplaceVariable struct {
 func (i ReplaceVariable) IsReplaceInstruction() {}
 
 type ReplaceProcess struct {
-	Process []ast.AstProcessStatement
+	Process []ProcInstruction
 }
 
 func (i ReplaceProcess) IsReplaceInstruction() {}
@@ -362,26 +362,28 @@ type ProcInstruction interface {
 }
 
 type Store struct {
-	variableName string
+	VariableName string
 }
 
 func (s Store) isProcInstruction() {}
 
 type Load struct {
-	variableName string
+	VariableName string
 }
 
 func (l Load) isProcInstruction() {}
 
 type Push struct {
-	value Value
+	Value Value
 }
 
 func (p Push) isProcInstruction() {}
 
-type BranchIfTrue struct{}
+type ConditionalJump struct {
+	NewProgramCounter int
+}
 
-func (b BranchIfTrue) isProcInstruction() {}
+func (c ConditionalJump) isProcInstruction() {}
 
 type Debug struct{}
 
