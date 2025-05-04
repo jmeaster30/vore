@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jmeaster30/vore/libvore/bytecode"
 	"github.com/jmeaster30/vore/libvore/ds"
 	"github.com/jmeaster30/vore/libvore/files"
 )
@@ -22,7 +23,7 @@ type LoopState struct {
 	iterationStep       int
 	name                string
 	loopMatchIndexStart int
-	variables           ValueHashMap
+	variables           bytecode.MapValue
 }
 
 type VariableRecord struct {
@@ -41,7 +42,7 @@ type SearchEngineState struct {
 	backtrack     *ds.Stack[SearchEngineState]
 	variableStack *ds.Stack[VariableRecord]
 	callStack     *ds.Stack[CallState]
-	environment   ValueHashMap
+	environment   bytecode.MapValue
 
 	status            Status
 	programCounter    int
@@ -469,11 +470,11 @@ func (es *SearchEngineState) MATCHVAR(name string) {
 	value, found := es.environment.Get(name)
 	if !found {
 		es.BACKTRACK()
-	} else if value.getType() == ValueHashMapType {
+	} else if value.Type() == bytecode.ValueType_Map {
 		// TODO add syntax for indexing hash maps but also I want something a bit better than just failing here
 		es.BACKTRACK()
 	} else {
-		es.MATCH(value.String().Value, false, false)
+		es.MATCH(value.String(), false, false)
 	}
 }
 
@@ -498,9 +499,9 @@ func (es *SearchEngineState) INITLOOPSTACK(loopId int64, name string) bool {
 			callLevel:           int(es.callStack.Size()),
 			iterationStep:       0,
 			loopMatchIndexStart: len(es.currentMatch),
-			variables:           NewValueHashMap(),
+			variables:           bytecode.NewEmptyMap(),
 		}
-		lstate.variables.Add("0", NewValueHashMap())
+		lstate.variables.Set("0", bytecode.NewEmptyMap())
 		es.loopStack.Push(lstate)
 		return true
 	}
@@ -514,7 +515,7 @@ func (es *SearchEngineState) INCLOOPSTACK() {
 	old := es.loopStack.Pop().GetValue()
 	old.iterationStep += 1
 	old.loopMatchIndexStart = len(es.currentMatch)
-	old.variables.Add(strconv.Itoa(old.iterationStep), NewValueHashMap())
+	old.variables.Set(strconv.Itoa(old.iterationStep), bytecode.NewEmptyMap())
 	es.loopStack.Push(old)
 }
 
@@ -562,11 +563,11 @@ func (es *SearchEngineState) ENDVAR(name string) {
 		panic("UHOH BAD INSTRUCTIONS I TRIED RESOLVING A VARIABLE THAT I WASN'T EXPECTING")
 	}
 	value := es.currentMatch[record.startOffset:]
-	es.INSERTVARIABLE(name, NewValueString(value))
+	es.INSERTVARIABLE(name, bytecode.NewString(value))
 	es.NEXT()
 }
 
-func (es *SearchEngineState) INSERTVARIABLE(name string, value Value) {
+func (es *SearchEngineState) INSERTVARIABLE(name string, value bytecode.Value) {
 	var lowestScope ds.Optional[LoopState] = ds.None[LoopState]()
 	for i := int(es.loopStack.Size()) - 1; i >= 0; i-- {
 		lowestScope = es.loopStack.Index(i)
@@ -576,18 +577,19 @@ func (es *SearchEngineState) INSERTVARIABLE(name string, value Value) {
 	}
 
 	if !lowestScope.HasValue() || lowestScope.GetValue().name == "" {
-		es.environment.Add(name, value)
+		es.environment.Set(name, value)
 	} else {
+		variables := lowestScope.GetValue().variables
 		index := strconv.Itoa(lowestScope.GetValue().iterationStep)
 		v, prs := lowestScope.GetValue().variables.Get(index)
 		if !prs {
-			m := NewValueHashMap()
-			m.Add(name, value)
-			lowestScope.GetValue().variables.Add(index, m)
+			m := bytecode.NewMap(map[string]any{})
+			m.Set(name, value)
+			variables.Set(index, m)
 		} else {
-			m := v.Hashmap()
-			m.Add(name, value)
-			lowestScope.GetValue().variables.Add(index, m)
+			m := bytecode.ToMapValue(v)
+			m.Set(name, value)
+			variables.Set(index, m)
 		}
 	}
 }
@@ -625,7 +627,7 @@ func CreateState(filename string, reader *files.Reader, fileOffset int, lineNumb
 		backtrack:         ds.NewStack[SearchEngineState](),
 		variableStack:     ds.NewStack[VariableRecord](),
 		callStack:         ds.NewStack[CallState](),
-		environment:       NewValueHashMap(),
+		environment:       bytecode.NewMap(map[string]any{}),
 		status:            INPROCESS,
 		programCounter:    0,
 		currentFileOffset: fileOffset,
@@ -692,22 +694,22 @@ func (es *SearchEngineState) MakeMatch(matchNumber int) Match {
 }
 
 type ReplacerState struct {
-	variables      ValueHashMap
+	variables      bytecode.MapValue
 	match          Match
 	programCounter int
 }
 
 func InitReplacerState(match Match, totalMatches int) *ReplacerState {
-	variables := match.Variables.Copy().Hashmap()
+	variables := match.Variables
 
-	variables.Add("totalMatches", NewValueString(strconv.Itoa(totalMatches)))
-	variables.Add("matchNumber", NewValueString(strconv.Itoa(match.MatchNumber)))
-	variables.Add("startOffset", NewValueString(strconv.Itoa(match.Offset.Start)))
-	variables.Add("endOffset", NewValueString(strconv.Itoa(match.Offset.End)))
-	variables.Add("lineNumber", NewValueString(strconv.Itoa(match.Line.Start)))
-	variables.Add("columnNumber", NewValueString(strconv.Itoa(match.Column.Start)))
-	variables.Add("value", NewValueString(match.Value))
-	variables.Add("filename", NewValueString(match.Filename))
+	variables.Set("totalMatches", bytecode.NewNumber(totalMatches))
+	variables.Set("matchNumber", bytecode.NewNumber(match.MatchNumber))
+	variables.Set("startOffset", bytecode.NewNumber(match.Offset.Start))
+	variables.Set("endOffset", bytecode.NewNumber(match.Offset.End))
+	variables.Set("lineNumber", bytecode.NewNumber(match.Line.Start))
+	variables.Set("columnNumber", bytecode.NewNumber(match.Column.Start))
+	variables.Set("value", bytecode.NewString(match.Value))
+	variables.Set("filename", bytecode.NewString(match.Filename))
 	return &ReplacerState{
 		variables:      variables,
 		match:          match,
@@ -725,8 +727,8 @@ func (rs *ReplacerState) WRITESTRING(value string) {
 
 func (rs *ReplacerState) WRITEVAR(name string) {
 	value, found := rs.variables.Get(name)
-	if found && value.getType() == ValueStringType {
-		rs.match.Replacement = ds.Some(rs.match.Replacement.GetValueOrDefault("") + value.String().Value)
+	if found && value.Type() == bytecode.ValueType_String {
+		rs.match.Replacement = ds.Some(rs.match.Replacement.GetValueOrDefault("") + value.String())
 	}
 }
 

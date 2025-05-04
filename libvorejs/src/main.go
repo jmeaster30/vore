@@ -4,6 +4,7 @@ import (
 	"syscall/js"
 
 	"github.com/jmeaster30/vore/libvore"
+	"github.com/jmeaster30/vore/libvore/ds"
 )
 
 func main() {
@@ -16,24 +17,89 @@ func main() {
 // TODO I would like to add the "compile" and "run" functions so you don't have to compile the source each search
 // TODO I would also like to use promises for asynchronous code and a little better error handling
 
-func buildError(err *libvore.VoreError) map[string]interface{} {
-	return map[string]interface{}{
-		"error": map[string]interface{}{
-			"message":   err.Message,
-			"token":     err.Token.Lexeme,
-			"tokenType": err.Token.TokenType.PP(),
-			"line": map[string]interface{}{
-				"start": err.Token.Line.Start,
-				"end":   err.Token.Line.End,
+func buildRange(value ds.Range) map[string]any {
+	return map[string]any{
+		"start": value.Start,
+		"end":   value.End,
+	}
+}
+
+func buildLexError(err libvore.LexError) map[string]any {
+	return map[string]any{
+		"error": map[string]any{
+			"type":    "LexError",
+			"message": err.Message(),
+			"token": map[string]any{
+				"lexeme": err.Token().Lexeme,
+				"type":   err.Token().TokenType.PP(),
+				"offset": buildRange(err.Token().Offset),
+				"line":   buildRange(err.Token().Line),
+				"column": buildRange(err.Token().Column),
 			},
-			"column": map[string]interface{}{
-				"start": err.Token.Column.Start,
-				"end":   err.Token.Column.End,
+		},
+	}
+}
+
+func buildParseError(err libvore.ParseError) map[string]any {
+	return map[string]any{
+		"error": map[string]any{
+			"type":    "ParseError",
+			"message": err.Message(),
+			"token": map[string]any{
+				"lexeme": err.Token().Lexeme,
+				"type":   err.Token().TokenType.PP(),
+				"offset": buildRange(err.Token().Offset),
+				"line":   buildRange(err.Token().Line),
+				"column": buildRange(err.Token().Column),
 			},
-			"offset": map[string]interface{}{
-				"start": err.Token.Offset.Start,
-				"end":   err.Token.Offset.End,
-			},
+		},
+	}
+}
+
+func buildGenError(err libvore.GenError) map[string]any {
+	return map[string]any{
+		"error": map[string]any{
+			"type":    "GenError",
+			"message": err.Message(),
+		},
+	}
+}
+
+func buildSemanticError(err libvore.SemanticError) map[string]any {
+	return map[string]any{
+		"error": map[string]any{
+			"type":    "SemanticError",
+			"message": err.Message(),
+		},
+	}
+}
+
+func buildExecError(err libvore.ExecError) map[string]any {
+	return map[string]any{
+		"error": map[string]any{
+			"type":    "ExecError",
+			"message": err.Message(),
+		},
+	}
+}
+
+func buildError(err error) map[string]any {
+	switch e := err.(type) {
+	case *libvore.LexError:
+		return buildLexError(e)
+	case *libvore.ParseError:
+		return buildParseError(e)
+	case *libvore.GenError:
+		return buildGenError(e)
+	case *libvore.SemanticError:
+		return buildSemanticError(e)
+	case *libvore.ExecError:
+		return buildExecError(e)
+	}
+
+	return map[string]any{
+		"error": map[string]any{
+			"message": err.Error(),
 		},
 	}
 }
@@ -103,14 +169,7 @@ func voreSearch(this js.Value, args []js.Value) any {
 
 	vore, err := libvore.Compile(source)
 	if err != nil {
-		// TODO pass in resolve and reject promises so if there is an error we can reject and use the "catch" syntax
-		if detailedErr, ok := err.(*libvore.VoreError); ok {
-			reject.Invoke(js.ValueOf(buildError(detailedErr)))
-		} else {
-			reject.Invoke(js.ValueOf(map[string]interface{}{
-				"error": err.Error(),
-			}))
-		}
+		reject.Invoke(js.ValueOf(buildError(err)))
 		return nil
 	}
 	matches := vore.Run(input)

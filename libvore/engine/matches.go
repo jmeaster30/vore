@@ -3,9 +3,8 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
-	"strings"
 
+	"github.com/jmeaster30/vore/libvore/bytecode"
 	"github.com/jmeaster30/vore/libvore/ds"
 )
 
@@ -44,7 +43,7 @@ type Match struct {
 	Column      ds.Range
 	Value       string
 	Replacement ds.Optional[string]
-	Variables   ValueHashMap
+	Variables   bytecode.MapValue
 }
 
 func (m Match) Json() string {
@@ -91,22 +90,9 @@ func (m Match) Print() {
 	fmt.Println("Variables:")
 	fmt.Print("  [key] = [value]")
 
-	m.Variables.process(0, printHashmap, printString)
-	fmt.Println()
-}
-
-func printHashmap(matchPrintDepth int, hashmap ValueHashMap) {
-	matchPrintDepth += 1
-	keys := hashmap.Keys()
-	sort.Strings(keys)
-	for _, k := range keys {
-		v, _ := hashmap.Get(k)
-		fmt.Printf("\n%s'%s' = ", strings.Repeat("  ", matchPrintDepth), k)
-		v.process(matchPrintDepth, printHashmap, printString)
+	for key, value := range m.Variables.Map() {
+		fmt.Printf("  %s = %s\n", key, value)
 	}
-	matchPrintDepth -= 1
-}
 
-func printString(str ValueString) {
-	fmt.Printf("'%s'", str.Value)
+	fmt.Println()
 }

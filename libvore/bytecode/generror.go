@@ -7,21 +7,19 @@ import (
 )
 
 type GenError struct {
-	err error
+	astNode ast.AstNode
+	message string
 }
 
 func (g *GenError) Error() string {
-	return g.err.Error()
-}
-
-func (g *GenError) Token() *ast.Token {
-	return nil
+	g.astNode.PrintNode()
+	return fmt.Sprintf("GenError: %s", g.message)
 }
 
 func (g *GenError) Message() string {
 	return g.Error()
 }
 
-func NewGenError(msg string) *GenError {
-	return &GenError{fmt.Errorf("GenError: %s", msg)}
+func NewGenError(node ast.AstNode, msg string) *GenError {
+	return &GenError{node, msg}
 }

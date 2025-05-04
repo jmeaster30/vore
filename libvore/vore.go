@@ -23,7 +23,7 @@ func Compile(command string) (*Vore, error) {
 func CompileFile(source string) (*Vore, error) {
 	source_file, err := os.Open(source)
 	if err != nil {
-		return nil, NewVoreFileError(err)
+		return nil, err
 	}
 	return compile(source_file)
 }

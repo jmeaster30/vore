@@ -79,3 +79,15 @@ func TestOptionalEqualSomeEqual(t *testing.T) {
 
 	testutils.AssertTrue(t, OptionalEqual(left, right))
 }
+
+func TestOptionalMapSomeValue(t *testing.T) {
+	value := Some(1)
+	actual := OptionalMap(value, func(a int) int { return a + 1 })
+	testutils.AssertEqual(t, Some(2), actual)
+}
+
+func TestOptionalMapNoneValue(t *testing.T) {
+	value := None[int]()
+	actual := OptionalMap(value, func(a int) int { return a + 1 })
+	testutils.AssertEqual(t, None[int](), actual)
+}

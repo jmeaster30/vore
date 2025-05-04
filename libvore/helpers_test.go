@@ -8,6 +8,7 @@ import (
 
 	"github.com/jmeaster30/vore/libvore/ds"
 	"github.com/jmeaster30/vore/libvore/engine"
+	"github.com/jmeaster30/vore/libvore/testutils"
 )
 
 type TestMatch struct {
@@ -46,24 +47,14 @@ func matches(t *testing.T, results engine.Matches, expected []TestMatch) {
 
 	for i, e := range expected {
 		actual := results[i]
-		if actual.Value != e.value {
-			t.Errorf("Expected value %s, got %s\n", e.value, actual.Value)
-		}
-		if actual.Offset.Start != e.offset {
-			t.Errorf("Expected offset %d, got %d", e.offset, actual.Offset.Start)
-		}
-		if actual.Replacement != e.replacement {
-			t.Errorf("Expected replacement %s, got %s\n", e.replacement.GetValueOrDefault("NONE OPTIONAL VALUE"), actual.Replacement.GetValueOrDefault("NONE OPTIONAL VALUE"))
-		}
-		if actual.Variables.Len() != len(e.variables) {
-			t.Errorf("Expected %d variables, got %d variables\n", len(e.variables), actual.Variables.Len())
-		} else {
-			for _, exVar := range e.variables {
-				v, prs := actual.Variables.Get(exVar.key)
-				if prs && v.String().Value != exVar.value {
-					t.Errorf("Expected %s, got %s\n", exVar.value, v.String().Value)
-				}
-			}
+		testutils.AssertEqual(t, e.value, actual.Value)
+		testutils.AssertEqual(t, e.offset, actual.Offset.Start)
+		testutils.AssertEqual(t, e.replacement, actual.Replacement)
+		testutils.AssertEqual(t, len(e.variables), len(actual.Variables.Map()))
+		for _, expectedVar := range e.variables {
+			v, prs := actual.Variables.Get(expectedVar.key)
+			testutils.AssertTrue(t, prs)
+			testutils.AssertEqual(t, expectedVar.value, v.String())
 		}
 	}
 }

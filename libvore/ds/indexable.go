@@ -6,12 +6,8 @@ type Indexable[T any] interface {
 
 type DefaultIndexable[T any] struct{}
 
-func (d DefaultIndexable[T]) Index(idx int) Optional[T] {
-	return None[T]()
-}
-
-func (i DefaultIndexable[T]) Subslice(startIndex int, endIndex int) []T {
-	slice := make([]T, endIndex-startIndex)
+func Subslice[T any](i Indexable[T], startIndex int, endIndex int) []T {
+	slice := make([]T, 0, endIndex-startIndex+1)
 	for idx := startIndex; idx <= endIndex; idx++ {
 		value := i.Index(idx)
 		if !value.HasValue() {

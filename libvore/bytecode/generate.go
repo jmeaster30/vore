@@ -1,7 +1,6 @@
 package bytecode
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/jmeaster30/vore/libvore/ast"
@@ -51,7 +50,7 @@ func generateCommand(com *ast.AstCommand, state *GenState) (Command, error) {
 	case *ast.AstSet:
 		return generateSetCommand(c, state)
 	}
-	return nil, NewGenError(fmt.Sprintf("Unknown command %T", icom))
+	return nil, NewGenError(*com, "unknown command")
 }
 
 func generateFindCommand(f *ast.AstFind, state *GenState) (Command, error) {
@@ -136,7 +135,7 @@ func generateSetBody(s *ast.AstSetBody, state *GenState, id string) (SetCommandB
 	case *ast.AstSetMatches:
 		return generateSetMatches(*sb, state, id)
 	}
-	return nil, NewGenError(fmt.Sprintf("Unexpected set body %T", si))
+	return nil, NewGenError(*s, "unexpected set body")
 }
 
 func generateSetTransform(s ast.AstSetTransform, state *GenState, id string) (SetCommandBody, error) {
@@ -237,7 +236,7 @@ func generateSearchInstruction(l *ast.AstExpression, offset int, state *GenState
 	case *ast.AstPrimary:
 		return generatePrimary(si, offset, state)
 	}
-	return nil, NewGenError(fmt.Sprintf("Unknown expression of type '%T'", il))
+	return nil, NewGenError(*l, "Unknown expression")
 }
 
 func generateLoop(l *ast.AstLoop, offset int, state *GenState) ([]SearchInstruction, error) {
@@ -347,7 +346,7 @@ func generateVarDec(l *ast.AstDec, offset int, state *GenState) ([]SearchInstruc
 
 	_, prs := state.variables[l.Name]
 	if prs {
-		return []SearchInstruction{}, NewGenError(fmt.Sprintf("name clash '%s'", l.Name))
+		return []SearchInstruction{}, NewGenError(*l, "name clash")
 	}
 	state.variables[l.Name] = -1
 
@@ -362,7 +361,7 @@ func generateSubroutine(l *ast.AstSub, offset int, state *GenState) ([]SearchIns
 
 	_, prs := state.variables[l.Name]
 	if prs {
-		return []SearchInstruction{}, NewGenError(fmt.Sprintf("name clash '%s'", l.Name))
+		return []SearchInstruction{}, NewGenError(*l, "name clash")
 	}
 	state.variables[l.Name] = offset
 
@@ -411,7 +410,7 @@ func generateListable(l *ast.AstListable, offset int, state *GenState) ([]Search
 	case *ast.AstRange:
 		return generateRange(li, offset, state)
 	}
-	return nil, NewGenError(fmt.Sprintf("Unknown listable '%T'", il))
+	return nil, NewGenError(*l, "Unknown listable")
 }
 
 func generate_not_not(l *ast.AstList, offset int, state *GenState) ([]SearchInstruction, error) {
@@ -483,7 +482,7 @@ func generateLiteral(l *ast.AstLiteral, offset int, state *GenState) ([]SearchIn
 	case *ast.AstCharacterClass:
 		return generateCharacterClass(ll, offset, state)
 	}
-	return nil, NewGenError(fmt.Sprintf("Unkonwn literal type '%T'", il))
+	return nil, NewGenError(*l, "unkonwn literal type")
 }
 
 func generatePrimary(l *ast.AstPrimary, offset int, state *GenState) ([]SearchInstruction, error) {
@@ -530,7 +529,7 @@ func generateVariable(l *ast.AstVariable, offset int, state *GenState) ([]Search
 		// we don't have a variable check the subroutines
 		globalSub, globalPrs := state.globalSubroutines[l.Name]
 		if !globalPrs {
-			return []SearchInstruction{}, NewGenError(fmt.Sprintf("identifier '%s' is not defined", l.Name))
+			return []SearchInstruction{}, NewGenError(*l, "undefined identifier")
 		}
 
 		state.variables[l.Name] = offset
@@ -590,7 +589,7 @@ func generateReplaceInstruction(l *ast.AstAtom, offset int, state *GenState) ([]
 	case *ast.AstVariable:
 		return generateReplaceVariable(ri, offset, state)
 	}
-	return nil, NewGenError(fmt.Sprintf("Unknown replace instruction '%T'", il))
+	return nil, NewGenError(*l, "unknown replace instruction")
 }
 
 func generateReplaceString(l *ast.AstString, offset int, state *GenState) ([]ReplaceInstruction, error) {

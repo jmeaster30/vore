@@ -7,11 +7,11 @@ import (
 
 type ProcessState struct {
 	instructionPointer int
-	environment        map[string]bytecode.Value
+	environment        bytecode.MapValue
 	stack              *ds.Stack[bytecode.Value]
 }
 
-func executeProcessInstructions(insts []bytecode.ProcInstruction, environment map[string]bytecode.Value) (ds.Optional[bytecode.Value], error) {
+func executeProcessInstructions(insts []bytecode.ProcInstruction, environment bytecode.MapValue) (ds.Optional[bytecode.Value], error) {
 	currentState := ProcessState{
 		instructionPointer: 0,
 		environment:        environment,
@@ -100,12 +100,12 @@ func executeStore(inst *bytecode.Store, state ProcessState) (ProcessState, error
 	}
 
 	storedValue := state.stack.Pop().GetValue()
-	state.environment[inst.VariableName] = storedValue
+	state.environment.Set(inst.VariableName, storedValue)
 	return state, nil
 }
 
 func executeLoad(inst *bytecode.Load, state ProcessState) (ProcessState, error) {
-	value, ok := state.environment[inst.VariableName]
+	value, ok := state.environment.Get(inst.VariableName)
 	if ok {
 		state.stack.Push(bytecode.NewString(""))
 	} else {
@@ -125,7 +125,7 @@ func executeConditionalJump(inst *bytecode.ConditionalJump, state ProcessState) 
 	}
 
 	condition := state.stack.Pop().GetValue()
-	if condition.GetBoolean() {
+	if condition.Boolean() {
 		state.instructionPointer = inst.NewProgramCounter
 	}
 	return state, nil
@@ -137,7 +137,7 @@ func executeDebug(inst *bytecode.Debug, state ProcessState) (ProcessState, error
 	}
 
 	value := state.stack.Pop().GetValue()
-	print(value.GetString())
+	print(value.String())
 	return state, nil
 }
 

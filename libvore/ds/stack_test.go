@@ -55,7 +55,8 @@ func TestIndex(t *testing.T) {
 	stack.Push(2)
 	stack.Index(0)
 	testutils.AssertEqual(t, 2, stack.Size())
-	testutils.AssertEqual(t, Some(2), stack.Index(1))
+	testutils.AssertEqual(t, Some(2), stack.Index(0))
+	testutils.AssertEqual(t, Some(1), stack.Index(1))
 }
 
 func TestCopy(t *testing.T) {

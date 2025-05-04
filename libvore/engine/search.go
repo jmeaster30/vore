@@ -352,10 +352,10 @@ func matchEndSubroutine(i bytecode.EndSubroutine, current_state *SearchEngineSta
 	if len(i.Validate) == 0 {
 		next_state.RETURN()
 	} else {
-		env := make(map[string]bytecode.Value)
+		env := bytecode.NewEmptyMap()
 		subMatch := current_state.currentMatch[current_state.callStack.Peek().GetValue().startMatchOffset:]
-		env["match"] = bytecode.NewString(subMatch)
-		env["matchLength"] = bytecode.NewNumber(len(subMatch))
+		env.Set("match", bytecode.NewString(subMatch))
+		env.Set("matchLength", bytecode.NewNumber(len(subMatch)))
 		// TODO add more variables here!
 
 		finalValue, err := executeProcessInstructions(i.Validate, env)
@@ -363,7 +363,7 @@ func matchEndSubroutine(i bytecode.EndSubroutine, current_state *SearchEngineSta
 			panic(err)
 		}
 
-		if finalValue.GetValueOrDefault(bytecode.NewBoolean(true)).GetBoolean() {
+		if finalValue.GetValueOrDefault(bytecode.NewBoolean(true)).Boolean() {
 			next_state.RETURN()
 		} else {
 			next_state.BACKTRACK()
@@ -410,26 +410,18 @@ func executeReplaceProcess(i bytecode.ReplaceProcess, current_state *ReplacerSta
 	next_state := current_state.Copy()
 
 	// execute AST
-	env := make(map[string]bytecode.Value)
-	keys := current_state.variables.Keys()
-	for _, key := range keys {
-		value, _ := current_state.variables.Get(key)
-		if value.getType() == ValueStringType {
-			env[key] = bytecode.NewString(value.String().Value)
-		}
-		// TODO Need to add process hash maps or merge into the main Values
-	}
+	env := current_state.variables
 
-	env["match"] = bytecode.NewString(next_state.match.Value)
-	env["matchLength"] = bytecode.NewNumber(len(next_state.match.Value))
-	env["matchNumber"] = bytecode.NewNumber(next_state.match.MatchNumber)
+	env.Set("match", bytecode.NewString(next_state.match.Value))
+	env.Set("matchLength", bytecode.NewNumber(len(next_state.match.Value)))
+	env.Set("matchNumber", bytecode.NewNumber(next_state.match.MatchNumber))
 
 	finalValue, err := executeProcessInstructions(i.Process, env)
 	if err != nil {
 		panic(err)
 	}
 
-	next_state.WRITESTRING(finalValue.GetValueOrDefault(bytecode.NewString("")).GetString())
+	next_state.WRITESTRING(finalValue.GetValueOrDefault(bytecode.NewString("")).String())
 	next_state.NEXT()
 	return next_state
 }
