@@ -29,7 +29,7 @@ func ParseReader(reader io.Reader) (*Ast, error) {
 }
 
 type AstNode interface {
-	PrintNode()
+	NodeString() string
 }
 
 type AstCommand interface {
@@ -77,18 +77,18 @@ type AstFind struct {
 }
 
 func (f AstFind) isCmd() {}
-func (f AstFind) PrintNode() {
-	fmt.Print("(find")
+func (f AstFind) NodeString() string {
+	result := "(find"
 	if f.All {
-		fmt.Print(" all")
+		result += " all"
 	}
-	fmt.Printf(" skip %d take %d", f.Skip, f.Take)
-	fmt.Print(" (body")
+	result += fmt.Sprintf(" skip %d take %d", f.Skip, f.Take)
+	result += " (body"
 	for _, expr := range f.Body {
-		fmt.Print(" ")
-		expr.PrintNode()
+		result += fmt.Sprintf(" %s", expr.NodeString())
 	}
-	fmt.Print("))")
+	result += "))"
+	return result
 }
 
 type AstReplace struct {
@@ -101,23 +101,21 @@ type AstReplace struct {
 }
 
 func (r AstReplace) isCmd() {}
-func (r AstReplace) PrintNode() {
-	fmt.Print("(replace")
+func (r AstReplace) NodeString() string {
+	result := "(replace"
 	if r.All {
-		fmt.Print(" all")
+		result = " all"
 	}
-	fmt.Printf(" skip %d take %d", r.Skip, r.Take)
-	fmt.Print(" (body")
+	result += fmt.Sprintf(" skip %d take %d (body", r.Skip, r.Take)
 	for _, expr := range r.Body {
-		fmt.Print(" ")
-		expr.PrintNode()
+		result += fmt.Sprintf(" %s", expr.NodeString())
 	}
-	fmt.Print(") (result")
+	result += ") (result"
 	for _, expr := range r.Result {
-		fmt.Print(" ")
-		expr.PrintNode()
+		result += fmt.Sprintf(" %s", expr.NodeString())
 	}
-	fmt.Print("))")
+	result += "))"
+	return result
 }
 
 type AstSet struct {
@@ -126,15 +124,13 @@ type AstSet struct {
 }
 
 func (s AstSet) isCmd() {}
-func (s AstSet) PrintNode() {
-	fmt.Printf("(set %s ", s.Id)
-	s.Body.PrintNode()
-	fmt.Print(")")
+func (s AstSet) NodeString() string {
+	return fmt.Sprintf("(set %s %s)", s.Id, s.Body.NodeString())
 }
 
 type AstSetBody interface {
 	// generate(state *GenState, id string) (SetCommandBody, error)
-	PrintNode()
+	NodeString() string
 }
 
 type AstSetPattern struct {
@@ -142,41 +138,38 @@ type AstSetPattern struct {
 	Body    []AstProcessStatement
 }
 
-func (b AstSetPattern) PrintNode() {
-	fmt.Print("(pattern ")
+func (b AstSetPattern) NodeString() string {
+	result := "(pattern "
 	for _, val := range b.Pattern {
-		val.PrintNode()
-		fmt.Print(" ")
+		result += fmt.Sprintf("%s ", val.NodeString())
 	}
-	fmt.Print(") (predicate")
+	result += ") (predicate"
 	for _, stmt := range b.Body {
-		fmt.Print(" ")
-		stmt.PrintNode()
+		result += fmt.Sprintf(" %s", stmt.NodeString())
 	}
-	fmt.Print(")")
+	result += ")"
+	return result
 }
 
 type AstSetMatches struct {
 	Command AstCommand
 }
 
-func (b AstSetMatches) PrintNode() {
-	fmt.Print("(matches ")
-	b.Command.PrintNode()
-	fmt.Print(")")
+func (b AstSetMatches) NodeString() string {
+	return fmt.Sprintf("(matches %s)", b.Command.NodeString())
 }
 
 type AstSetTransform struct {
 	Statements []AstProcessStatement
 }
 
-func (b AstSetTransform) PrintNode() {
-	fmt.Print("(transform ")
+func (b AstSetTransform) NodeString() string {
+	result := "(transform "
 	for _, stmt := range b.Statements {
-		fmt.Print(" ")
-		stmt.PrintNode()
+		result += fmt.Sprintf(" %s", stmt.NodeString())
 	}
-	fmt.Print(")")
+	result += ")"
+	return result
 }
 
 type AstLoop struct {
@@ -188,10 +181,8 @@ type AstLoop struct {
 }
 
 func (l AstLoop) isExpr() {}
-func (l AstLoop) PrintNode() {
-	fmt.Printf("(loop min %d max %d fewest %t ", l.Min, l.Max, l.Fewest)
-	l.Body.PrintNode()
-	fmt.Print(")")
+func (l AstLoop) NodeString() string {
+	return fmt.Sprintf("(loop min %d max %d fewest %t %s)", l.Min, l.Max, l.Fewest, l.Body.NodeString())
 }
 
 type AstBranch struct {
@@ -200,12 +191,8 @@ type AstBranch struct {
 }
 
 func (b AstBranch) isExpr() {}
-func (b AstBranch) PrintNode() {
-	fmt.Print("(branch ")
-	b.Left.PrintNode()
-	fmt.Print(" ")
-	b.Right.PrintNode()
-	fmt.Print(")")
+func (b AstBranch) NodeString() string {
+	return fmt.Sprintf("(branch %s %s)", b.Left.NodeString(), b.Right.NodeString())
 }
 
 type AstDec struct {
@@ -214,10 +201,8 @@ type AstDec struct {
 }
 
 func (d AstDec) isExpr() {}
-func (d AstDec) PrintNode() {
-	fmt.Printf("(dec '%s' ", d.Name)
-	d.Body.PrintNode()
-	fmt.Print(")")
+func (d AstDec) NodeString() string {
+	return fmt.Sprintf("(dec '%s' %s)", d.Name, d.Body.NodeString())
 }
 
 type AstSub struct {
@@ -226,13 +211,13 @@ type AstSub struct {
 }
 
 func (d AstSub) isExpr() {}
-func (d AstSub) PrintNode() {
-	fmt.Printf("(subdec '%s'", d.Name)
+func (d AstSub) NodeString() string {
+	result := fmt.Sprintf("(subdec '%s'", d.Name)
 	for _, expr := range d.Body {
-		fmt.Print(" ")
-		expr.PrintNode()
+		result += fmt.Sprintf(" %s", expr.NodeString())
 	}
-	fmt.Print(")")
+	result += ")"
+	return result
 }
 
 type AstList struct {
@@ -252,13 +237,13 @@ func (l AstList) GetMaxSize() int {
 	return max
 }
 
-func (l AstList) PrintNode() {
-	fmt.Print("(in ")
+func (l AstList) NodeString() string {
+	result := "(in "
 	for _, expr := range l.Contents {
-		fmt.Print(" ")
-		expr.PrintNode()
+		result += fmt.Sprintf(" %s", expr.NodeString())
 	}
-	fmt.Print(")")
+	result += ")"
+	return result
 }
 
 type AstPrimary struct {
@@ -266,10 +251,8 @@ type AstPrimary struct {
 }
 
 func (s AstPrimary) isExpr() {}
-func (s AstPrimary) PrintNode() {
-	fmt.Print("(primary ")
-	s.Literal.PrintNode()
-	fmt.Print(")")
+func (s AstPrimary) NodeString() string {
+	return fmt.Sprintf("(primary %s)", s.Literal.NodeString())
 }
 
 type AstRange struct {
@@ -283,12 +266,8 @@ func (r AstRange) GetMaxSize() int {
 	return len(r.To.Value)
 }
 
-func (r AstRange) PrintNode() {
-	fmt.Print("(range ")
-	r.From.PrintNode()
-	fmt.Print(" ")
-	r.To.PrintNode()
-	fmt.Print(")")
+func (r AstRange) NodeString() string {
+	return fmt.Sprintf("(range %s %s)", r.From.NodeString(), r.To.NodeString())
 }
 
 type AstString struct {
@@ -303,8 +282,8 @@ func (s AstString) GetMaxSize() int {
 	return len(s.Value)
 }
 func (s AstString) isAtom() {}
-func (s AstString) PrintNode() {
-	fmt.Printf("(string '%s')", s.Value)
+func (s AstString) NodeString() string {
+	return fmt.Sprintf("(string '%s')", s.Value)
 }
 
 type AstSubExpr struct {
@@ -312,13 +291,13 @@ type AstSubExpr struct {
 }
 
 func (n AstSubExpr) isLiteral() {}
-func (n AstSubExpr) PrintNode() {
-	fmt.Print("(subexpr")
+func (n AstSubExpr) NodeString() string {
+	result := "(subexpr"
 	for _, expr := range n.Body {
-		fmt.Print(" ")
-		expr.PrintNode()
+		result += fmt.Sprintf(" %s", expr.NodeString())
 	}
-	fmt.Print(")")
+	result += ")"
+	return result
 }
 
 type AstVariable struct {
@@ -327,8 +306,8 @@ type AstVariable struct {
 
 func (s AstVariable) isLiteral() {}
 func (s AstVariable) isAtom()    {}
-func (s AstVariable) PrintNode() {
-	fmt.Printf("(var %s)", s.Name)
+func (s AstVariable) NodeString() string {
+	return fmt.Sprintf("(var %s)", s.Name)
 }
 
 type AstCharacterClassType int
@@ -430,41 +409,42 @@ func (c AstCharacterClass) GetMaxSize() int {
 	panic("shouldn't get here")
 }
 
-func (c AstCharacterClass) PrintNode() {
-	fmt.Printf("(class ")
+func (c AstCharacterClass) NodeString() string {
+	result := "(class "
 	switch c.ClassType {
 	case ClassAny:
-		fmt.Print("any")
+		result += "any"
 	case ClassWhitespace:
-		fmt.Print("whitespace")
+		result += "whitespace"
 	case ClassDigit:
-		fmt.Print("digit")
+		result += "digit"
 	case ClassUpper:
-		fmt.Print("upper")
+		result += "upper"
 	case ClassLower:
-		fmt.Print("lower")
+		result += "lower"
 	case ClassLetter:
-		fmt.Print("letter")
+		result += "letter"
 	case ClassLineStart:
-		fmt.Print("line start")
+		result += "line start"
 	case ClassFileStart:
-		fmt.Print("file start")
+		result += "file start"
 	case ClassLineEnd:
-		fmt.Print("line end")
+		result += "line end"
 	case ClassFileEnd:
-		fmt.Print("file end")
+		result += "file end"
 	case ClassWordStart:
-		fmt.Print("word start")
+		result += "word start"
 	case ClassWordEnd:
-		fmt.Print("word end")
+		result += "word end"
 	case ClassWholeFile:
-		fmt.Print("whole file")
+		result += "whole file"
 	case ClassWholeLine:
-		fmt.Print("whole line")
+		result += "whole line"
 	case ClassWholeWord:
-		fmt.Print("whole word")
+		result += "whole word"
 	}
-	fmt.Printf(")")
+	result += ")"
+	return result
 }
 
 type AstProcessSet struct {
@@ -473,10 +453,8 @@ type AstProcessSet struct {
 }
 
 func (s AstProcessSet) isProcessStatement() {}
-func (s AstProcessSet) PrintNode() {
-	fmt.Printf("(pset '%s' ", s.Name)
-	s.Expr.PrintNode()
-	fmt.Print(")")
+func (s AstProcessSet) NodeString() string {
+	return fmt.Sprintf("(pset '%s' %s)", s.Name, s.Expr.NodeString())
 }
 
 type AstProcessReturn struct {
@@ -484,10 +462,8 @@ type AstProcessReturn struct {
 }
 
 func (s AstProcessReturn) isProcessStatement() {}
-func (s AstProcessReturn) PrintNode() {
-	fmt.Print("(return ")
-	s.Expr.PrintNode()
-	fmt.Print(")")
+func (s AstProcessReturn) NodeString() string {
+	return fmt.Sprintf("(return %s)", s.Expr.NodeString())
 }
 
 type AstProcessIf struct {
@@ -497,20 +473,17 @@ type AstProcessIf struct {
 }
 
 func (s AstProcessIf) isProcessStatement() {}
-func (s AstProcessIf) PrintNode() {
-	fmt.Print("(if ")
-	s.Condition.PrintNode()
-	fmt.Print(" (true")
+func (s AstProcessIf) NodeString() string {
+	result := fmt.Sprintf("(if %s (true", s.Condition.NodeString())
 	for _, expr := range s.TrueBody {
-		fmt.Print(" ")
-		expr.PrintNode()
+		result += fmt.Sprintf(" %s", expr.NodeString())
 	}
-	fmt.Print(") (false")
+	result += ") (false"
 	for _, expr := range s.FalseBody {
-		fmt.Print(" ")
-		expr.PrintNode()
+		result += fmt.Sprintf(" %s", expr.NodeString())
 	}
-	fmt.Print("))")
+	result += "))"
+	return result
 }
 
 type AstProcessDebug struct {
@@ -518,10 +491,8 @@ type AstProcessDebug struct {
 }
 
 func (s AstProcessDebug) isProcessStatement() {}
-func (s AstProcessDebug) PrintNode() {
-	fmt.Print("(debug ")
-	s.Expr.PrintNode()
-	fmt.Print(")")
+func (s AstProcessDebug) NodeString() string {
+	return fmt.Sprintf("(debug %s)", s.Expr.NodeString())
 }
 
 type AstProcessLoop struct {
@@ -529,27 +500,27 @@ type AstProcessLoop struct {
 }
 
 func (s AstProcessLoop) isProcessStatement() {}
-func (s AstProcessLoop) PrintNode() {
-	fmt.Print("(loop")
+func (s AstProcessLoop) NodeString() string {
+	result := "(loop"
 	for _, expr := range s.Body {
-		fmt.Print(" ")
-		expr.PrintNode()
+		result += fmt.Sprintf(" %s", expr.NodeString())
 	}
-	fmt.Print(")")
+	result += ")"
+	return result
 }
 
 type AstProcessContinue struct{}
 
 func (s AstProcessContinue) isProcessStatement() {}
-func (s AstProcessContinue) PrintNode() {
-	fmt.Print("(continue)")
+func (s AstProcessContinue) NodeString() string {
+	return "(continue)"
 }
 
 type AstProcessBreak struct{}
 
 func (s AstProcessBreak) isProcessStatement() {}
-func (s AstProcessBreak) PrintNode() {
-	fmt.Print("(break)")
+func (s AstProcessBreak) NodeString() string {
+	return "(break)"
 }
 
 type AstProcessUnaryExpression struct {
@@ -558,10 +529,8 @@ type AstProcessUnaryExpression struct {
 }
 
 func (e AstProcessUnaryExpression) isProcessExpr() {}
-func (e AstProcessUnaryExpression) PrintNode() {
-	fmt.Printf("(unary %s ", e.Op.PP())
-	e.Expr.PrintNode()
-	fmt.Print(")")
+func (e AstProcessUnaryExpression) NodeString() string {
+	return fmt.Sprintf("(unary %s %s)", e.Op.PP(), e.Expr.NodeString())
 }
 
 type AstProcessBinaryExpression struct {
@@ -571,12 +540,8 @@ type AstProcessBinaryExpression struct {
 }
 
 func (e AstProcessBinaryExpression) isProcessExpr() {}
-func (e AstProcessBinaryExpression) PrintNode() {
-	fmt.Printf("(binary %s ", e.Op.PP())
-	e.Lhs.PrintNode()
-	fmt.Print(" ")
-	e.Rhs.PrintNode()
-	fmt.Print(")")
+func (e AstProcessBinaryExpression) NodeString() string {
+	return fmt.Sprintf("(binary %s %s %s)", e.Op.PP(), e.Lhs.NodeString(), e.Rhs.NodeString())
 }
 
 type AstProcessString struct {
@@ -584,8 +549,8 @@ type AstProcessString struct {
 }
 
 func (e AstProcessString) isProcessExpr() {}
-func (e AstProcessString) PrintNode() {
-	fmt.Printf("(string %s)", e.Value)
+func (e AstProcessString) NodeString() string {
+	return fmt.Sprintf("(string %s)", e.Value)
 }
 
 type AstProcessNumber struct {
@@ -593,8 +558,8 @@ type AstProcessNumber struct {
 }
 
 func (e AstProcessNumber) isProcessExpr() {}
-func (e AstProcessNumber) PrintNode() {
-	fmt.Printf("(number %d)", e.Value)
+func (e AstProcessNumber) NodeString() string {
+	return fmt.Sprintf("(number %d)", e.Value)
 }
 
 type AstProcessBoolean struct {
@@ -602,8 +567,8 @@ type AstProcessBoolean struct {
 }
 
 func (e AstProcessBoolean) isProcessExpr() {}
-func (e AstProcessBoolean) PrintNode() {
-	fmt.Printf("(boolean %t)", e.Value)
+func (e AstProcessBoolean) NodeString() string {
+	return fmt.Sprintf("(boolean %t)", e.Value)
 }
 
 type AstProcessVariable struct {
@@ -611,6 +576,6 @@ type AstProcessVariable struct {
 }
 
 func (e AstProcessVariable) isProcessExpr() {}
-func (e AstProcessVariable) PrintNode() {
-	fmt.Printf("(var %s)", e.Name)
+func (e AstProcessVariable) NodeString() string {
+	return fmt.Sprintf("(var %s)", e.Name)
 }

@@ -587,6 +587,7 @@ func (es *SearchEngineState) INSERTVARIABLE(name string, value bytecode.Value) {
 			m.Set(name, value)
 			variables.Set(index, m)
 		} else {
+			// fmt.Printf("aa %s %+v\n", name, v)
 			m := bytecode.ToMapValue(v)
 			m.Set(name, value)
 			variables.Set(index, m)

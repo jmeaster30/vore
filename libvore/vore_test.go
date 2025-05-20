@@ -345,9 +345,9 @@ find all
       or (maybe (at least 0 ldd ld) ":" at least 1 (hexPart1 or ("\\" hexPart2)))
   "]")`)
 	testutils.CheckNoError(t, err)
-	results := vore.Run("jhneasterday09@gmail.com")
+	results := vore.Run("snemail@gmail.com")
 	matches(t, results, []TestMatch{
-		{0, "jhneasterday09@gmail.com", ds.None[string](), []TestVar{}},
+		{0, "snemail@gmail.com", ds.None[string](), []TestVar{}},
 	})
 }
 

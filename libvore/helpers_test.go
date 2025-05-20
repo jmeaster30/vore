@@ -47,14 +47,16 @@ func matches(t *testing.T, results engine.Matches, expected []TestMatch) {
 
 	for i, e := range expected {
 		actual := results[i]
-		testutils.AssertEqual(t, e.value, actual.Value)
-		testutils.AssertEqual(t, e.offset, actual.Offset.Start)
-		testutils.AssertEqual(t, e.replacement, actual.Replacement)
-		testutils.AssertEqual(t, len(e.variables), len(actual.Variables.Map()))
-		for _, expectedVar := range e.variables {
-			v, prs := actual.Variables.Get(expectedVar.key)
-			testutils.AssertTrue(t, prs)
-			testutils.AssertEqual(t, expectedVar.value, v.String())
+		testutils.AssertEqualLabel(t, "match value", e.value, actual.Value)
+		testutils.AssertEqualLabel(t, "match offset", e.offset, actual.Offset.Start)
+		testutils.AssertEqualLabel(t, "replacement", e.replacement, actual.Replacement)
+		if len(e.variables) > 0 {
+			// testutils.AssertEqualLabel(t, "variables length", len(e.variables), len(actual.Variables.Map()))
+			for _, expectedVar := range e.variables {
+				v, prs := actual.Variables.Get(expectedVar.key)
+				testutils.AssertTrue(t, prs)
+				testutils.AssertEqualLabel(t, "variable value", expectedVar.value, v.String())
+			}
 		}
 	}
 }

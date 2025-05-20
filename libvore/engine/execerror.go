@@ -13,9 +13,25 @@ type ExecError struct {
 	message      string
 }
 
+func max(a int, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
 func (err ExecError) Error() string {
 	message := fmt.Sprintf("ExecError: %s\n", err.message)
-	message += fmt.Sprintf("Inst [%d] %T %#v\n", err.processState.instructionPointer, err.instruction, err.instruction)
+	message += "Instructions ---\n"
+	startIdx := err.processState.instructionPointer
+	endIdx := max(startIdx-5, 0)
+	for idx, inst := range err.processState.instructions[endIdx : startIdx+1] {
+		if idx+endIdx == err.processState.instructionPointer {
+			message += fmt.Sprintf("   @@[%d] %v\n", idx+endIdx, inst)
+		} else {
+			message += fmt.Sprintf("     [%d] %v\n", idx+endIdx, inst)
+		}
+	}
 
 	message += "Stack ----------\n"
 	for idx, value := range ds.Subslice[bytecode.Value](err.processState.stack, 0, 5) {
@@ -29,6 +45,10 @@ func (err ExecError) Error() string {
 	}
 
 	return message
+}
+
+func (err ExecError) Message() string {
+	return err.message
 }
 
 func NewExecError(message string, instruction bytecode.ProcInstruction, processState ProcessState) ExecError {

@@ -358,7 +358,7 @@ func (i ReplaceProcess) IsReplaceInstruction() {}
 
 type ProcInstruction interface {
 	isProcInstruction()
-	// StackChange() (int, int)
+	String() string
 }
 
 type Store struct {
@@ -366,93 +366,177 @@ type Store struct {
 }
 
 func (s Store) isProcInstruction() {}
+func (s Store) String() string {
+	return fmt.Sprintf("(store '%s')", s.VariableName)
+}
 
 type Load struct {
 	VariableName string
 }
 
 func (l Load) isProcInstruction() {}
+func (l Load) String() string {
+	return fmt.Sprintf("(load '%s')", l.VariableName)
+}
 
 type Push struct {
 	Value Value
 }
 
 func (p Push) isProcInstruction() {}
+func (p Push) String() string {
+	return fmt.Sprintf("(push %s %s)", p.Value.Type(), p.Value.String())
+}
 
 type ConditionalJump struct {
 	NewProgramCounter int
 }
 
 func (c ConditionalJump) isProcInstruction() {}
+func (c ConditionalJump) String() string {
+	return fmt.Sprintf("(cond %d)", c.NewProgramCounter)
+}
+
+type LabelJump struct {
+	Label string
+}
+
+func (l LabelJump) isProcInstruction() {}
+func (l LabelJump) String() string {
+	return fmt.Sprintf("(ljump %s)", l.Label)
+}
 
 type Debug struct{}
 
 func (d Debug) isProcInstruction() {}
+func (d Debug) String() string {
+	return "(debug)"
+}
 
 type Return struct{}
 
 func (r Return) isProcInstruction() {}
+func (r Return) String() string {
+	return "(return)"
+}
 
 type Not struct{}
 
 func (n Not) isProcInstruction() {}
+func (n Not) String() string {
+	return "(not)"
+}
 
 type Head struct{}
 
 func (h Head) isProcInstruction() {}
+func (h Head) String() string {
+	return "(head)"
+}
 
 type Tail struct{}
 
 func (t Tail) isProcInstruction() {}
+func (t Tail) String() string {
+	return "(tail)"
+}
 
 type And struct{}
 
 func (a And) isProcInstruction() {}
+func (a And) String() string {
+	return "(and)"
+}
 
 type Or struct{}
 
 func (o Or) isProcInstruction() {}
+func (o Or) String() string {
+	return "(or)"
+}
 
 type Add struct{}
 
 func (a Add) isProcInstruction() {}
+func (a Add) String() string {
+	return "(add)"
+}
 
 type Subtract struct{}
 
 func (s Subtract) isProcInstruction() {}
+func (s Subtract) String() string {
+	return "(subtract)"
+}
 
 type Multiply struct{}
 
 func (m Multiply) isProcInstruction() {}
+func (m Multiply) String() string {
+	return "(multiply)"
+}
 
 type Divide struct{}
 
 func (d Divide) isProcInstruction() {}
+func (d Divide) String() string {
+	return "(divide)"
+}
 
 type Modulo struct{}
 
 func (m Modulo) isProcInstruction() {}
+func (m Modulo) String() string {
+	return "(modulo)"
+}
 
 type Equal struct{}
 
 func (e Equal) isProcInstruction() {}
+func (e Equal) String() string {
+	return "(equal)"
+}
 
 type NotEqual struct{}
 
 func (n NotEqual) isProcInstruction() {}
+func (n NotEqual) String() string {
+	return "(notequal)"
+}
 
 type GreaterThan struct{}
 
 func (g GreaterThan) isProcInstruction() {}
+func (g GreaterThan) String() string {
+	return "(greater)"
+}
 
 type GreaterThanEqual struct{}
 
 func (g GreaterThanEqual) isProcInstruction() {}
+func (g GreaterThanEqual) String() string {
+	return "(greaterequal)"
+}
 
 type LessThan struct{}
 
 func (l LessThan) isProcInstruction() {}
+func (l LessThan) String() string {
+	return "(less)"
+}
 
 type LessThanEqual struct{}
 
 func (l LessThanEqual) isProcInstruction() {}
+func (l LessThanEqual) String() string {
+	return "(lessequal)"
+}
+
+type Label struct {
+	Name string
+}
+
+func (l Label) isProcInstruction() {}
+func (l Label) String() string {
+	return fmt.Sprintf("(label %s)", l.Name)
+}

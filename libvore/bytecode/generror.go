@@ -12,8 +12,7 @@ type GenError struct {
 }
 
 func (g *GenError) Error() string {
-	g.astNode.PrintNode()
-	return fmt.Sprintf("GenError: %s", g.message)
+	return fmt.Sprintf("GenError: %s at node %s", g.message, g.astNode.NodeString())
 }
 
 func (g *GenError) Message() string {

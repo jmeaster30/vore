@@ -29,6 +29,14 @@ func AssertEqual[T any, U any](t *testing.T, expected T, actual U) {
 	}
 }
 
+func AssertEqualLabel[T any, U any](t *testing.T, label string, expected T, actual U) {
+	t.Helper()
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Expected %s %+v (%T) but got %+v (%T)", label, expected, expected, actual, actual)
+		t.FailNow()
+	}
+}
+
 func AssertLength[T any](t *testing.T, expectedLength int, array []T) {
 	t.Helper()
 	if expectedLength != len(array) {

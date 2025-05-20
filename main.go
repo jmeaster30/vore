@@ -134,8 +134,9 @@ func main() {
 	}
 
 	if debug {
-		println("HERE")
+		println("-- AST -----------")
 		vore.PrintAST()
+		println("-- Bytecode ------")
 		vore.PrintBytecode()
 	}
 

@@ -360,6 +360,7 @@ func matchEndSubroutine(i bytecode.EndSubroutine, current_state *SearchEngineSta
 
 		finalValue, err := executeProcessInstructions(i.Validate, env)
 		if err != nil {
+			// fmt.Printf("ERROR ERROR ERROR [%T] %s\n", err, (err.(ExecError)).Message())
 			panic(err)
 		}
 

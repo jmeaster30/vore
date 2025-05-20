@@ -162,6 +162,15 @@ func TestGetFileListWildcardThenSingleLetter(t *testing.T) {
 	testutils.AssertEqual(t, fs+"/test.a", fileList[1])
 }
 
+func TestGetFileListDotThenExactPath(t *testing.T) {
+	fs := testutils.BuildTestingFilesystem(t, "scratch/test.txt")
+	defer testutils.RemoveTestingFilesystem(t, fs)
+	path := ParsePath("./scratch/test.txt")
+	fileList := path.GetFileList(fs)
+	testutils.AssertLength(t, 1, fileList)
+	testutils.AssertEqual(t, fs+"/scratch/test.txt", fileList[0])
+}
+
 func TestNormalize(t *testing.T) {
 	normalized := normalize("/a/b")
 	testutils.AssertEqual(t, "/a/b", normalized)

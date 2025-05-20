@@ -30,10 +30,10 @@ func checkStatement(s *ast.AstProcessStatement, info ProcessTypeInfo) (ProcessTy
 		return checkIf(ps, info)
 	case *ast.AstProcessLoop:
 		return checkLoop(ps, info)
-	case ast.AstProcessBreak:
-		return checkBreak(&ps, info)
-	case ast.AstProcessContinue:
-		return checkContinue(&ps, info)
+	case *ast.AstProcessBreak:
+		return checkBreak(ps, info)
+	case *ast.AstProcessContinue:
+		return checkContinue(ps, info)
 	case *ast.AstProcessExpression:
 		return checkExpression(ps, info)
 	case *ast.AstProcessDebug:

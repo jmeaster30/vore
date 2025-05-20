@@ -19,19 +19,19 @@ func ParsePath(path string) *Path {
 		path = path[1:]
 	}
 	splitPath := strings.Split(path, "/")
-	for idx, pathPart := range splitPath {
-		if idx == len(splitPath)-1 {
-			if strings.ContainsRune(pathPart, '*') {
+	for _, pathPart := range splitPath {
+		if strings.ContainsRune(pathPart, '*') {
+			entries = append(entries, pathPart)
+		} else if pathPart == "." {
+			continue
+		} else if pathPart == ".." {
+			if len(entries) == 0 || entries[len(entries)-1] == ".." {
 				entries = append(entries, pathPart)
 			} else {
-				entries = append(entries, pathPart)
+				entries = entries[:len(entries)-1]
 			}
 		} else {
-			if strings.ContainsRune(pathPart, '*') {
-				entries = append(entries, pathPart)
-			} else {
-				entries = append(entries, pathPart)
-			}
+			entries = append(entries, pathPart)
 		}
 	}
 	return &Path{entries}

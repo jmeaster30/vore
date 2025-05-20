@@ -44,3 +44,7 @@ func SplitKeep(target string, split string) []string {
 	}
 	return results
 }
+
+func Combine[T any](array ...T) []T {
+	return array
+}

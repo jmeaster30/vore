@@ -226,7 +226,7 @@ func (v *MapValue) Set(index string, value Value) {
 }
 
 func (v *MapValue) Entries() []ds.Pair[string, Value] {
-	result := make([]ds.Pair[string, Value], len(v.value))
+	result := make([]ds.Pair[string, Value], 0, len(v.value))
 	for key, value := range v.value {
 		result = append(result, ds.NewPair(key, value))
 	}

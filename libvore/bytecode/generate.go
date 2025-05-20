@@ -159,7 +159,10 @@ func generateSetTransform(s ast.AstSetTransform, state *GenState, id string) (Se
 		}
 	}
 
-	generatedInstructions := generateProcessBytecode(s.Statements)
+	generatedInstructions, err := generateProcessBytecode(s.Statements, nil)
+	if err != nil {
+		return nil, err
+	}
 	state.globalTransformations[id] = generatedInstructions
 	return SetCommandTransform{generatedInstructions}, nil
 }
@@ -199,7 +202,10 @@ func generateSetPattern(s ast.AstSetPattern, state *GenState, id string) (SetCom
 		}
 	}
 
-	generatedInstructions := generateProcessBytecode(s.Body)
+	generatedInstructions, err := generateProcessBytecode(s.Body, nil)
+	if err != nil {
+		return nil, err
+	}
 	state.globalSubroutines[id] = GeneratedPattern{searchInstructions, generatedInstructions}
 
 	return &SetCommandExpression{

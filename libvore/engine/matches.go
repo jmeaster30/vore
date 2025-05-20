@@ -88,7 +88,7 @@ func (m Match) Print() {
 	fmt.Printf("Line: %d %d\n", m.Line.Start, m.Line.End)
 	fmt.Printf("Column: %d %d\n", m.Column.Start, m.Column.End)
 	fmt.Println("Variables:")
-	fmt.Print("  [key] = [value]")
+	fmt.Println("  [key] = [value]")
 
 	for key, value := range m.Variables.Map() {
 		fmt.Printf("  %s = %s\n", key, value)

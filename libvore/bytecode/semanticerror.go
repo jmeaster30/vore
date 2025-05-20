@@ -12,8 +12,7 @@ type SemanticError struct {
 }
 
 func (s SemanticError) Error() string {
-	s.astNode.PrintNode() // TODO turn PrintNode() into NodeString()
-	return fmt.Sprintf("SemanticError: %s", s.message)
+	return fmt.Sprintf("SemanticError: %s at %s", s.message, s.astNode.NodeString())
 }
 
 func NewSemanticError(node ast.AstNode, message string) *SemanticError {

@@ -52,9 +52,8 @@ func (v *Vore) RunFiles(filenames []string, mode engine.ReplaceMode, processFile
 
 func (v *Vore) PrintAST() {
 	for _, command := range v.ast.Commands() {
-		command.PrintNode()
+		fmt.Printf("%s\n\n", command.NodeString())
 	}
-	fmt.Println()
 }
 
 func (v *Vore) PrintBytecode() {
